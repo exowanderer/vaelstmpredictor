@@ -5,6 +5,8 @@ import numpy as np
 import os
 import random
 
+from contextlib import redirect_stdout
+
 from keras import backend as K
 from keras.utils import to_categorical
 
@@ -138,6 +140,8 @@ class Chromosome(VAEPredictor):
                            "size_dnn_hidden": size_dnn_hidden}#,
                            # "size_dnn_latent":size_dnn_latent}
 
+        self.model_dir = clargs.model_dir
+        self.run_name = clargs.run_name
         self.predictor_type = clargs.predictor_type
         self.original_dim = clargs.original_dim
         self.predictor_weight = clargs.predictor_weight
@@ -155,8 +159,27 @@ class Chromosome(VAEPredictor):
         self.get_model()
         self.neural_net = self.model
         self.fitness = 0
+        
+        assert(os.path.exists(self.model_dir)), "{} does not exist.".format(self.model_dir) 
+        self.model_topology_savefile = '{}/{}_{}_{}_model_topology_savefile_{}.save'
+        self.model_topology_savefile = self.model_topology_savefile.format(self.model_dir, self.run_name,
+                                       self.generationID, self.chromosomeID,
+                                       self.time_stamp)
 
-        print(self.neural_net.summary())
+        with open(self.model_topology_savefile, 'w') as f:
+            with redirect_stdout(f):
+                self.neural_net.summary()
+
+        yaml_filename = self.model_topology_savefile.replace('.save', '.yaml')
+        with open(yaml_filename, 'w') as yaml_fileout:
+            yaml_fileout.write(self.neural_net.to_yaml())
+        
+        # save model args
+        json_filename = self.model_topology_savefile.replace('.save', '.json')
+        with open(json_filename, 'w') as json_fileout:
+            json_fileout.write(self.neural_net.to_json())
+
+        if verbose: print(self.neural_net.summary())
 
     def train(self, verbose = False):
         """Training control operations to create VAEPredictor instance, 
@@ -219,7 +242,7 @@ class Chromosome(VAEPredictor):
         
         best_loss = {k: history.history[k][best_ind] for k in history.history}
         
-        self.fitness = 1.0 / best_loss
+        # self.fitness = 1.0 / best_loss
         # if(self.fitness < 0): self.fitness = 0
 
         if verbose: print('\n\n[INFO] The Best Loss: {}\n'.format(best_loss))
@@ -230,7 +253,7 @@ class Chromosome(VAEPredictor):
                                          self.time_stamp)
 
         wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
-        wghts_save_loc = weights_save_loc.format(self.model_dir, self.run_name,
+        wghts_save_loc = wghts_save_loc.format(self.model_dir, self.run_name,
                                          self.generationID, self.chromosomeID,
                                          self.time_stamp)
         
@@ -239,8 +262,8 @@ class Chromosome(VAEPredictor):
                                          self.generationID, self.chromosomeID,
                                          self.time_stamp)
         
-        vae_model.model.save_weights(wghts_save_loc, overwrite=True)
-        vae_model.model.save(model_save_loc, overwrite=True)
+        self.neural_net.save_weights(wghts_save_loc, overwrite=True)
+        self.neural_net.save(model_save_loc, overwrite=True)
         joblib.dump({'best_loss':best_loss,'history':history}, joblib_save_loc)
 
 if __name__ == '__main__':
