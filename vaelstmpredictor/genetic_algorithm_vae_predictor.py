@@ -1,4 +1,5 @@
 # from https://github.com/philippesaade11/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
+# python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 --verbose --iterations 1 --population_size 2 --num_epochs 1
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
@@ -328,7 +329,9 @@ if __name__ == '__main__':
                 help='number of iterations for genetic algorithm')
     parser.add_argument('--verbose', action='store_true',
                 help='print more [INFO] and [DEBUG] statements')
-
+    parser.add_argument('--make_plots', actiion='store_true',
+                help='make plots of the growth in the best_loss over generations')
+    
     clargs = parser.parse_args()
     
     cross_prob = clargs.cross_prob
@@ -336,6 +339,7 @@ if __name__ == '__main__':
     population_size = clargs.population_size
     iterations = clargs.iterations
     verbose = clargs.verbose
+    make_plots = clargs.make_plots
 
     clargs.data_type = 'MNIST'
     data_instance = MNISTData(batch_size = clargs.batch_size)
@@ -362,8 +366,10 @@ if __name__ == '__main__':
     fig = plt.gcf()
     fig.show()
 
+    evolutionary_tree = []
+    start = time()
     while gen_num < iterations:
-
+        start_while = time()
         #Create new generation
         new_generation = []
         gen_num += 1
@@ -379,9 +385,18 @@ if __name__ == '__main__':
             
             new_generation.append(child1)
             new_generation.append(child2)
-        generation = new_generation
 
+        print('Time per generation: {} minutes'.format((time() - start_while)//60))
+
+        generation = new_generation
+        del new_generation.data_instance
+        del new_generation.neural_net
+        del new_generation.model
+
+        evolutionary_tree.append(new_generation)
         best_fitness.append(max(chrom.fitness for chrom in generation))
-        plt.plot(best_fitness, color="c")
-        plt.xlim([0, iterations])
-        fig.canvas.draw()
+        
+        if make_plots:
+            plt.plot(best_fitness, color="c")
+            plt.xlim([0, iterations])
+            fig.canvas.draw()
