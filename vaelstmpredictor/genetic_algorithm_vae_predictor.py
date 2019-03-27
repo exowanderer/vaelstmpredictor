@@ -248,7 +248,7 @@ class Chromosome(VAEPredictor):
         self.best_val_loss = sum([val for key,val in self.best_loss.items() if 'val_' in key])
         self.fitness = 1.0 / self.best_val_loss
 
-        if verbose: #print('\n\n[INFO] The Best Loss: {}\n'.format(self.best_loss))
+        if verbose: 
             print("Generation: {}".format(self.generationID))
             print("Chromosome: {}".format(self.chromosomeID))
             print('\nBest Loss:')

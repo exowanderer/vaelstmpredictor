@@ -220,8 +220,8 @@ class VAEPredictor(object):
                                 'prediction_latent_mod':predictor_weight,
                                 'vae_latent_args': vae_kl_weight},
 
-                metrics = {'predictor_prediction': 'accuracy'})
-
+                metrics = {'predictor_output': 'accuracy'})
+    
     def vae_sampling(self, args):
         eps = K.random_normal(shape = (self.batch_size, self.vae_latent_dim), 
                                 mean = 0., stddev = 1.0)
