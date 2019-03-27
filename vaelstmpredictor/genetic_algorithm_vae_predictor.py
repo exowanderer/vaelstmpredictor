@@ -87,7 +87,7 @@ def cross_over(parent1, parent2, prob, verbose=False):
             generationID=generationID, chromosomeID=chromosomeID,
             vae_kl_weight = vae_kl_weight, predictor_weight = predictor_weight,
             predictor_kl_weight = predictor_kl_weight, verbose=verbose, **params1)
-        
+
         child2 = Chromosome(clargs=clargs, data_instance=data_instance, 
             generationID=generationID, chromosomeID=chromosomeID,
             vae_kl_weight = vae_kl_weight, predictor_weight = predictor_weight,
@@ -369,7 +369,7 @@ if __name__ == '__main__':
     fig = plt.gcf()
     fig.show()
 
-    evolutionary_tree = []
+    # evolutionary_tree = []
     start = time()
     while gen_num < iterations:
         start_while = time()
@@ -394,11 +394,12 @@ if __name__ == '__main__':
 
         generation = new_generation
         
-        del new_generation.data_instance
-        del new_generation.neural_net
-        del new_generation.model
+        # del new_generation.data_instance
+        # del new_generation.neural_net
+        # del new_generation.model
 
-        evolutionary_tree.append(new_generation)
+        # evolutionary_tree.append(new_generation)
+        
         best_fitness.append(max(chrom.fitness for chrom in generation))
         
         if make_plots:
