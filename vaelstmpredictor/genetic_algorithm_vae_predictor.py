@@ -357,7 +357,7 @@ if __name__ == '__main__':
         #Create new generation
         new_generation = []
         gen_num += 1
-        for _ in range(int(net_size/2)):
+        for _ in range(population_size//2):
             parent1, parent2 = select_parents(generation)
             child1, child2 = cross_over(parent1, parent2, cross_prob)
             
