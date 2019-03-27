@@ -1,5 +1,5 @@
 # from https://github.com/philippesaade11/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
-# python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 --verbose --iterations 1 --population_size 2 --num_epochs 1
+# python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 --verbose --iterations 500 --population_size 10 --num_epochs 200
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
@@ -329,9 +329,9 @@ if __name__ == '__main__':
                 help='number of iterations for genetic algorithm')
     parser.add_argument('--verbose', action='store_true',
                 help='print more [INFO] and [DEBUG] statements')
-    parser.add_argument('--make_plots', actiion='store_true',
+    parser.add_argument('--make_plots', action='store_true',
                 help='make plots of the growth in the best_loss over generations')
-    
+
     clargs = parser.parse_args()
     
     cross_prob = clargs.cross_prob
