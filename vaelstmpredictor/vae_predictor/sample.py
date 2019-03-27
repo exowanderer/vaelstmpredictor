@@ -5,7 +5,7 @@ from collections import namedtuple
 from json import load as json_load
 from keras.utils import to_categorical
 
-from ..utils.midi_utils import write_sample
+# from ..utils.midi_utils import write_sample
 
 # from .model import load_model, generate_sample, make_decoder
 # from .model import make_w_encoder, make_z_encoder, sample_z
@@ -92,7 +92,7 @@ def make_sample(generate_sequence, vae_instance, data_instance, clargs):
     print('[INFO] Storing New MIDI file in {}/{}.mid'.format(
                                 clargs.sample_dir, clargs.run_name))
 
-    write_sample(sample, clargs.sample_dir, clargs.run_name, True)
+    # write_sample(sample, clargs.sample_dir, clargs.run_name, True)
 
 def sample(clargs, data_instance):
     """Training control operations to create VAEPredictor instance, 
