@@ -87,6 +87,7 @@ def cross_over(parent1, parent2, prob, verbose=False):
             generationID=generationID, chromosomeID=chromosomeID,
             vae_kl_weight = vae_kl_weight, predictor_weight = predictor_weight,
             predictor_kl_weight = predictor_kl_weight, verbose=verbose, **params1)
+        
         child2 = Chromosome(clargs=clargs, data_instance=data_instance, 
             generationID=generationID, chromosomeID=chromosomeID,
             vae_kl_weight = vae_kl_weight, predictor_weight = predictor_weight,
