@@ -94,8 +94,10 @@ def cross_over(parent1, parent2, prob):
 def mutate(child, prob):
     for param in Chromosome.params:
         if(random.random() <= prob):
-            extra = int(child.params_dict[param]*0.1)+1
-            child.params_dict[param] += random.randint(-extra, extra)
+            # extra = int(child.params_dict[param]*0.1)+1
+            # child.params_dict[param] += random.randint(-extra, extra)
+            child.params_dict[param] += np.random.choice([-1,1])
+
     return child
 
 class Chromosome(VAEPredictor):
@@ -229,7 +231,7 @@ class Chromosome(VAEPredictor):
         validation_data = (vae_features_val, vae_labels_val)
         train_labels = [DI.labels_train, predictor_train, predictor_train, DI.labels_train]
         
-        history = self.model.fit(vae_train, train_labels,
+        self.history = self.model.fit(vae_train, train_labels,
                                     shuffle = True,
                                     epochs = clargs.num_epochs,
                                     batch_size = clargs.batch_size,
@@ -237,15 +239,23 @@ class Chromosome(VAEPredictor):
                                     validation_data = validation_data)
 
         max_kl_anneal = max(clargs.kl_anneal, clargs.w_kl_anneal)
-        best_ind = np.argmin([x if i >= max_kl_anneal + 1 else np.inf \
-                    for i,x in enumerate(history.history['val_loss'])])
+        self.best_ind = np.argmin([x if i >= max_kl_anneal + 1 else np.inf \
+                    for i,x in enumerate(self.history.history['val_loss'])])
         
-        best_loss = {k: history.history[k][best_ind] for k in history.history}
+        self.best_loss = {k: self.history.history[k][self.best_ind] \
+                                        for k in self.history.history}
         
-        # self.fitness = 1.0 / best_loss
-        # if(self.fitness < 0): self.fitness = 0
+        self.best_val_loss = sum([val for key,val in self.best_loss.items() if 'val_' in key])
+        self.fitness = 1.0 / self.best_val_loss
 
-        if verbose: print('\n\n[INFO] The Best Loss: {}\n'.format(best_loss))
+        if verbose: #print('\n\n[INFO] The Best Loss: {}\n'.format(self.best_loss))
+            print("Generation: {}".format(self.generationID))
+            print("Chromosome: {}".format(self.chromosomeID))
+            print('\nBest Loss:')
+            for key,val in self.best_loss.items():
+                print('{}: {}'.format(key,val))
+
+            print('\nFitness: {}'.format(self.fitness))
         
         joblib_save_loc = '{}/{}_{}_{}_trained_model_output_{}.joblib.save'
         joblib_save_loc = joblib_save_loc.format(self.model_dir, self.run_name,
@@ -264,7 +274,8 @@ class Chromosome(VAEPredictor):
         
         self.neural_net.save_weights(wghts_save_loc, overwrite=True)
         self.neural_net.save(model_save_loc, overwrite=True)
-        joblib.dump({'best_loss':best_loss,'history':history}, joblib_save_loc)
+        joblib.dump({'best_loss':self.best_loss,'history':self.history}, 
+                        joblib_save_loc)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
