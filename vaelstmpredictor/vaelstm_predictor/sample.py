@@ -4,7 +4,7 @@ import numpy as np
 from keras.utils import to_categorical
 
 from ..utils.data_utils import PianoData
-from ..utils.midi_utils import write_sample
+# from ..utils.midi_utils import write_sample
 from .model import load_model, generate_sample, make_decoder
 from .model import make_w_encoder, make_z_encoder
 
@@ -24,10 +24,10 @@ def gen_samples(P, dec_model, w_enc_model, z_enc_model, args, margs):
         x_seed = P.x_test[i]
         sample = generate_sample(dec_model, w_enc_model, z_enc_model, x_seed, args.t, margs['use_x_prev'], w_val=w_val, w_discrete=args.discrete_w, seq_length=margs['seq_length'])
         
-        write_sample(sample, args.sample_dir, outfile(j,i),
-            'jsb' in args.train_file.lower())
-        write_sample(x_seed, args.sample_dir, outfile_seed(j,i),
-            'jsb' in args.train_file.lower())
+        # write_sample(sample, args.sample_dir, outfile(j,i),
+        #     'jsb' in args.train_file.lower())
+        # write_sample(x_seed, args.sample_dir, outfile_seed(j,i),
+        #     'jsb' in args.train_file.lower())
 
 def sample(args):
     # load models
