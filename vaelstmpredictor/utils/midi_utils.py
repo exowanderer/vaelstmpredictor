@@ -12,7 +12,7 @@ import sys
 import argparse
 import numpy as np
 import pretty_midi
-import librosa
+# import librosa
 
 RANGE = 128
 
