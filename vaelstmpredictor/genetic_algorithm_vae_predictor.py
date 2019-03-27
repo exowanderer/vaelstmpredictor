@@ -309,13 +309,25 @@ if __name__ == '__main__':
                 help='basedir for saving model weights')    
     parser.add_argument('--train_file', type=str, default='MNIST',
                 help='file of training data (.pickle)')
+    parser.add_argument('--cross_prob', type=float, default=0.7,
+                help='Probability of crossover between generations')
+    parser.add_argument('--mutate_prob', type=float, default=0.01,
+                help='Probability of mutation for each member')
+    parser.add_argument('--population_size', type=int, default=10,# Preferably divisible by 2
+                help='size of the population to evolve')
+    parser.add_argument('--iterations', type=int, default=500,
+                help='number of iterations for genetic algorithm')
     parser.add_argument('--verbose', action='store_true',
                 help='print more [INFO] and [DEBUG] statements')
 
     clargs = parser.parse_args()
     
+    cross_prob = clargs.cross_prob
+    mutate_prob = clargs.mutate_prob
+    population_size = clargs.population_size
+    iterations = clargs.iterations
     verbose = clargs.verbose
-
+    
     clargs.data_type = 'MNIST'
     data_instance = MNISTData(batch_size = clargs.batch_size)
     
@@ -332,10 +344,6 @@ if __name__ == '__main__':
     
     clargs.n_labels = len(np.unique(data_instance.train_labels))
 
-    cross_prob = 0.7
-    mutate_prob = 0.01
-    net_size = 10  #Preferably divisible by 2
-
     generation = generate_random_chromosomes(net_size,
             clargs = clargs, data_instance = data_instance)
     gen_num = 0
@@ -344,7 +352,6 @@ if __name__ == '__main__':
     fig = plt.gcf()
     fig.show()
 
-    iterations = 500
     while gen_num < iterations:
 
         #Create new generation
