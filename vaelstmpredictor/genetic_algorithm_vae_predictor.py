@@ -58,7 +58,7 @@ def select_parents(generation):
 
     return parent1, parent2
 
-def cross_over(parent1, parent2, prob):
+def cross_over(parent1, parent2, prob, verbose=False):
     if(random.random() <= prob):
         params1 = {}
         params2 = {}
@@ -81,11 +81,11 @@ def cross_over(parent1, parent2, prob):
         child1 = Chromosome(clargs=clargs, data_instance=data_instance, 
             generationID=generationID, chromosomeID=chromosomeID,
             vae_kl_weight = vae_kl_weight, predictor_weight = predictor_weight,
-            predictor_kl_weight = predictor_kl_weight, **params1)
+            predictor_kl_weight = predictor_kl_weight, verbose=verbose, **params1)
         child2 = Chromosome(clargs=clargs, data_instance=data_instance, 
             generationID=generationID, chromosomeID=chromosomeID,
             vae_kl_weight = vae_kl_weight, predictor_weight = predictor_weight,
-            predictor_kl_weight = predictor_kl_weight, **params2)
+            predictor_kl_weight = predictor_kl_weight, verbose=verbose, **params2)
 
         return child1, child2
     
@@ -360,7 +360,7 @@ if __name__ == '__main__':
         gen_num += 1
         for _ in range(population_size//2):
             parent1, parent2 = select_parents(generation)
-            child1, child2 = cross_over(parent1, parent2, cross_prob)
+            child1, child2 = cross_over(parent1, parent2, cross_prob, verbose=verbose)
             
             mutate(child1, mutate_prob)
             mutate(child2, mutate_prob)
