@@ -6,7 +6,7 @@ from __future__ import division
 import sys, os
 from collections import defaultdict
 import numpy as np
-import midi
+# import midi
 
 import sys
 import argparse
@@ -70,6 +70,7 @@ def piano_roll_to_pretty_midi(piano_roll, fs=100, program=0):
     pm.instruments.append(instrument)
     return pm
 
+"""
 class MidiWriter(object):
 
     def __init__(self, verbose=False, default_vel=100):
@@ -182,8 +183,11 @@ class MidiWriter(object):
         pattern.append(self.track)
         midi.write_midifile(output_filename, pattern)
     '''
+"""
+"""
 def write_sample(sample, outdir, fnm, isHalfAsSlow=False):
     if isHalfAsSlow:
         sample = np.repeat(sample, 2, axis=0)
     fnm = os.path.join(outdir, fnm + '.mid')
     MidiWriter().dump_sequence_to_midi(sample, fnm)
+"""
