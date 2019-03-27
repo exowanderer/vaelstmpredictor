@@ -10,7 +10,7 @@ from keras.models import Model
 from keras.losses import binary_crossentropy, categorical_crossentropy
 from keras.losses import mean_squared_error
 
-from ..utils.midi_utils import write_sample
+# from ..utils.midi_utils import write_sample
 
 try:
     # Python 2 
