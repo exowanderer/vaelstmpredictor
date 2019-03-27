@@ -59,6 +59,10 @@ def select_parents(generation):
     return parent1, parent2
 
 def cross_over(parent1, parent2, prob, verbose=False):
+    if verbose:
+        print('Crossing over with Parent {} and Parent {}'.format(
+                                parent1.chromosomeID,parent2.chromosomeID))
+    
     if(random.random() <= prob):
         params1 = {}
         params2 = {}
@@ -91,7 +95,11 @@ def cross_over(parent1, parent2, prob, verbose=False):
     
     return parent1, parent2
 
-def mutate(child, prob):
+def mutate(child, prob, verbose=False):
+
+    if verbose:
+        print('Mutating Child {}'.format(child.chromosomeID))
+    
     for param in Chromosome.params:
         if(random.random() <= prob):
             # extra = int(child.params_dict[param]*0.1)+1
@@ -362,8 +370,8 @@ if __name__ == '__main__':
             parent1, parent2 = select_parents(generation)
             child1, child2 = cross_over(parent1, parent2, cross_prob, verbose=verbose)
             
-            mutate(child1, mutate_prob)
-            mutate(child2, mutate_prob)
+            mutate(child1, mutate_prob, verbose=verbose)
+            mutate(child2, mutate_prob, verbose=verbose)
             
             child1.train()
             child2.train()
