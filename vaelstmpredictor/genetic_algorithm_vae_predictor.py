@@ -27,7 +27,6 @@ class BlankClass(object):
         pass
 
 def generate_random_chromosomes(size, clargs, data_instance):
-    print('DOING GEN RAND CHROMO')
     generationID = 0
     nets = []
     for chromosomeID in range(size):
@@ -58,7 +57,6 @@ def select_parents(generation):
     return parent1, parent2
 
 def cross_over(parent1, parent2, prob):
-    print('DOING CROSSOVER')
     if(random.random() <= prob):
         params1 = {}
         params2 = {}
@@ -92,7 +90,6 @@ def cross_over(parent1, parent2, prob):
     return parent1, parent2
 
 def mutate(child, prob):
-    print('DOING CROSSOVER')
     for param in Chromosome.params:
         if(random.random() <= prob):
             extra = int(child.params_dict[param]*0.1)+1

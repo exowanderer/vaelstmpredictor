@@ -128,18 +128,11 @@ class VAEPredictor(object):
         """
         eps = K.random_normal(shape = (self.batch_size, self.predictor_latent_dim), 
                                 mean = 0., stddev = 1.0)
-        print('eps',eps)
         predictor_norm = self.prediction_latent_mean + K.exp(self.prediction_log_var/2) * eps
-        print('self.prediction_latent_mean',self.prediction_latent_mean)
-        print('self.prediction_log_var',self.prediction_log_var)
-        print('predictor_norm',predictor_norm)
         
         # need to add 0's so we can sum it all to 1
         padding = K.tf.zeros(self.batch_size, 1)[:,None]
-        print('padding',padding)
         predictor_norm = concatenate([predictor_norm, padding], name='predictor_norm')
-        print('predictor_norm', predictor_norm)
-        print('output',K.exp(predictor_norm)/K.sum(K.exp(predictor_norm), axis = -1)[:,None])
         return K.exp(predictor_norm)/K.sum(K.exp(predictor_norm), axis = -1)[:,None]
 
     def get_model(self, batch_size = None, original_dim = None, 
