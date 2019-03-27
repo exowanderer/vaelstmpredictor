@@ -98,7 +98,8 @@ def cross_over(parent1, parent2, prob, verbose=False):
 def mutate(child, prob, verbose=False):
 
     if verbose:
-        print('Mutating Child {}'.format(child.chromosomeID))
+        print('Mutating Child {} in {}'.format(child.chromosomeID, 
+                                                child.generationID))
     
     for param in Chromosome.params:
         if(random.random() <= prob):
