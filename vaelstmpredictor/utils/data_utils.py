@@ -2,6 +2,10 @@
 Code to load pianoroll data (.pickle)
 """
 import numpy as np
+import os
+from sklearn.externals import joblib
+
+from numpy import array, arange, vstack, reshape, loadtxt, zeros
 
 try:
     # Python 3
@@ -128,10 +132,39 @@ class PianoData:
         if 'train_key' in D:
             D = self.update_keys(D)
             self.key_map = self.make_keymap(D)
-            self.train_classes = self.song_keys(D['train_key'], self.train_song_inds)
-            self.test_classes = self.song_keys(D['test_key'], self.test_song_inds)
-            self.valid_classes = self.song_keys(D['valid_key'], self.valid_song_inds)
+            self.train_labels = self.song_keys(D['train_key'], self.train_song_inds)
+            self.test_labels = self.song_keys(D['test_key'], self.test_song_inds)
+            self.valid_labels = self.song_keys(D['valid_key'], self.valid_song_inds)
 
+        if seq_length > 1:
+            X = vstack([self.data_train, 
+                           self.data_valid, 
+                           self.data_test, 
+                           self.labels_train, 
+                           self.labels_valid, 
+                           self.labels_test
+                         ])
+
+            idx = X.sum(axis=0).sum(axis=0) > 0
+
+            n_train = self.data_train.shape[0]
+            n_valid = self.data_valid.shape[0]
+            n_test = self.data_test.shape[0]
+
+            self.data_train = self.data_train[:,:,idx].reshape((n_train, -1))
+            self.data_valid = self.data_valid[:,:,idx].reshape((n_valid, -1))
+            self.data_test = self.data_test[:,:,idx].reshape((n_test, -1))
+
+            self.labels_train = self.labels_train[:,:,idx]
+            self.labels_train = self.labels_train.reshape((n_train, -1))
+            self.labels_valid = self.labels_valid[:,:,idx]
+            self.labels_valid = self.labels_valid.reshape((n_valid, -1))
+            self.labels_test = self.labels_test[:,:,idx].reshape((n_test, -1))
+
+            self.original_dim = idx.sum()*seq_length
+        else:
+            self.original_dim = None
+        
     def make_xy(self, songs):
         inner_fcn = song_to_pianoroll
         data_rolls, song_inds = songs_to_pianoroll(songs, self.seq_length + int(self.return_label_next), self.step_length, inner_fcn=inner_fcn)
@@ -178,6 +211,92 @@ class PianoData:
             return items
         mod = (items.shape[0] % self.batch_size)
         return items[:-mod] if mod > 0 else items
+
+
+class MNISTData(object):
+    def __init__(self, batch_size):
+        from keras.datasets import mnist
+
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        
+        n_samples_test = x_test.shape[0]
+        n_samples_test = (n_samples_test // batch_size)*batch_size
+        
+        x_test = x_test[:n_samples_test]
+        y_test = y_test[:n_samples_test]
+
+        n_samples_train = x_train.shape[0]
+        n_samples_train = (n_samples_train // batch_size)*batch_size
+        
+        x_train = x_train[:n_samples_train]
+        y_train = y_train[:n_samples_train]
+
+        self.image_size = x_train.shape[1]
+        self.original_dim = self.image_size * self.image_size
+
+        x_train = reshape(x_train, [-1, self.original_dim])
+        x_test = reshape(x_test, [-1, self.original_dim])
+
+        x_train = x_train.astype('float32') / 255
+        x_test = x_test.astype('float32') / 255
+
+        """These are all of the necessary `data_instance` components"""
+        self.train_labels = y_train
+        self.valid_labels = y_test
+        self.test_labels = arange(0) # irrelevant(?)
+
+        self.data_train = x_train
+        self.data_valid = x_test
+        self.data_test = arange(0) # irrelevant(?)
+
+        self.labels_train = self.data_train
+        self.labels_valid = self.data_valid
+
+class ExoplanetData(object):
+    exoplanet_filename = 'exoplanet_spectral_database.joblib.save'
+
+    def __init__(self, train_file, batch_size):
+
+        assert(os.path.exists(train_file))
+
+        exoplanet_filename = '{}/{}'.format(train_file,
+                                            self.exoplanet_filename)
+
+        input_specdb = joblib.load(exoplanet_filename)
+
+        x_train, y_train_raw = input_specdb[0]
+        x_test, y_test_raw = input_specdb[1]
+        y_train, y_test = input_specdb[2]
+
+        n_samples_test = y_test.shape[0]
+        n_samples_test = (n_samples_test // batch_size)*batch_size
+        
+        y_test = y_test[:n_samples_test]
+        x_test = x_test[:n_samples_test]
+
+        n_samples_train = y_train.shape[0]
+        n_samples_train = (n_samples_train // batch_size)*batch_size
+        
+        y_train = y_train[:n_samples_train]
+        x_train = x_train[:n_samples_train]
+
+        # these are our "labels"; the regresser will be conditioning on these
+        self.train_labels = x_train
+        self.valid_labels = x_test
+        self.test_labels = arange(0) # irrelevant(?)
+
+        # these are our "features"; the VAE will be reproducing these
+        self.data_train = y_train
+        self.data_valid = y_test
+        self.data_test = arange(0) # irrelevant(?)
+        
+        # This is a 'copy' because the output must equal the input
+        self.labels_train = self.data_train
+        self.labels_valid = self.data_valid
+
+class BlankClass(object):
+    def __init__(self):
+        pass
 
 if __name__ == '__main__':
     # train_file = '../data/input/Piano-midi_all.pickle'
