@@ -131,15 +131,15 @@ class Chromosome(VAEPredictor):
         size_vae_latent = size_vae_latent or random.randint(1, 10)    
         
         # num_dnn_hidden = num_dnn_hidden or random.randint(1, 10)
-        size_dnn_latent = size_dnn_latent or random.randint(1, 10)
+        # size_dnn_latent = size_dnn_latent or random.randint(1, 10)
         size_dnn_hidden = size_dnn_hidden or random.randint(5, 10)
 
         self.params_dict = {#"num_vae_hidden": num_vae_hidden,
                            "size_vae_hidden": size_vae_hidden,
                            "size_vae_latent": size_vae_latent,
                            #"num_dnn_hidden": num_dnn_hidden,
-                           "size_dnn_hidden": size_dnn_hidden,
-                           "size_dnn_latent":size_dnn_latent}
+                           "size_dnn_hidden": size_dnn_hidden}#,
+                           # "size_dnn_latent":size_dnn_latent}
 
         self.predictor_type = clargs.predictor_type
         self.original_dim = clargs.original_dim
