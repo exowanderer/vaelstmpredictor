@@ -28,11 +28,11 @@ class BlankClass(object):
     def __init__(self):
         pass
 
-def generate_random_chromosomes(population_size, clargs, data_instance):
+def generate_random_chromosomes(population_size, clargs, data_instance, verbose = False):
     generationID = 0
     nets = []
     for chromosomeID in range(population_size):
-        chrom = Chromosome(clargs, data_instance, generationID, chromosomeID)
+        chrom = Chromosome(clargs, data_instance, generationID, chromosomeID, verbose = verbose)
         chrom.train()
         nets.append(chrom)
     return nets
@@ -345,7 +345,8 @@ if __name__ == '__main__':
     clargs.n_labels = len(np.unique(data_instance.train_labels))
 
     generation = generate_random_chromosomes(population_size,
-                    clargs = clargs, data_instance = data_instance)
+                    clargs = clargs, data_instance = data_instance,
+                    verbose = verbose)
     gen_num = 0
 
     best_fitness = []
