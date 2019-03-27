@@ -208,6 +208,7 @@ class Chromosome(VAEPredictor):
                 Structure Contents: train_labels, valid_labels, test_labels
                     labels_train, data_train, labels_valid, data_valid
         """
+        start_train = time()
         verbose = verbose or self.verbose
         
         DI = self.data_instance
@@ -261,6 +262,7 @@ class Chromosome(VAEPredictor):
         if verbose: 
             print("Generation: {}".format(self.generationID))
             print("Chromosome: {}".format(self.chromosomeID))
+            print("Operation Time: {}".format(time() - start_train))
             print('\nBest Loss:')
             for key,val in self.best_loss.items():
                 print('{}: {}'.format(key,val))
@@ -386,9 +388,11 @@ if __name__ == '__main__':
             new_generation.append(child1)
             new_generation.append(child2)
 
-        print('Time per generation: {} minutes'.format((time() - start_while)//60))
+        print('Time for Generation{}: {} minutes'.format(child1.generationID, 
+                                                    (time() - start_while)//60))
 
         generation = new_generation
+        
         del new_generation.data_instance
         del new_generation.neural_net
         del new_generation.model
