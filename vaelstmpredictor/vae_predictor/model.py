@@ -21,67 +21,87 @@ except:
 
 '''HERE WHERE I STARTED'''
 def wrapped_partial(func, *args, **kwargs):
-    '''
-        from: http://louistiao.me/posts/
-        adding-__name__-and-__doc__-attributes-to-functoolspartial-objects/
+    ''' from: http://louistiao.me/posts/
+    adding-__name__-and-__doc__-attributes-to-functoolspartial-objects/
     '''
     partial_func = partial(func, *args, **kwargs)
     update_wrapper(partial_func, func)
     return partial_func
 
+def build_hidden_layers(hidden_dims, input_layer, layer_name, activation,
+                        Layer = Dense):
+    # Establish hidden layer structure
+    for k, layer_size in enumerate(hidden_dims):
+        # Skip 0 sized layers
+        if layer_size == 0: continue
+        
+        name = '{}_hidden_layer{}'.format(layer_name, k)
+        
+        hidden_layer = Layer(layer_size, activation = activation, name = name)
+        
+        '''If this is the 1st hidden layer, then input as input_w_pred;
+            else, input the previous hidden_layer'''
+        input_now = input_layer if k is 0 else hidden_layer
+        
+        hidden_layer = hidden_layer(input_now)
+    
+    return hidden_layer
+
 class VAEPredictor(object):
     def __init__(self, original_dim, vae_hidden_dims, predictor_hidden_dims, 
-                    vae_latent_dim, predictor_latent_dim = None, 
-                    batch_size = 128, vae_kl_weight = 1.0, 
-                    predictor_weight=1.0, predictor_kl_weight = 1.0, 
-                    optimizer = 'adam-wn', use_prev_input = False, 
-                    predictor_type = 'classification'):
-
+                    vae_latent_dim, predictor_out_dim = None, 
+                    predictor_latent_dim = None, batch_size = 128, 
+                    prediction_log_var_prior = 0.0, optimizer = 'adam-wn', 
+                    use_prev_input = False, predictor_type = 'classification'):
+        
         self.predictor_type = predictor_type
         self.original_dim = original_dim
+        
         self.vae_hidden_dims = vae_hidden_dims
         self.vae_latent_dim = vae_latent_dim
-        self.predictor_hidden_dims = predictor_hidden_dims
-        
-        '''FINDME: Why is this predictor_out_dim-1(??)'''
-        if predictor_latent_dim is not None:
-            self.predictor_latent_dim = predictor_latent_dim - 1
 
+        self.predictor_hidden_dims = predictor_hidden_dims
+        self.predictor_out_dim = predictor_out_dim
+        
+        """FINDME: Why is this predictor_out_dim-1(??)"""
+        if predictor_latent_dim is not None:
+            self.predictor_latent_dim = self.predictor_out_dim - 1
+
+        self.prediction_log_var_prior = prediction_log_var_prior
         self.optimizer = optimizer
         self.batch_size = batch_size
         self.use_prev_input = use_prev_input
     
     def build_predictor(self):
-        for k, layer_size in enumerate(self.predictor_hidden_dims[:-1]):
-            name = 'prediction_hidden_layer{}'.format(k)
-            
-            prediction_hidden_layer = Dense(layer_size, 
-                                    activation = self.hidden_activation, 
-                                    name = name)
-            
-            input_now = self.input_layer if k is 0 else prediction_hidden_layer
-            prediction_hidden_layer = prediction_hidden_layer(input_now)
-
-        self.prediction_hidden_layer = prediction_hidden_layer
-
+        if sum(self.predictor_hidden_dims):
+            ''' Establish VAE Encoder layer structure '''
+            pred_hidden_layer = build_hidden_layers(
+                                    self.predictor_hidden_dims, 
+                                    self.input_layer, layer_name='prediction', 
+                                    activation=self.hidden_activation)
+        else:
+            '''if there are no hidden layers, then the input to the 
+                predictor latent layers is the input_layer'''
+            pred_hidden_layer = self.input_layer
+        
+        # Process the prediction layer through a latent layer
         prediction_latent_mean = Dense(self.predictor_latent_dim, 
                                         name = 'prediction_latent_mean')
-        self.prediction_latent_mean = prediction_latent_mean(
-                                                self.prediction_hidden_layer)
+        self.prediction_latent_mean = prediction_latent_mean(pred_hidden_layer)
 
-        prediction_log_var = Dense(self.predictor_latent_dim, 
-                                    name = 'prediction_log_var')
-        self.prediction_log_var = prediction_log_var(
-                                    self.prediction_hidden_layer)
+        prediction_latent_log_var = Dense(self.predictor_latent_dim, 
+                                    name = 'prediction_latent_log_var')
+        self.prediction_latent_log_var = prediction_latent_log_var(
+                                                    pred_hidden_layer)
 
         prediction_latent_layer = Lambda(self.predictor_sampling, 
                                     name = 'prediction_latent_layer')
 
         self.prediction_latent_layer = prediction_latent_layer(
                                         [self.prediction_latent_mean, 
-                                            self.prediction_log_var])
+                                            self.prediction_latent_log_var])
 
-    def build_decoder(self):
+    def build_latent_decoder(self):
         vae_decoded_mean = Dense(self.original_dim, 
                                  activation = self.output_activation, 
                                  name = 'vae_decoded_mean')
@@ -96,27 +116,41 @@ class VAEPredictor(object):
             self.vae_decoded_mean = vae_decoded_mean(self.pred_w_latent)
 
     def build_latent_encoder(self):
-        if self.vae_hidden_dim > 0:
-            for layer_size in self.vae_dims
-            vae_hidden_layer = Dense(self.vae_hidden_dim, 
-                                     activation = self.hidden_activation, 
-                                     name = 'vae_hidden_layer')
+        """
+        # Establish VAE Encoder layer structure
+        for k, layer_size in enumerate(self.vae_hidden_dims):
+            # Skip 0 sized layers
+            if layer_size == 0: continue
+            
+            name = 'vae_hidden_layer{}'.format(k)
+            
+            vae_hidden_layer = Dense(layer_size, 
+                                    activation = self.hidden_activation, 
+                                    name = name)
+            
+            '''If this is the 1st hidden layer, then input as input_w_pred;
+                else, input the previous vae_hidden_layer'''
+            input_now = self.input_w_pred if k is 0 else vae_hidden_layer
 
-            self.vae_hidden_layer = vae_hidden_layer(self.input_w_pred)
-            
-            vae_latent_mean = Dense(self.vae_latent_dim,name='vae_latent_mean')
-            self.vae_latent_mean = vae_latent_mean(self.vae_hidden_layer)
-            
-            vae_latent_log_var =Dense(self.vae_latent_dim,
-                                      name = 'vae_latent_log_var')
-            self.vae_latent_log_var = vae_latent_log_var(self.vae_hidden_layer)
+            vae_hidden_layer = vae_hidden_layer(input_now)
+        """
+        if sum(self.vae_hidden_dims):
+            ''' Establish VAE Encoder layer structure '''
+            vae_hidden_layer = build_hidden_layers(self.vae_hidden_dims, 
+                                    self.input_w_pred, layer_name='vae', 
+                                    activation=self.hidden_activation)
         else:
-            vae_latent_mean = Dense(self.vae_latent_dim,name='vae_latent_mean')
-            self.vae_latent_mean = vae_latent_mean(self.input_w_pred)
-            vae_latent_log_var = Dense(vae_latent_dim, 
-                                        name = 'vae_latent_log_var')
-            self.vae_latent_log_var = vae_latent_log_var(self.input_w_pred)
-
+            '''if there are no hidden layers, then the input to the 
+                vae latent layers is the input_w_pred layer'''
+            vae_hidden_layer = self.input_w_pred
+        
+        vae_latent_mean = Dense(self.vae_latent_dim,name='vae_latent_mean')
+        self.vae_latent_mean = vae_latent_mean(vae_hidden_layer)
+        
+        vae_latent_log_var =Dense(self.vae_latent_dim,
+                                  name = 'vae_latent_log_var')
+        self.vae_latent_log_var = vae_latent_log_var(vae_hidden_layer)
+        
         vae_latent_layer = Lambda(self.vae_sampling, name = 'vae_latent_layer')
         self.vae_latent_layer = vae_latent_layer([self.vae_latent_mean, 
                                                   self.vae_latent_log_var])
@@ -128,8 +162,8 @@ class VAEPredictor(object):
     
     def predictor_kl_loss(self, labels, preds):
         exp_log_var_prior = K.exp(self.prediction_log_var_prior)
-        vs = 1 - self.prediction_log_var_prior + self.prediction_log_var
-        vs = vs - K.exp(self.prediction_log_var)/exp_log_var_prior
+        vs = 1 - self.prediction_log_var_prior + self.prediction_latent_log_var
+        vs = vs - K.exp(self.prediction_latent_log_var)/exp_log_var_prior
         vs = vs - K.square(self.prediction_latent_mean)/exp_log_var_prior
 
         return -0.5*K.sum(vs, axis = -1)
@@ -142,15 +176,15 @@ class VAEPredictor(object):
         return self.predictor_latent_dim * rec_loss
 
     def predictor_sampling(self, args):
-        """
-            sample from a logit-normal with params prediction_latent_mean 
-                and prediction_log_var
+        ''' sample from a logit-normal with params prediction_latent_mean 
+                and prediction_latent_log_var
             (n.b. this is very similar to a logistic-normal distribution)
-        """
+        '''
         batch_shape = (self.batch_size, self.predictor_latent_dim)
         eps = K.random_normal(shape = batch_shape, mean = 0., stddev = 1.0)
-        predictor_norm = self.prediction_latent_mean 
-        predictor_norm = predictor_norm + K.exp(self.prediction_log_var/2)*eps
+
+        gamma_ = K.exp(self.prediction_latent_log_var/2)*eps
+        predictor_norm = self.prediction_latent_mean + gamma_
         
         # need to add 0's so we can sum it all to 1
         padding = K.tf.zeros(self.batch_size, 1)[:,None]
@@ -161,22 +195,30 @@ class VAEPredictor(object):
         return output[:,None]
 
     def get_model(self, batch_size = None, original_dim = None, 
-                  vae_dims = None, predictor_dims = None, 
-                  predictor_latent_dim = None, predictor_weight = 1.0, 
-                  vae_kl_weight = 1.0, use_prev_input = False, 
-                  predictor_kl_weight = 1.0, prediction_log_var_prior = 0.0, 
-                  hidden_activation = 'relu', output_activation = 'sigmoid'):
+                  vae_hidden_dims = None, vae_latent_dim = None, 
+                  predictor_hidden_dims = None, 
+                  predictor_weight = 1.0, vae_kl_weight = 1.0, 
+                  use_prev_input = False, predictor_kl_weight = 1.0, 
+                  prediction_log_var_prior = 0.0, hidden_activation = 'relu', 
+                  output_activation = 'sigmoid'):
         
         self.hidden_activation = hidden_activation
         self.output_activation = output_activation
-        self.prediction_log_var_prior = prediction_log_var_prior
-
-        # if vae_dims is not None:
-        #     self.vae_hidden_dim, self.vae_latent_dim = vae_dims
-
-        # if predictor_dims is not None:
-        #    self.predictor_hidden_dim, self.predictor_out_dim = predictor_dims
+        if prediction_log_var_prior is not None:
+            self.prediction_log_var_prior = prediction_log_var_prior
         
+        # update new input values
+        if batch_size is not None: self.batch_size = batch_size
+        if original_dim is not None: self.original_dim = original_dim
+        if vae_hidden_dims is not None: self.vae_hidden_dims = vae_hidden_dims
+        if vae_latent_dim is not None: self.vae_latent_dim = vae_latent_dim
+
+        if predictor_hidden_dims is not None: 
+            self.predictor_hidden_dims = predictor_hidden_dims
+
+        
+        if use_prev_input is not None: 
+
         batch_shape = (self.batch_size, self.original_dim)
         # batch_shape = (self.original_dim,)
         self.input_layer = Input(batch_shape = batch_shape, name='input_layer')
@@ -206,7 +248,7 @@ class VAEPredictor(object):
                         axis = -1, name = 'pred_latent_out_w_prev_w_vae_lat'
                         )
         
-        self.build_decoder()
+        self.build_latent_decoder()
 
         # Add some wiggle to the predictor predictions 
         #   to avoid division by zero
@@ -266,11 +308,10 @@ class VAEPredictor(object):
         return -0.5*K.sum(k_summer, axis = -1)
 
     def load_model(self, model_file):
-        """
-        there's a currently bug in the way keras loads models 
-            from `.yaml` files that has to do with `Lambda` calls
-            ... so this is a hack for now
-        """
+        ''' there's a currently bug in the way keras loads models 
+                from `.yaml` files that has to do with `Lambda` calls
+                ... so this is a hack for now
+        '''
         self.get_model()
         self.model.load_weights(model_file)
 
@@ -286,10 +327,12 @@ class VAEPredictor(object):
         prediction_latent_mean = self.model.get_layer('prediction_latent_mean')
         prediction_latent_mean = prediction_latent_mean(enc_hidden_layer)
 
-        prediction_log_var = self.model.get_layer('prediction_log_var')
-        prediction_log_var = prediction_log_var(enc_hidden_layer)
+        prediction_latent_log_var = self.model.get_layer(
+                                                'prediction_latent_log_var')
+        prediction_latent_log_var = prediction_latent_log_var(enc_hidden_layer)
 
-        return Model(input_layer, [prediction_latent_mean, prediction_log_var])
+        return Model(input_layer, [prediction_latent_mean, 
+                                    prediction_latent_log_var])
 
     def make_latent_encoder(self):
         orig_batch_shape = (self.batch_size, self.original_dim)
@@ -307,7 +350,7 @@ class VAEPredictor(object):
         
         # build latent encoder
         if self.vae_hidden_dim > 0:
-            vae_hidden_layer = self.model.get_layer('vae_hidden_layer')
+            vae_hidden_layer = self.model.get_layer('vae_enc_hid_layer')
             vae_hidden_layer = vae_hidden_layer(input_w_pred)
 
             vae_latent_mean = self.model.get_layer('vae_latent_mean')
@@ -371,8 +414,10 @@ class VAEPredictor(object):
 
         return Model(dec_input_stack, vae_decoded_mean)
 
-    def sample_prediction(self, prediction_latent_mean, prediction_log_var, 
-                            nsamps=1, nrm_samp=False, add_noise=True):
+    def sample_prediction(self, prediction_latent_mean, 
+                                prediction_latent_log_var, 
+                                nsamps=1, nrm_samp=False, 
+                                add_noise=True):
         
         if nsamps == 1:
             eps_shape = prediction_latent_mean.flatten().shape[0]
@@ -382,7 +427,7 @@ class VAEPredictor(object):
         if eps.T.shape == prediction_latent_mean.shape:
             eps = eps.T
 
-        gamma_ = np.exp(prediction_log_var/2)
+        gamma_ = np.exp(prediction_latent_log_var/2)
         if add_noise:
             predictor_norm = prediction_latent_mean + gamma_*eps
         else:

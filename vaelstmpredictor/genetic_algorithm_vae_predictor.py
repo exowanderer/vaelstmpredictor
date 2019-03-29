@@ -175,11 +175,11 @@ def mutate(child, prob, range_change = 25, forced_evolve = False,
         if(random.random() <= prob):
             # Compute delta_param step
             change_p = np.random.uniform(-range_change, range_change)
-            
+
             if forced_evolve and child.params_dict[param] == zero:
                 # if the layer is empty, then force a mutation
                 change_p = min([min_layer_size, abs(change_p)])
-            
+
             # Add delta_param to param
             current_p = child.params_dict[param] + change_p
             
@@ -455,13 +455,17 @@ if __name__ == '__main__':
     generation = generate_random_chromosomes(population_size,
                     clargs = clargs, data_instance = data_instance,
                     start_small = True, verbose = verbose)
-    # gen_num = 0
+
+    # generationID = 0    
+    # generation_dict = {}
+    # generation_dict['params'] = member.params_dict
+    # generation_dict['fitness'] = member.fitness
+    # evolutionary_tree = {generationID:generation_dict}
 
     best_fitness = []
     fig = plt.gcf()
     fig.show()
 
-    # evolutionary_tree = []
     start = time()
     # while gen_num < iterations:
     for _ in range(iterations):
@@ -477,7 +481,13 @@ if __name__ == '__main__':
             mutate(child1, mutate_prob, verbose=verbose)
             mutate(child2, mutate_prob, verbose=verbose)
             
+            # gene_set1 = child1.params_dict
+            # gene_set2 = child2.params_dict
+            
+            # if not (gene_set1 == evolutionary_tree).all(axis=1).any():
             child1.train()
+
+            # if not (gene_set2 == evolutionary_tree).all(axis=1).any():
             child2.train()
             
             new_generation.append(child1)
