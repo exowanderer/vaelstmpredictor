@@ -39,9 +39,6 @@ def build_hidden_layers(hidden_dims, input_layer, layer_name, activation,
     
     # Establish hidden layer structure
     for k, layer_size in enumerate(hidden_dims):
-        # Skip 0 sized layers
-        if layer_size == 0: continue
-        
         name = '{}{}'.format(layer_name, k)
         
         hidden_layer = Layer(layer_size, activation = activation, name = name)

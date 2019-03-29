@@ -170,8 +170,9 @@ def mutate(child, prob, range_change = 25, forced_evolve = False,
     zero = 0 
 
     if verbose:
-        print('Mutating Child {} in {}'.format(child.chromosomeID, 
-                                                child.generationID))
+        print('Mutating Child {} in Generation {}'.format(child.chromosomeID, 
+                                                         child.generationID))
+    
     mutation_happened = False
     for param in Chromosome.params:
         if(random.random() <= prob):
@@ -452,6 +453,7 @@ if __name__ == '__main__':
     clargs = parser.parse_args()
     
     run_name = clargs.run_name
+    num_epochs = clargs.num_epochs
     cross_prob = clargs.cross_prob
     mutate_prob = clargs.mutate_prob
     population_size = clargs.population_size
