@@ -30,12 +30,14 @@ def wrapped_partial(func, *args, **kwargs):
 
 def build_hidden_layers(hidden_dims, input_layer, layer_name, activation,
                         Layer = Dense):
-    print(hidden_dims, input_layer, layer_name, activation)
-    # Establish hidden layer structure
+    
+    '''Need to remove all leading zeros for the Decoder 
+    to be properly established'''
+
     hidden_dims = list(hidden_dims)
     while 0 in hidden_dims: hidden_dims.remove(0)
-    print(hidden_dims, input_layer, layer_name, activation)
     
+    # Establish hidden layer structure
     for k, layer_size in enumerate(hidden_dims):
         # Skip 0 sized layers
         if layer_size == 0: continue
@@ -129,13 +131,11 @@ class VAEPredictor(object):
 
     def bak_build_latent_decoder_1stpass(self):
         if bool(sum(self.vae_hidden_dims)):
-            print('BUILDING Hidden Layers')
             vae_dec_hid_layer = build_hidden_layers(# reverse order for decoder
                                         self.vae_hidden_dims[::-1],
                                         self.pred_w_latent, 
                                         layer_name = 'vae_dec_hidden_layer', 
                                         activation = self.hidden_activation)
-            print('BUILT Hidden Layers')
         else:
             vae_dec_hid_layer = self.pred_w_latent
 
@@ -257,10 +257,8 @@ class VAEPredictor(object):
                         axis = -1, name = 'pred_latent_out_w_prev_w_vae_lat'
                         )
         
-        print('BUILDING VAE DECODER')
         self.build_latent_decoder()
-        print('BUILT VAE DECODER')
-
+        
         if use_prev_input or self.use_prev_input:
             input_stack = [self.input_layer, self.prev_input_layer]
             out_stack = [self.vae_decoded_mean, self.prediction_latent_layer, 
