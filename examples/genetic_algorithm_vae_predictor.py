@@ -127,8 +127,11 @@ def select_parents(generation):
 def cross_over(parent1, parent2, prob, verbose=False):
     if verbose:
         print('Crossing over with Parent {} and Parent {}'.format(
-                                parent1.chromosomeID,parent2.chromosomeID))
+                                                        parent1.chromosomeID,
+                                                        parent2.chromosomeID))
     
+    crossover_happened = True # Flag if child == parent: no need to train
+
     if(random.random() <= prob):
         params1 = {}
         params2 = {}
@@ -142,8 +145,6 @@ def cross_over(parent1, parent2, prob, verbose=False):
         
         clargs = parent1.clargs
         data_instance = parent1.data_instance
-        generationID = parent1.generationID + 1
-        chromosomeID = parent1.chromosomeID
         vae_kl_weight = parent1.vae_kl_weight
         predictor_weight = parent1.predictor_weight
         predictor_kl_weight = parent1.predictor_kl_weight
@@ -158,9 +159,9 @@ def cross_over(parent1, parent2, prob, verbose=False):
             vae_kl_weight = vae_kl_weight, predictor_weight = predictor_weight,
             predictor_kl_weight = predictor_kl_weight, verbose=verbose, **params2)
 
-        return child1, child2
+        return child1, child2, crossover_happened
     
-    return parent1, parent2
+    return parent1, parent2, not crossover_happened
 
 def mutate(child, prob, range_change = 25, forced_evolve = False, 
             min_layer_size = 2, verbose = False):
@@ -171,9 +172,11 @@ def mutate(child, prob, range_change = 25, forced_evolve = False,
     if verbose:
         print('Mutating Child {} in {}'.format(child.chromosomeID, 
                                                 child.generationID))
-    
+    mutation_happened = False
     for param in Chromosome.params:
         if(random.random() <= prob):
+            mutation_happened = True
+
             # Compute delta_param step
             change_p = np.random.uniform(-range_change, range_change)
 
@@ -190,7 +193,7 @@ def mutate(child, prob, range_change = 25, forced_evolve = False,
             # All layers must be integer sized: round and convert
             child.params_dict[param] = np.int(np.round(current_p))
 
-    return child
+    return child, mutation_happened
 
 class Chromosome(VAEPredictor):
     
@@ -382,6 +385,24 @@ class Chromosome(VAEPredictor):
         joblib.dump({'best_loss':self.best_loss,'history':self.history}, 
                         joblib_save_loc)
 
+def save_generation_to_tree(generation, verbose = False):
+    generation_dict = {}
+    if verbose: print('[INFO] Current Generation: ' )
+
+    for ID, member in enumerate(generation):
+        if ID not in generation_dict.keys(): generation_dict[ID] = {}
+        
+        if verbose: 
+            print('memberID: {}'.format(ID))
+            print('Fitness: {}'.format(member.fitness))
+            for key,val in member.params_dict.items():
+                print('{}: {}'.format(key, val))
+
+        generation_dict[ID]['params'] = member.params_dict
+        generation_dict[ID]['fitness'] = member.fitness
+    
+    return generation_dict
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('run_name', type=str, default='ga_test_',
@@ -457,15 +478,15 @@ if __name__ == '__main__':
                     clargs = clargs, data_instance = data_instance,
                     start_small = True, verbose = verbose)
 
-    # generationID = 0    
-    # generation_dict = {}
-    # generation_dict['params'] = member.params_dict
-    # generation_dict['fitness'] = member.fitness
-    # evolutionary_tree = {generationID:generation_dict}
-
+    generationID = 0    
+    evolutionary_tree = {}
+    evolutionary_tree[generationID] = save_generation_to_tree(generation,   
+                                                            verbose=verbose)
+    
     best_fitness = []
-    fig = plt.gcf()
-    fig.show()
+    if make_plots:
+        fig = plt.gcf()
+        fig.show()
 
     start = time()
     # while gen_num < iterations:
@@ -473,41 +494,58 @@ if __name__ == '__main__':
         start_while = time()
         #Create new generation
         new_generation = []
-        # gen_num += 1
+        chromosomeID = 0
         for _ in range(population_size//2):
             parent1, parent2 = select_parents(generation)
-            child1, child2 = cross_over(parent1, parent2, cross_prob, 
-                                        verbose=verbose)
+            child1, child2, crossover_happened = cross_over(parent1, parent2, 
+                                                cross_prob, verbose=verbose)
             
-            mutate(child1, mutate_prob, verbose=verbose)
-            mutate(child2, mutate_prob, verbose=verbose)
+            child1.generationID = generationID
+            child1.chromosomeID = chromosomeID; chromosomeID += 1 
+            child2.generationID = generationID
+            child2.chromosomeID = chromosomeID; chromosomeID += 1 
+
+            child1, mutation_happened1 = mutate(child1, mutate_prob, 
+                                                verbose=verbose)
+            child1, mutation_happened2 = mutate(child2, mutate_prob, 
+                                                verbose=verbose)
             
             # gene_set1 = child1.params_dict
             # gene_set2 = child2.params_dict
             
-            # if not (gene_set1 == evolutionary_tree).all(axis=1).any():
-            child1.train()
+            if crossover_happened or mutation_happened1: 
+                child1.train()
+                new_generation.append(child1)
+            else:
+                new_generation.append(parent2)
 
-            # if not (gene_set2 == evolutionary_tree).all(axis=1).any():
-            child2.train()
-            
-            new_generation.append(child1)
-            new_generation.append(child2)
+            if crossover_happened or mutation_happened2: 
+                child2.train()
+                new_generation.append(child2)
+            else:
+                new_generation.append(parent2)
+
+            generationID += 1
 
         print('Time for Generation{}: {} minutes'.format(child1.generationID, 
-                                                    (time() - start_while)//60))
+                                                (time() - start_while)//60))
 
         generation = new_generation
-        
-        # del new_generation.data_instance
-        # del new_generation.neural_net
-        # del new_generation.model
+        evolutionary_tree[generationID] = save_generation_to_tree(generation,
+                                                            verbose=verbose)
 
-        # evolutionary_tree.append(new_generation)
-        
         best_fitness.append(max(chrom.fitness for chrom in generation))
         
         if make_plots:
             plt.plot(best_fitness, color="c")
             plt.xlim([0, iterations])
             fig.canvas.draw()
+
+    evtree_save_name = 'evolutionary_tree_{}_ps{}_iter{}_epochs{}_cp{}_mp{}'
+    evtree_save_name = evtree_save_name + '.joblib.save'
+    evtree_save_name = evtree_save_name.format(run_name, population_size, 
+                                            iterations, num_epochs, cross_prob,
+                                            mutate_prob)
+
+    print('[INFO] Saving evolutionary tree to {}'.format(evtree_save_name))
+    joblib.dump(evolutionary_tree, evtree_save_name)
