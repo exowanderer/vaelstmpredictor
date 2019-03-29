@@ -293,7 +293,7 @@ class Chromosome(VAEPredictor):
         with open(json_filename, 'w') as json_fileout:
             json_fileout.write(self.neural_net.to_json())
 
-        if verbose: print(self.neural_net.summary())
+        if verbose: self.neural_net.summary()
 
     def train(self, verbose = False):
         """Training control operations to create VAEPredictor instance, 

@@ -40,13 +40,11 @@ def build_hidden_layers(hidden_dims, input_layer, layer_name, activation,
     # Establish hidden layer structure
     for k, layer_size in enumerate(hidden_dims):
         name = '{}{}'.format(layer_name, k)
-        
-        hidden_layer = Layer(layer_size, activation = activation, name = name)
-        
         '''If this is the 1st hidden layer, then input as input_w_pred;
             else, input the previous hidden_layer'''
         input_now = input_layer if k is 0 else hidden_layer
 
+        hidden_layer = Layer(layer_size, activation = activation, name = name)
         hidden_layer = hidden_layer(input_now)
     
     return hidden_layer
