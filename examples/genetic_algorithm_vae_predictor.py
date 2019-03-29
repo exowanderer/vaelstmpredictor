@@ -29,10 +29,27 @@ class BlankClass(object):
     def __init__(self):
         pass
 
+def configure_multi_hidden_layers(num_hidden, input_size, 
+                                  min_hidden1, max_hidden
+                                  start_small = True, init_large = True):
+    
+    if input_size is not None and init_large:
+        hidden_dims = [random.randint(input_size//2, input_size)]
+    else:
+        hidden_dims = [random.randint(min_hidden1, max_hidden)]
+    
+    # set to zero or random
+    if start_small:
+        hidden_dims = hidden_dims + [zero]*(num_hidden-1)
+    else:
+        upper_layers = random.randint(zero, max_hidden, size = num_hidden-1)
+
+        hidden_dims = np.append(hidden_dims, upper_layers)
+
 def generate_random_chromosomes(population_size, clargs, data_instance, 
                             start_small = False, init_large = False,
                             input_size = None, vae_kl_weight = 1.0, 
-                            # num_vae_hidden = 5, num_dnn_hidden = 5, 
+                            max_vae_hidden_layers = 5, max_dnn_hidden_layers = 5, 
                             predictor_weight = 1.0, predictor_kl_weight = 1.0, 
                             min_vae_hidden1 = 2, min_vae_latent = 2, 
                             min_dnn_hidden1 = 2, max_vae_hidden = 1024, 
@@ -44,45 +61,22 @@ def generate_random_chromosomes(population_size, clargs, data_instance,
 
     # explicit defaults
     zero = 0
-
-    if input_size is not None and init_large:
-        size_vae_hidden1 = random.randint(input_size//2, input_size)
-    else:
-        size_vae_hidden1 = random.randint(min_vae_hidden1, max_vae_hidden)
-    # for _ in range(num_vae_hidden - 1):
-
-    # set to zero or random
-    if start_small:
-        size_vae_hidden2 = zero
-        size_vae_hidden3 = zero
-        size_vae_hidden4 = zero
-        size_vae_hidden5 = zero
-    else:
-        size_vae_hidden2 = random.randint(zero, max_vae_hidden)
-        size_vae_hidden3 = random.randint(zero, max_vae_hidden)
-        size_vae_hidden4 = random.randint(zero, max_vae_hidden)
-        size_vae_hidden5 = random.randint(zero, max_vae_hidden)
-
-    # set to zero or random
-    size_vae_latent = random.randint(min_vae_latent, max_vae_latent)
+    vae_hidden_dims = configure_multi_hidden_layers(max_vae_hidden_layers, 
+                                input_size, min_vae_hidden1, max_vae_hidden,
+                                start_small = start_small, 
+                                init_large = init_large)
     
-    # set to zero or random
-    size_dnn_hidden1 = random.randint(min_dnn_hidden1, max_dnn_hidden)
-    if start_small:
-        size_dnn_hidden2 = zero
-        size_dnn_hidden3 = zero
-        size_dnn_hidden4 = zero
-        size_dnn_hidden5 = zero
-    else:
-        size_dnn_hidden2 = random.randint(zero, max_dnn_hidden)
-        size_dnn_hidden3 = random.randint(zero, max_dnn_hidden)
-        size_dnn_hidden4 = random.randint(zero, max_dnn_hidden)
-        size_dnn_hidden5 = random.randint(zero, max_dnn_hidden)
+    vae_latent_dim = random.randint(min_vae_latent, max_vae_latent)
+    
+    dnn_hidden_dims = configure_multi_hidden_layers(max_dnn_hidden_layers, 
+                                input_size, min_dnn_hidden1, max_dnn_hidden,
+                                start_small = start_small, 
+                                init_large = init_large)
 
     generationID = 0
     generation_0 = []
     for chromosomeID in range(population_size):
-        params_dict =  { 'clargs':clargs, 
+        params_dict =  {'clargs':clargs, 
                         'verbose':verbose, 
                         'data_instance':data_instance, 
                         'generationID':generationID, 
@@ -95,7 +89,7 @@ def generate_random_chromosomes(population_size, clargs, data_instance,
                         'size_vae_hidden3':size_vae_hidden3,
                         'size_vae_hidden4':size_vae_hidden4,
                         'size_vae_hidden5':size_vae_hidden5,
-                        'size_vae_latent':size_vae_latent,
+                        'vae_latent_dim':vae_latent_dim,
                         'size_dnn_hidden1':size_dnn_hidden1,
                         'size_dnn_hidden2':size_dnn_hidden2,
                         'size_dnn_hidden3':size_dnn_hidden3,
@@ -141,7 +135,7 @@ def cross_over(parent1, parent2, prob, verbose=False):
     if(random.random() <= prob):
         params1 = {}
         params2 = {}
-        for param in Chromosome.params:
+        for param in parent1.params:
             if(random.random() <= 0.5):
                 params1[param] = parent1.params_dict[param]
                 params2[param] = parent2.params_dict[param]
@@ -180,7 +174,7 @@ def mutate(child, prob, range_change = 25, forced_evolve = False,
                                                          child.generationID))
     
     mutation_happened = False
-    for param in Chromosome.params:
+    for param in child.params:
         if(random.random() <= prob):
             mutation_happened = True
 
@@ -203,28 +197,17 @@ def mutate(child, prob, range_change = 25, forced_evolve = False,
     return child, mutation_happened
 
 class Chromosome(VAEPredictor):
-    
-    #[number of hidden layers in VAE,
-    #   size of the first hidden layer in VAE,
-    #   size of the latent layer,
-    #   number of hidden layers in the DNN regressor,
-    #   size of the first hidden layer in the DNN regressor]
-    params = ["size_vae_hidden1", "size_vae_hidden2", "size_vae_hidden3", 
-                "size_vae_hidden4", "size_vae_hidden5", 
-              "size_vae_latent", 
-              "size_dnn_hidden1", "size_dnn_hidden2", "size_dnn_hidden3", 
-                "size_dnn_hidden4", "size_dnn_hidden5"]
-    
+    # params = ["size_vae_hidden1", "size_vae_hidden2", "size_vae_hidden3", 
+    #             "size_vae_hidden4", "size_vae_hidden5", 
+    #           "vae_latent_dim", 
+    #           "size_dnn_hidden1", "size_dnn_hidden2", "size_dnn_hidden3", 
+    #             "size_dnn_hidden4", "size_dnn_hidden5"]
+
     def __init__(self, clargs, data_instance, 
+                vae_hidden_dims, dnn_hidden_dims, 
                 generationID = 0, chromosomeID = 0, 
-                size_vae_hidden1 = 2, size_vae_hidden2 = 0, 
-                size_vae_hidden3 = 0, size_vae_hidden4 = 0, 
-                size_vae_hidden5 = 0, size_vae_latent = 2, 
-                size_dnn_hidden1 = 2, size_dnn_hidden2 = 0, 
-                size_dnn_hidden3 = 0, size_dnn_hidden4 = 0, 
-                size_dnn_hidden5 = 0, vae_kl_weight = 1.0, 
-                predictor_weight = 1.0, predictor_kl_weight = 1.0, 
-                verbose = False):
+                vae_kl_weight = 1.0, predictor_weight = 1.0, 
+                predictor_kl_weight = 1.0, verbose = False):
 
         self.verbose = verbose
         self.clargs = clargs
@@ -232,24 +215,23 @@ class Chromosome(VAEPredictor):
         self.generationID = generationID
         self.chromosomeID = chromosomeID
         self.time_stamp = clargs.time_stamp
+        
+        self.vae_hidden_dims = vae_hidden_dims
+        self.dnn_hidden_dims = dnn_hidden_dims
 
         self.vae_kl_weight = vae_kl_weight
         self.predictor_weight = predictor_weight
         self.predictor_kl_weight = predictor_kl_weight
+        
+        self.params_dict = {}
+        for k, layer_size in enumerate(self.vae_hidden_dims)
+            self.params_dict['size_vae_hidden{}'.format(k)] = layer_size
 
-        self.params_dict =  {'size_vae_hidden1':size_vae_hidden1,
-                             'size_vae_hidden2':size_vae_hidden2,
-                             'size_vae_hidden3':size_vae_hidden3,
-                             'size_vae_hidden4':size_vae_hidden4,
-                             'size_vae_hidden5':size_vae_hidden5,
-                             'size_vae_latent':size_vae_latent,
-                             'size_dnn_hidden1':size_dnn_hidden1,
-                             'size_dnn_hidden2':size_dnn_hidden2,
-                             'size_dnn_hidden3':size_dnn_hidden3,
-                             'size_dnn_hidden4':size_dnn_hidden4,
-                             'size_dnn_hidden5':size_dnn_hidden5
-                            }
+        self.params_dict['vae_latent_dim'] = self.vae_latent_dim
 
+        for k, layer_size in enumerate(self.dnn_hidden_dims)
+            self.params_dict['size_dnn_hidden{}'.format(k)] = layer_size
+        
         self.model_dir = clargs.model_dir
         self.run_name = clargs.run_name
         self.predictor_type = clargs.predictor_type
@@ -265,7 +247,7 @@ class Chromosome(VAEPredictor):
                                  size_vae_hidden3, size_vae_hidden4, 
                                  size_vae_hidden5]
 
-        self.vae_latent_dim = size_vae_latent
+        self.vae_latent_dim = vae_latent_dim
 
         self.predictor_hidden_dims = [size_dnn_hidden1, size_dnn_hidden2, 
                                        size_dnn_hidden3, size_dnn_hidden4, 
