@@ -74,7 +74,7 @@ def generate_random_chromosomes(population_size, clargs, data_instance,
         size_dnn_hidden5 = random.randint(zero, max_dnn_hidden)
 
     generationID = 0
-    nets = []
+    generation_0 = []
     for chromosomeID in range(population_size):
         params_dict =  { 'clargs':clargs, 
                         'verbose':verbose, 
@@ -100,6 +100,7 @@ def generate_random_chromosomes(population_size, clargs, data_instance,
         chrom = Chromosome(**params_dict)
         chrom.train()
         generation_0.append(chrom)
+    
     return generation_0
 
 def select_parents(generation):
