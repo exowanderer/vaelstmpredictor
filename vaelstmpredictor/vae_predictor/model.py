@@ -48,7 +48,6 @@ def build_hidden_layers(hidden_dims, input_layer, layer_name, activation,
         input_now = input_layer if k is 0 else hidden_layer
 
         hidden_layer = hidden_layer(input_now)
-        print(name)
     
     return hidden_layer
 

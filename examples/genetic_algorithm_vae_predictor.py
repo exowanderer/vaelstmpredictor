@@ -397,7 +397,7 @@ def save_generation_to_tree(generation, verbose = False):
             print('memberID: {}'.format(ID))
             print('Fitness: {}'.format(member.fitness))
             for key,val in member.params_dict.items():
-                print('{}: {}'.format(key, val))
+                print('\t{}: {}'.format(key, val))
 
         generation_dict[ID]['params'] = member.params_dict
         generation_dict[ID]['fitness'] = member.fitness
@@ -547,8 +547,8 @@ if __name__ == '__main__':
     evtree_save_name = 'evolutionary_tree_{}_ps{}_iter{}_epochs{}_cp{}_mp{}'
     evtree_save_name = evtree_save_name + '.joblib.save'
     evtree_save_name = evtree_save_name.format(run_name, population_size, 
-                                            iterations, num_epochs, cross_prob,
-                                            mutate_prob)
+                                iterations, num_epochs, cross_prob,mutate_prob)
+    evtree_save_name = os.path.join(clargs.model_dir, evtree_save_name)
 
     print('[INFO] Saving evolutionary tree to {}'.format(evtree_save_name))
     joblib.dump(evolutionary_tree, evtree_save_name)
