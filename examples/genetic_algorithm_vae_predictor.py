@@ -32,6 +32,7 @@ class BlankClass(object):
 def generate_random_chromosomes(population_size, clargs, data_instance, 
                             start_small = False, init_large = False,
                             input_size = None, vae_kl_weight = 1.0, 
+                            # num_vae_hidden = 5, num_dnn_hidden = 5, 
                             predictor_weight = 1.0, predictor_kl_weight = 1.0, 
                             min_vae_hidden1 = 2, min_vae_latent = 2, 
                             min_dnn_hidden1 = 2, max_vae_hidden = 1024, 
@@ -44,11 +45,11 @@ def generate_random_chromosomes(population_size, clargs, data_instance,
     # explicit defaults
     zero = 0
 
-    # num_vae_hidden = num_vae_hidden or random.randint(1, 10)
     if input_size is not None and init_large:
         size_vae_hidden1 = random.randint(input_size//2, input_size)
     else:
         size_vae_hidden1 = random.randint(min_vae_hidden1, max_vae_hidden)
+    # for _ in range(num_vae_hidden - 1):
 
     # set to zero or random
     if start_small:
