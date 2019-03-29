@@ -42,7 +42,7 @@ def build_hidden_layers(hidden_dims, input_layer, layer_name, activation,
         '''If this is the 1st hidden layer, then input as input_w_pred;
             else, input the previous hidden_layer'''
         input_now = input_layer if k is 0 else hidden_layer
-        
+
         hidden_layer = hidden_layer(input_now)
     
     return hidden_layer
@@ -66,7 +66,7 @@ class VAEPredictor(object):
         """FINDME: Why is this predictor_out_dim-1(??)"""
         if predictor_latent_dim is not None:
             self.predictor_latent_dim = self.predictor_out_dim - 1
-
+        
         self.prediction_log_var_prior = prediction_log_var_prior
         self.optimizer = optimizer
         self.batch_size = batch_size

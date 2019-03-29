@@ -84,16 +84,16 @@ def generate_random_chromosomes(population_size, clargs, data_instance,
                         'vae_kl_weight':vae_kl_weight, 
                         'predictor_weight':predictor_weight,
                         'predictor_kl_weight':predictor_kl_weight, 
-                        'size_vae_hidden1':size_vae_hidden1
-                        'size_vae_hidden2':size_vae_hidden2
-                        'size_vae_hidden3':size_vae_hidden3
-                        'size_vae_hidden4':size_vae_hidden4
-                        'size_vae_hidden5':size_vae_hidden5
-                        'size_vae_latent':size_vae_latent
-                        'size_dnn_hidden1':size_dnn_hidden1
-                        'size_dnn_hidden2':size_dnn_hidden2
-                        'size_dnn_hidden3':size_dnn_hidden3
-                        'size_dnn_hidden4':size_dnn_hidden4
+                        'size_vae_hidden1':size_vae_hidden1,
+                        'size_vae_hidden2':size_vae_hidden2,
+                        'size_vae_hidden3':size_vae_hidden3,
+                        'size_vae_hidden4':size_vae_hidden4,
+                        'size_vae_hidden5':size_vae_hidden5,
+                        'size_vae_latent':size_vae_latent,
+                        'size_dnn_hidden1':size_dnn_hidden1,
+                        'size_dnn_hidden2':size_dnn_hidden2,
+                        'size_dnn_hidden3':size_dnn_hidden3,
+                        'size_dnn_hidden4':size_dnn_hidden4,
                         'size_dnn_hidden5':size_dnn_hidden5
                        }
 
@@ -226,16 +226,16 @@ class Chromosome(VAEPredictor):
         self.predictor_weight = predictor_weight
         self.predictor_kl_weight = predictor_kl_weight
 
-        self.params_dict =  {'size_vae_hidden1':size_vae_hidden1
-                             'size_vae_hidden2':size_vae_hidden2
-                             'size_vae_hidden3':size_vae_hidden3
-                             'size_vae_hidden4':size_vae_hidden4
-                             'size_vae_hidden5':size_vae_hidden5
-                             'size_vae_latent':size_vae_latent
-                             'size_dnn_hidden1':size_dnn_hidden1
-                             'size_dnn_hidden2':size_dnn_hidden2
-                             'size_dnn_hidden3':size_dnn_hidden3
-                             'size_dnn_hidden4':size_dnn_hidden4
+        self.params_dict =  {'size_vae_hidden1':size_vae_hidden1,
+                             'size_vae_hidden2':size_vae_hidden2,
+                             'size_vae_hidden3':size_vae_hidden3,
+                             'size_vae_hidden4':size_vae_hidden4,
+                             'size_vae_hidden5':size_vae_hidden5,
+                             'size_vae_latent':size_vae_latent,
+                             'size_dnn_hidden1':size_dnn_hidden1,
+                             'size_dnn_hidden2':size_dnn_hidden2,
+                             'size_dnn_hidden3':size_dnn_hidden3,
+                             'size_dnn_hidden4':size_dnn_hidden4,
                              'size_dnn_hidden5':size_dnn_hidden5
                             }
 
