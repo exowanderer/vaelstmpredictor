@@ -388,7 +388,7 @@ class Chromosome(VAEPredictor):
 def save_generation_to_tree(generation, verbose = False):
     generation_dict = {}
     if verbose: print('[INFO] Current Generation: ' )
-    
+
     for ID, member in enumerate(generation):
         if ID not in generation_dict.keys(): generation_dict[ID] = {}
         
@@ -451,6 +451,7 @@ if __name__ == '__main__':
 
     clargs = parser.parse_args()
     
+    run_name = clargs.run_name
     cross_prob = clargs.cross_prob
     mutate_prob = clargs.mutate_prob
     population_size = clargs.population_size
