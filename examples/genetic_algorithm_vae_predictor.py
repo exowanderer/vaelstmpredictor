@@ -30,7 +30,7 @@ class BlankClass(object):
         pass
 
 def generate_random_chromosomes(population_size, clargs, data_instance, 
-                            start_small = False, init_same = False,
+                            start_small = False, init_large = False,
                             input_size = None, vae_kl_weight = 1.0, 
                             predictor_weight = 1.0, predictor_kl_weight = 1.0, 
                             min_vae_hidden1 = 2, min_vae_latent = 2, 
@@ -39,13 +39,13 @@ def generate_random_chromosomes(population_size, clargs, data_instance,
                             verbose=False):
     
     start_small = start_small or clargs.start_small
-    init_same = init_same or clargs.init_same
-    
+    init_large = init_large or clargs.init_large
+
     # explicit defaults
     zero = 0
 
     # num_vae_hidden = num_vae_hidden or random.randint(1, 10)
-    if input_size is not None and init_same:
+    if input_size is not None and init_large:
         size_vae_hidden1 = random.randint(input_size//2, input_size)
     else:
         size_vae_hidden1 = random.randint(min_vae_hidden1, max_vae_hidden)
@@ -423,7 +423,7 @@ if __name__ == '__main__':
                 help='number of epochs')
     parser.add_argument('--start_small', action='store_true',
                 help='Only the first hidden layer is initially populated')
-    parser.add_argument('--init_same', action='store_true', 
+    parser.add_argument('--init_large', action='store_true', 
                 help='Initial the 1st layer in [num_features/2,num_features]')
     parser.add_argument('--predictor_weight', type=float, default=1.0,
                 help='relative weight on prediction loss')
@@ -489,7 +489,7 @@ if __name__ == '__main__':
     generation = generate_random_chromosomes(population_size,
                     clargs = clargs, data_instance = data_instance,
                     verbose = verbose)
-    
+
     generationID = 0    
     evolutionary_tree = {}
     evolutionary_tree[generationID] = save_generation_to_tree(generation,   
