@@ -161,7 +161,11 @@ def cross_over(parent1, parent2, prob, verbose=False):
     
     return parent1, parent2
 
-def mutate(child, prob, percent_change = 0.10, verbose=False):
+def mutate(child, prob, range_change = 25, forced_evolve = False, 
+            min_layer_size = 2, verbose = False):
+    
+    # explicit declaration
+    zero = 0 
 
     if verbose:
         print('Mutating Child {} in {}'.format(child.chromosomeID, 
@@ -169,18 +173,21 @@ def mutate(child, prob, percent_change = 0.10, verbose=False):
     
     for param in Chromosome.params:
         if(random.random() <= prob):
-            # Isolate current value
-            current_p = child.params_dict[param]
-            # determine the range of changes in that value
-            range_p = percent_change * current_p
-            # compute delta_param step
-            change_p = np.random.uniform(-range_p, range_p)
-            # all steps must be integers: round and convert
-            change_p = np.int(np.round(change_p))
-            # add delta_param to param
-            child.params_dict[param] += change_p
+            # Compute delta_param step
+            change_p = np.random.uniform(-range_change, range_change)
+            
+            if forced_evolve and child.params_dict[param] == zero:
+                # if the layer is empty, then force a mutation
+                change_p = min([min_layer_size, abs(change_p)])
+            
+            # Add delta_param to param
+            current_p = child.params_dict[param] + change_p
+            
             # If layer size param is negative, then set layer size to zero
-            child.params_dict[param] = np.max([child.params_dict[param],0])
+            child.params_dict[param] = np.max([child.params_dict[param],zero])
+
+            # All layers must be integer sized: round and convert
+            child.params_dict[param] = np.int(np.round(current_p))
 
     return child
 
@@ -243,11 +250,17 @@ class Chromosome(VAEPredictor):
         self.use_prev_input = False
         self.predictor_out_dim = clargs.n_labels
 
-        self.predictor_hidden_dim = size_dnn_hidden
-        self.predictor_latent_dim = self.predictor_out_dim-1# 2**size_dnn_latent
-        self.vae_hidden_dim = size_vae_hidden
+        self.vae_hidden_dims = [size_vae_hidden1, size_vae_hidden2, 
+                                 size_vae_hidden3, size_vae_hidden4, 
+                                 size_vae_hidden5]
+
         self.vae_latent_dim = size_vae_latent
 
+        self.predictor_hidden_dims = [size_dnn_hidden1, size_dnn_hidden2, 
+                                       size_dnn_hidden3, size_dnn_hidden4, 
+                                       size_dnn_hidden5]
+        self.predictor_latent_dim = clargs.n_labels-1
+        
         self.get_model()
         self.neural_net = self.model
         self.fitness = 0
@@ -442,7 +455,7 @@ if __name__ == '__main__':
     generation = generate_random_chromosomes(population_size,
                     clargs = clargs, data_instance = data_instance,
                     start_small = True, verbose = verbose)
-    gen_num = 0
+    # gen_num = 0
 
     best_fitness = []
     fig = plt.gcf()
@@ -450,14 +463,16 @@ if __name__ == '__main__':
 
     # evolutionary_tree = []
     start = time()
-    while gen_num < iterations:
+    # while gen_num < iterations:
+    for _ in range(iterations):
         start_while = time()
         #Create new generation
         new_generation = []
-        gen_num += 1
+        # gen_num += 1
         for _ in range(population_size//2):
             parent1, parent2 = select_parents(generation)
-            child1, child2 = cross_over(parent1, parent2, cross_prob, verbose=verbose)
+            child1, child2 = cross_over(parent1, parent2, cross_prob, 
+                                        verbose=verbose)
             
             mutate(child1, mutate_prob, verbose=verbose)
             mutate(child2, mutate_prob, verbose=verbose)
