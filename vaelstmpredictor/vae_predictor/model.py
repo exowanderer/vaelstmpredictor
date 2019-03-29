@@ -77,7 +77,7 @@ class VAEPredictor(object):
     def build_predictor(self):
         if bool(sum(self.dnn_hidden_dims)):
             ''' Establish VAE Encoder layer structure '''
-            pred_hidden_layer = build_hidden_layers(
+            dnn_hidden_layer = build_hidden_layers(
                                     self.dnn_hidden_dims, 
                                     self.input_layer, 
                                     layer_name='predictor_hidden_layer', 
@@ -85,17 +85,17 @@ class VAEPredictor(object):
         else:
             '''if there are no hidden layers, then the input to the 
                 dnn latent layers is the input_layer'''
-            pred_hidden_layer = self.input_layer
+            dnn_hidden_layer = self.input_layer
         
         # Process the predictor layer through a latent layer
-        predictor_latent_mean = Dense(self.dnn_latent_dim, 
+        dnn_latent_mean = Dense(self.dnn_latent_dim, 
                                         name = 'predictor_latent_mean')
-        self.dnn_latent_mean = dnn_latent_mean(pred_hidden_layer)
+        self.dnn_latent_mean = dnn_latent_mean(dnn_hidden_layer)
         dnn_latent_log_var = Dense(self.dnn_latent_dim, 
                                     name = 'predictor_latent_log_var')
         
         self.dnn_latent_log_var = dnn_latent_log_var(
-                                                    pred_hidden_layer)
+                                                    dnn_hidden_layer)
         
         dnn_latent_layer = Lambda(self.dnn_sampling, 
                                     name = 'predictor_latent_layer')
@@ -111,11 +111,11 @@ class VAEPredictor(object):
     def build_latent_decoder(self):
         if bool(sum(self.vae_hidden_dims)):
             vae_dec_hid_layer = build_hidden_layers(self.vae_hidden_dims[::-1],
-                                        input_layer = self.pred_w_latent,
+                                        input_layer = self.dnn_w_latent,
                                         layer_name = 'vae_dec_hidden_layer', 
                                         activation = self.hidden_activation)
         else:
-            vae_dec_hid_layer = self.pred_w_latent
+            vae_dec_hid_layer = self.dnn_w_latent
         
         vae_reconstruction = Dense(self.original_dim, 
                                  activation = self.output_activation, 
@@ -126,11 +126,11 @@ class VAEPredictor(object):
         if bool(sum(self.vae_hidden_dims)):
             vae_dec_hid_layer = build_hidden_layers(# reverse order for decoder
                                         self.vae_hidden_dims[::-1],
-                                        self.pred_w_latent, 
+                                        self.dnn_w_latent, 
                                         layer_name = 'vae_dec_hidden_layer', 
                                         activation = self.hidden_activation)
         else:
-            vae_dec_hid_layer = self.pred_w_latent
+            vae_dec_hid_layer = self.dnn_w_latent
 
         vae_reconstruction = Dense(self.original_dim, 
                                  activation = self.output_activation, 
@@ -172,11 +172,11 @@ class VAEPredictor(object):
         vs = vs - K.square(self.dnn_latent_mean)/K.exp(self.dnn_log_var_prior)
 
         return -0.5*K.sum(vs, axis = -1)
-
+    
     def dnn_rec_loss(self, labels, preds):
         if self.predictor_type is 'classification':
             rec_loss = categorical_crossentropy(labels, preds)
-            rec_loss = self.dnn_latent_dim * rec_loss
+            # rec_loss = self.dnn_latent_dim * rec_loss
         if self.predictor_type is 'regression':
             rec_loss = mean_squared_error(labels, preds)
         return rec_loss
@@ -196,8 +196,8 @@ class VAEPredictor(object):
         padding = K.tf.zeros(self.batch_size, 1)[:,None]
         dnn_norm = concatenate([dnn_norm, padding], 
                                 name='dnn_norm')
-        sum_exp_pred_norm = K.sum(K.exp(dnn_norm), axis = -1)[:,None]
-        return K.exp(dnn_norm)/sum_exp_pred_norm
+        sum_exp_dnn_norm = K.sum(K.exp(dnn_norm), axis = -1)[:,None]
+        return K.exp(dnn_norm)/sum_exp_dnn_norm
 
     def get_model(self, batch_size = None, original_dim = None, 
                   vae_hidden_dims = None, vae_latent_dim = None, 
@@ -234,7 +234,7 @@ class VAEPredictor(object):
         self.input_w_pred = concatenate([self.input_layer, 
                                         self.dnn_latent_layer], 
                                         axis = -1,
-                                        name = 'data_input_w_pred_latent_out')
+                                        name = 'data_input_w_dnn_latent_out')
 
         self.build_latent_encoder()
         
@@ -245,9 +245,9 @@ class VAEPredictor(object):
         else:
             self.prev_w_vae_latent = self.vae_latent_layer
         
-        self.pred_w_latent = concatenate(
+        self.dnn_w_latent = concatenate(
                         [self.dnn_latent_layer, self.prev_w_vae_latent],
-                        axis = -1, name = 'pred_latent_out_w_prev_w_vae_lat'
+                        axis = -1, name = 'dnn_latent_out_w_prev_w_vae_lat'
                         )
         
         self.build_latent_decoder()
@@ -288,9 +288,19 @@ class VAEPredictor(object):
         return self.vae_latent_mean + K.exp(self.vae_latent_log_var/2) * eps
 
     def vae_loss(self, input_layer, vae_reconstruction):
-        if self.predictor_type is 'classification':
+        if self.predictor_type is 'binary':
+            '''This case is specific to binary input sequences
+                i.e. [0,1,1,0,0,0,....,0,1,1,1]'''
             inp_vae_loss = binary_crossentropy(input_layer, vae_reconstruction)
             inp_vae_loss = self.original_dim * inp_vae_loss
+        
+        if self.predictor_type is 'classification':
+            ''' I am left to assume that the vae_reconstruction_loss for a 
+                    non-binary data source (i.e. *not* piano keys) should be 
+                    a regression problem. 
+                The prediction loss is still categorical crossentropy because 
+                    the features being compared are discrete classes'''
+            inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
         
         if self.predictor_type is 'regression':
             inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
@@ -340,7 +350,7 @@ class VAEPredictor(object):
                             name = 'predictor_input_layer')
 
         input_w_pred = concatenate([input_layer, dnn_input_layer], 
-                                    axis = -1, name = 'input_w_pred_layer')
+                                    axis = -1, name = 'input_w_dnn_layer')
         
         # build latent encoder
         if self.vae_hidden_dim > 0:
@@ -387,17 +397,17 @@ class VAEPredictor(object):
         else:
             prev_w_vae_latent = vae_latent_layer
 
-        pred_w_latent = concatenate([dnn_input_layer,prev_w_vae_latent],
+        dnn_w_latent = concatenate([dnn_input_layer,prev_w_vae_latent],
                                         axis = -1)
 
         # build physical decoder
         vae_reconstruction = self.model.get_layer('vae_reconstruction')
         if self.vae_hidden_dim > 0:
             vae_dec_hid_layer = self.model.get_layer('vae_dec_hid_layer')
-            vae_dec_hid_layer = vae_dec_hid_layer(pred_w_latent)
+            vae_dec_hid_layer = vae_dec_hid_layer(dnn_w_latent)
             vae_reconstruction = vae_reconstruction(vae_dec_hid_layer)
         else:
-            vae_reconstruction = vae_reconstruction(pred_w_latent)
+            vae_reconstruction = vae_reconstruction(dnn_w_latent)
 
         if use_prev_input or self.use_prev_input:
             dec_input_stack = [dnn_input_layer, 

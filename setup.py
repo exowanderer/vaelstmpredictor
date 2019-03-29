@@ -4,7 +4,7 @@ except ImportError:
     from distutils.core import setup, find_packages
 
 setup(name='vaelstmpredictor',
-      version=0.1,
+      version=0.2,
       description='Combined Classifying, Regressing, Variational Autoencoder, \
                   and Long Short Term Memory Recurrent Neural Network for \
                   Autocorrelated Data',
