@@ -29,14 +29,78 @@ class BlankClass(object):
     def __init__(self):
         pass
 
-def generate_random_chromosomes(population_size, clargs, data_instance, verbose = False):
+def generate_random_chromosomes(population_size, clargs, data_instance, 
+                            start_small = True, init_same = True,
+                            input_size = None, vae_kl_weight = 1.0, 
+                            predictor_weight = 1.0, predictor_kl_weight = 1.0, 
+                            min_vae_hidden1 = 2, min_vae_latent = 2, 
+                            min_dnn_hidden1 = 2, max_vae_hidden = 1024, 
+                            max_vae_latent = 1024, max_dnn_hidden = 1024, 
+                            verbose=False):
+    # explicit defaults
+    zero = 0
+
+    # num_vae_hidden = num_vae_hidden or random.randint(1, 10)
+    if input_size is not None and init_same:
+        size_vae_hidden1 = random.randint(input_size//2, input_size)
+    else:
+        size_vae_hidden1 = random.randint(min_vae_hidden1, max_vae_hidden)
+    # set to zero or random
+    if start_small:
+        size_vae_hidden2 = zero
+        size_vae_hidden3 = zero
+        size_vae_hidden4 = zero
+        size_vae_hidden5 = zero
+    else:
+        size_vae_hidden2 = random.randint(zero, max_vae_hidden)
+        size_vae_hidden3 = random.randint(zero, max_vae_hidden)
+        size_vae_hidden4 = random.randint(zero, max_vae_hidden)
+        size_vae_hidden5 = random.randint(zero, max_vae_hidden)
+
+    # set to zero or random
+    size_vae_latent = random.randint(min_vae_latent, max_vae_latent)
+    
+    # set to zero or random
+    size_dnn_hidden1 = random.randint(min_dnn_hidden1, max_dnn_hidden)
+    if start_small:
+        size_dnn_hidden2 = zero
+        size_dnn_hidden3 = zero
+        size_dnn_hidden4 = zero
+        size_dnn_hidden5 = zero
+    else:
+        size_dnn_hidden2 = random.randint(zero, max_dnn_hidden)
+        size_dnn_hidden3 = random.randint(zero, max_dnn_hidden)
+        size_dnn_hidden4 = random.randint(zero, max_dnn_hidden)
+        size_dnn_hidden5 = random.randint(zero, max_dnn_hidden)
+
     generationID = 0
     nets = []
     for chromosomeID in range(population_size):
-        chrom = Chromosome(clargs, data_instance, generationID, chromosomeID, verbose = verbose)
+        params_dict =  { 'clargs':clargs, 
+                        'verbose':verbose, 
+                        'data_instance':data_instance, 
+                        'generationID':generationID, 
+                        'chromosomeID':chromosomeID,
+                        'vae_kl_weight':vae_kl_weight, 
+                        'predictor_weight':predictor_weight,
+                        'predictor_kl_weight':predictor_kl_weight, 
+                        'size_vae_hidden1':size_vae_hidden1
+                        'size_vae_hidden2':size_vae_hidden2
+                        'size_vae_hidden3':size_vae_hidden3
+                        'size_vae_hidden4':size_vae_hidden4
+                        'size_vae_hidden5':size_vae_hidden5
+                        'size_vae_latent':size_vae_latent
+                        'size_dnn_hidden1':size_dnn_hidden1
+                        'size_dnn_hidden2':size_dnn_hidden2
+                        'size_dnn_hidden3':size_dnn_hidden3
+                        'size_dnn_hidden4':size_dnn_hidden4
+                        'size_dnn_hidden5':size_dnn_hidden5
+                       }
+
+        chrom = Chromosome(**params_dict)
         chrom.train()
-        nets.append(chrom)
-    return nets
+        generation_0.append(chrom)
+    return generation_0
 
 def select_parents(generation):
     total_fitness = sum(chrom.fitness for chrom in generation)
@@ -97,7 +161,7 @@ def cross_over(parent1, parent2, prob, verbose=False):
     
     return parent1, parent2
 
-def mutate(child, prob, verbose=False):
+def mutate(child, prob, percent_change = 0.10, verbose=False):
 
     if verbose:
         print('Mutating Child {} in {}'.format(child.chromosomeID, 
@@ -105,9 +169,18 @@ def mutate(child, prob, verbose=False):
     
     for param in Chromosome.params:
         if(random.random() <= prob):
-            # extra = int(child.params_dict[param]*0.1)+1
-            # child.params_dict[param] += random.randint(-extra, extra)
-            child.params_dict[param] += np.random.choice([-1,1])
+            # Isolate current value
+            current_p = child.params_dict[param]
+            # determine the range of changes in that value
+            range_p = percent_change * current_p
+            # compute delta_param step
+            change_p = np.random.uniform(-range_p, range_p)
+            # all steps must be integers: round and convert
+            change_p = np.int(np.round(change_p))
+            # add delta_param to param
+            child.params_dict[param] += change_p
+            # If layer size param is negative, then set layer size to zero
+            child.params_dict[param] = np.max([child.params_dict[param],0])
 
     return child
 
@@ -118,15 +191,23 @@ class Chromosome(VAEPredictor):
     #   size of the latent layer,
     #   number of hidden layers in the DNN regressor,
     #   size of the first hidden layer in the DNN regressor]
-    params = ["size_vae_hidden", "size_vae_latent", "size_dnn_hidden"]
-    # params_for_later = ["num_vae_hidden", "num_dnn_hidden" "size_dnn_latent"]
-    #If any of the parameters is set to -1, a random number if chosen
-    def __init__(self, clargs, data_instance, generationID, chromosomeID, 
-                size_vae_hidden = None, size_vae_latent = None, 
-                size_dnn_hidden = None, 
-                vae_kl_weight = 1.0, predictor_weight=1.0, 
-                predictor_kl_weight = 1.0, verbose = False):
-        
+    params = ["size_vae_hidden1", "size_vae_hidden2", "size_vae_hidden3", 
+                "size_vae_hidden4", "size_vae_hidden5", 
+              "size_vae_latent", 
+              "size_dnn_hidden1", "size_dnn_hidden2", "size_dnn_hidden3", 
+                "size_dnn_hidden4", "size_dnn_hidden5"]
+    
+    def __init__(self, clargs, data_instance, 
+                generationID = 0, chromosomeID = 0, 
+                size_vae_hidden1 = 2, size_vae_hidden2 = 0, 
+                size_vae_hidden3 = 0, size_vae_hidden4 = 0, 
+                size_vae_hidden5 = 0, size_vae_latent = 2, 
+                size_dnn_hidden1 = 2, size_dnn_hidden2 = 0, 
+                size_dnn_hidden3 = 0, size_dnn_hidden4 = 0, 
+                size_dnn_hidden5 = 0, vae_kl_weight = 1.0, 
+                predictor_weight = 1.0, predictor_kl_weight = 1.0, 
+                verbose = False):
+
         self.verbose = verbose
         self.clargs = clargs
         self.data_instance = data_instance
@@ -138,20 +219,18 @@ class Chromosome(VAEPredictor):
         self.predictor_weight = predictor_weight
         self.predictor_kl_weight = predictor_kl_weight
 
-        # num_vae_hidden = num_vae_hidden or random.randint(1, 10)
-        size_vae_hidden = size_vae_hidden or random.randint(5, 10)
-        size_vae_latent = size_vae_latent or random.randint(1, 10)    
-        
-        # num_dnn_hidden = num_dnn_hidden or random.randint(1, 10)
-        # size_dnn_latent = size_dnn_latent or random.randint(1, 10)
-        size_dnn_hidden = size_dnn_hidden or random.randint(5, 10)
-
-        self.params_dict = {#"num_vae_hidden": num_vae_hidden,
-                           "size_vae_hidden": size_vae_hidden,
-                           "size_vae_latent": size_vae_latent,
-                           #"num_dnn_hidden": num_dnn_hidden,
-                           "size_dnn_hidden": size_dnn_hidden}#,
-                           # "size_dnn_latent":size_dnn_latent}
+        self.params_dict =  {'size_vae_hidden1':size_vae_hidden1
+                             'size_vae_hidden2':size_vae_hidden2
+                             'size_vae_hidden3':size_vae_hidden3
+                             'size_vae_hidden4':size_vae_hidden4
+                             'size_vae_hidden5':size_vae_hidden5
+                             'size_vae_latent':size_vae_latent
+                             'size_dnn_hidden1':size_dnn_hidden1
+                             'size_dnn_hidden2':size_dnn_hidden2
+                             'size_dnn_hidden3':size_dnn_hidden3
+                             'size_dnn_hidden4':size_dnn_hidden4
+                             'size_dnn_hidden5':size_dnn_hidden5
+                            }
 
         self.model_dir = clargs.model_dir
         self.run_name = clargs.run_name
@@ -164,10 +243,10 @@ class Chromosome(VAEPredictor):
         self.use_prev_input = False
         self.predictor_out_dim = clargs.n_labels
 
-        self.predictor_hidden_dim = 2**size_dnn_hidden
+        self.predictor_hidden_dim = size_dnn_hidden
         self.predictor_latent_dim = self.predictor_out_dim-1# 2**size_dnn_latent
-        self.vae_hidden_dim = 2**size_vae_hidden
-        self.vae_latent_dim = 2**size_vae_latent
+        self.vae_hidden_dim = size_vae_hidden
+        self.vae_latent_dim = size_vae_latent
 
         self.get_model()
         self.neural_net = self.model
@@ -175,9 +254,8 @@ class Chromosome(VAEPredictor):
         
         assert(os.path.exists(self.model_dir)), "{} does not exist.".format(self.model_dir) 
         self.model_topology_savefile = '{}/{}_{}_{}_model_topology_savefile_{}.save'
-        self.model_topology_savefile = self.model_topology_savefile.format(self.model_dir, self.run_name,
-                                       self.generationID, self.chromosomeID,
-                                       self.time_stamp)
+        self.model_topology_savefile = self.model_topology_savefile.format(self.model_dir, self.run_name,self.generationID, self.chromosomeID,
+            self.time_stamp)
 
         with open(self.model_topology_savefile, 'w') as f:
             with redirect_stdout(f):
@@ -326,14 +404,15 @@ if __name__ == '__main__':
                 help='Probability of crossover between generations')
     parser.add_argument('--mutate_prob', type=float, default=0.01,
                 help='Probability of mutation for each member')
-    parser.add_argument('--population_size', type=int, default=10,# Preferably divisible by 2
-                help='size of the population to evolve')
-    parser.add_argument('--iterations', type=int, default=500,
+    parser.add_argument('--population_size', type=int, default=10,
+                help='size of the population to evolve; '\
+                        'preferably divisible by 2')
+    parser.add_argument('--iterations', type=int, default=50,
                 help='number of iterations for genetic algorithm')
     parser.add_argument('--verbose', action='store_true',
                 help='print more [INFO] and [DEBUG] statements')
     parser.add_argument('--make_plots', action='store_true',
-                help='make plots of the growth in the best_loss over generations')
+                help='make plots of growth in the best_loss over generations')
 
     clargs = parser.parse_args()
     
@@ -362,7 +441,7 @@ if __name__ == '__main__':
 
     generation = generate_random_chromosomes(population_size,
                     clargs = clargs, data_instance = data_instance,
-                    verbose = verbose)
+                    start_small = True, verbose = verbose)
     gen_num = 0
 
     best_fitness = []
