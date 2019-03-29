@@ -62,9 +62,23 @@ def generate_random_chromosomes(population_size, clargs, data_instance,
                         max_vae_latent = 1024, max_dnn_hidden = 1024, 
                         verbose=False):
     
-    start_small = start_small or clargs.start_small
+    start_small = start_small or clargs.start_small 
     init_large = init_large or clargs.init_large
-    input_size = input_size or clargs.original_dim
+    vae_kl_weight = vae_kl_weight or clargs.vae_kl_weight 
+    input_size  = input_size or clargs.original_dim 
+    max_vae_hidden_layers = max_vae_hidden_layers \
+                                or clargs.max_vae_hidden_layers 
+    max_dnn_hidden_layers = max_dnn_hidden_layers \
+                                or clargs.max_dnn_hidden_layers 
+    dnn_weight = dnn_weight or clargs.dnn_weight 
+    dnn_kl_weight = dnn_kl_weight or clargs.dnn_kl_weight 
+    min_vae_hidden1 = min_vae_hidden1 or clargs.min_vae_hidden1 
+    min_vae_latent = min_vae_latent or clargs.min_vae_latent 
+    min_dnn_hidden1 = min_dnn_hidden1 or clargs.min_dnn_hidden1 
+    max_vae_hidden = max_vae_hidden or clargs.max_vae_hidden 
+    max_vae_latent = max_vae_latent or clargs.max_vae_latent 
+    max_dnn_hidden = max_dnn_hidden or clargs.max_dnn_hidden 
+    verbose = verbose or clargs.verbose
 
     generationID = 0
     generation_0 = []
@@ -128,19 +142,51 @@ def select_parents(generation):
 
     return parent1, parent2
 
+def reconfigure_vae_params(params, static_params_):
+    clargs = static_params_['clargs']
+
+    max_vae_hidden_layers = clargs.max_vae_hidden_layers
+    max_dnn_hidden_layers = clargs.max_dnn_hidden_layers
+
+    for key,val in static_params_.items():
+        params[key] = val
+
+    # Reconfigure child1's collection of layer sizes into arrays
+    vae_hidden_dims = np.zeros(max_vae_hidden_layers, dtype=int)
+    dnn_hidden_dims = np.zeros(max_dnn_hidden_layers, dtype=int)
+
+    params_copy = {key:val for key,val in params.items()}
+
+    for key,val in params_copy.items():
+        if 'size_vae_hidden' in key:
+            idx = int(key[-1])
+            vae_hidden_dims[idx] = val
+            del params[key]
+
+        if 'size_dnn_hidden' in key:
+            idx = int(key[-1])
+            dnn_hidden_dims[idx] = val
+            del params[key]
+    
+    # params['vae_latent_dim'] = vae_latent_dim
+    params['vae_hidden_dims'] = vae_hidden_dims
+    params['dnn_hidden_dims'] = dnn_hidden_dims
+    
+    return params
+
 def cross_over(parent1, parent2, prob, verbose=False):
     if verbose:
         print('Crossing over with Parent {} and Parent {}'.format(
-                                parent1.chromosomeID, parent2.chromosomeID))
+                        parent1.chromosomeID, parent2.chromosomeID))
 
     static_params_ = {  'clargs':parent1.clargs, 
-                        'verbose':parent1.verbose, 
                         'data_instance':parent1.data_instance, 
                         'vae_kl_weight':parent1.vae_kl_weight, 
                         'dnn_weight':parent1.dnn_weight,
-                        'dnn_kl_weight':parent1.dnn_kl_weight
+                        'dnn_kl_weight':parent1.dnn_kl_weight,
+                        'verbose':parent1.verbose
                       }
-    
+
     crossover_happened = True # Flag if child == parent: no need to train
 
     if(random.random() <= prob):
@@ -154,13 +200,10 @@ def cross_over(parent1, parent2, prob, verbose=False):
                 params1[param] = parent2.params_dict[param]
                 params2[param] = parent1.params_dict[param]
         
-        for key,val in static_params_.items():
-            params1[key] = val
-            params2[key] = val
-
-        for key in params1.keys():
-            if 'size_vae_hidden' in 0,size_vae_hidden0,...,size_vae_hiddenN
-
+        # Reconfigure each child's collection of layer sizes into arrays
+        params1 = reconfigure_vae_params(params1, static_params_)
+        params2 = reconfigure_vae_params(params2, static_params_)
+        
         child1 = Chromosome(**params1)
         child2 = Chromosome(**params2)
 
@@ -179,7 +222,7 @@ def mutate(child, prob, range_change = 25, forced_evolve = False,
                                                          child.generationID))
     
     mutation_happened = False
-    for param in child.params:
+    for param in child.params_dict.keys():
         if(random.random() <= prob):
             mutation_happened = True
 
@@ -257,7 +300,7 @@ class Chromosome(VAEPredictor):
         
         assert(os.path.exists(self.model_dir)), "{} does not exist.".format(self.model_dir) 
         self.model_topology_savefile = '{}/{}_{}_{}_model_topology_savefile_{}.save'
-        self.model_topology_savefile = self.model_topology_savefile.format(self.model_dir, self.run_name,self.generationID, self.chromosomeID,
+        self.model_topology_savefile = self.model_topology_savefile.format(self.model_dir, self.run_name, self.generationID, self.chromosomeID,
             self.time_stamp)
 
         with open(self.model_topology_savefile, 'w') as f:
@@ -446,7 +489,7 @@ if __name__ == '__main__':
                 help='print more [INFO] and [DEBUG] statements')
     parser.add_argument('--make_plots', action='store_true',
                 help='make plots of growth in the best_loss over generations')
-
+    
     clargs = parser.parse_args()
     
     run_name = clargs.run_name
@@ -473,28 +516,11 @@ if __name__ == '__main__':
     if verbose: print('\n\n[INFO] Run Base Name: {}\n'.format(clargs.run_name))
     
     clargs.n_labels = len(np.unique(data_instance.train_labels))
-generate_random_chromosomes(population_size=population_size, 
-                        clargs=clargs, 
-                        data_instance=data_instance, 
-                        start_small = clargs.start_small, 
-                        init_large = clargs.init_large,
-                        vae_kl_weight  = clargs.vae_kl_weight, 
-                        input_size  = clargs.original_dim, 
-                        max_vae_hidden_layers  = clargs.max_vae_hidden_layers, 
-                        max_dnn_hidden_layers  = clargs.max_dnn_hidden_layers, 
-                        dnn_weight = clargs.dnn_weight, 
-                        dnn_kl_weight = clargs.dnn_kl_weight, 
-                        min_vae_hidden1 = clargs.min_vae_hidden1, 
-                        min_vae_latent = clargs.min_vae_latent, 
-                        min_dnn_hidden1 = clargs.min_dnn_hidden1, 
-                        max_vae_hidden = clargs.max_vae_hidden, 
-                        max_vae_latent = clargs.max_vae_latent, 
-                        max_dnn_hidden = clargs.max_dnn_hidden, 
-                        verbose= = clargs.verbose)
     
-    generation = generate_random_chromosomes(population_size,
-                    clargs = clargs, data_instance = data_instance,
-                    verbose = verbose)
+    generation = generate_random_chromosomes(
+                        population_size = population_size, 
+                        clargs = clargs, 
+                        data_instance = data_instance)
 
     generationID = 0    
     evolutionary_tree = {}
@@ -510,7 +536,9 @@ generate_random_chromosomes(population_size=population_size,
     # while gen_num < iterations:
     for _ in range(iterations):
         start_while = time()
-        #Create new generation
+
+        # Create new generation
+        generationID += 1
         new_generation = []
         chromosomeID = 0
         for _ in range(population_size//2):
@@ -522,28 +550,23 @@ generate_random_chromosomes(population_size=population_size,
             child1.chromosomeID = chromosomeID; chromosomeID += 1 
             child2.generationID = generationID
             child2.chromosomeID = chromosomeID; chromosomeID += 1 
-
+            
             child1, mutation_happened1 = mutate(child1, mutate_prob, 
                                                 verbose=verbose)
             child1, mutation_happened2 = mutate(child2, mutate_prob, 
                                                 verbose=verbose)
             
-            # gene_set1 = child1.params_dict
-            # gene_set2 = child2.params_dict
-            
             if crossover_happened or mutation_happened1: 
                 child1.train()
                 new_generation.append(child1)
             else:
-                new_generation.append(parent2)
+                new_generation.append(parent1)
 
             if crossover_happened or mutation_happened2: 
                 child2.train()
                 new_generation.append(child2)
             else:
                 new_generation.append(parent2)
-
-            generationID += 1
 
         print('Time for Generation{}: {} minutes'.format(child1.generationID, 
                                                 (time() - start_while)//60))

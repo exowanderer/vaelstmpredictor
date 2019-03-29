@@ -30,7 +30,6 @@ def wrapped_partial(func, *args, **kwargs):
 
 def build_hidden_layers(hidden_dims, input_layer, layer_name, activation,
                         Layer = Dense):
-    
     '''Need to remove all leading zeros for the Decoder 
     to be properly established'''
 
@@ -172,7 +171,7 @@ class VAEPredictor(object):
         vs = vs - K.square(self.dnn_latent_mean)/K.exp(self.dnn_log_var_prior)
 
         return -0.5*K.sum(vs, axis = -1)
-    
+
     def dnn_rec_loss(self, labels, preds):
         if self.predictor_type is 'classification':
             rec_loss = categorical_crossentropy(labels, preds)
@@ -279,7 +278,7 @@ class VAEPredictor(object):
                                 'predictor_latent_mod':dnn_weight,
                                 'vae_latent_args': vae_kl_weight},
 
-                metrics = {'dnn_output': 'accuracy'})
+                metrics = {'predictor_output': 'accuracy'})
     
     def vae_sampling(self, args):
         eps = K.random_normal(shape = (self.batch_size, self.vae_latent_dim), 
