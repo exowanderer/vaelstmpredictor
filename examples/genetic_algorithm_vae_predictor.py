@@ -30,13 +30,17 @@ class BlankClass(object):
         pass
 
 def generate_random_chromosomes(population_size, clargs, data_instance, 
-                            start_small = True, init_same = True,
+                            start_small = False, init_same = False,
                             input_size = None, vae_kl_weight = 1.0, 
                             predictor_weight = 1.0, predictor_kl_weight = 1.0, 
                             min_vae_hidden1 = 2, min_vae_latent = 2, 
                             min_dnn_hidden1 = 2, max_vae_hidden = 1024, 
                             max_vae_latent = 1024, max_dnn_hidden = 1024, 
                             verbose=False):
+    
+    start_small = start_small or clargs.start_small
+    init_same = init_same or clargs.init_same
+    
     # explicit defaults
     zero = 0
 
@@ -45,6 +49,7 @@ def generate_random_chromosomes(population_size, clargs, data_instance,
         size_vae_hidden1 = random.randint(input_size//2, input_size)
     else:
         size_vae_hidden1 = random.randint(min_vae_hidden1, max_vae_hidden)
+
     # set to zero or random
     if start_small:
         size_vae_hidden2 = zero
@@ -416,6 +421,10 @@ if __name__ == '__main__':
                 help='optimizer name') 
     parser.add_argument('--num_epochs', type=int, default=200,
                 help='number of epochs')
+    parser.add_argument('--start_small', action='store_true',
+                help='Only the first hidden layer is initially populated')
+    parser.add_argument('--init_same', action='store_true', 
+                help='Initial the 1st layer in [num_features/2,num_features]')
     parser.add_argument('--predictor_weight', type=float, default=1.0,
                 help='relative weight on prediction loss')
     parser.add_argument('--prediction_log_var_prior', type=float, default=0.0,
@@ -479,8 +488,8 @@ if __name__ == '__main__':
 
     generation = generate_random_chromosomes(population_size,
                     clargs = clargs, data_instance = data_instance,
-                    start_small = True, verbose = verbose)
-
+                    verbose = verbose)
+    
     generationID = 0    
     evolutionary_tree = {}
     evolutionary_tree[generationID] = save_generation_to_tree(generation,   
