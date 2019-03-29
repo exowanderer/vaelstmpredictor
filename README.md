@@ -1,4 +1,4 @@
-### A Classifying and Regressing Variational Autoencoder with Application to Autocorrelated Data Sets (i.e. time series)
+### A Classifying and Regressing Variational Autoencoder with Application to Autocorrelated Data Sets
 
 This is the implementation of the Classifying VAE and Classifying VAE+LSTM models, as described in [_A Classifying Variational Autoencoder with Application to Polyphonic Music Generation_](https://arxiv.org/abs/1711.07050) by Jay A. Hennig, Akash Umakantha, and Ryan C. Williamson.
 
