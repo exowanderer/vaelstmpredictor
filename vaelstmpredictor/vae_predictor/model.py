@@ -277,7 +277,7 @@ class VAEPredictor(object):
                                 'predictor_latent_layer': dnn_kl_weight,
                                 'predictor_latent_mod':dnn_weight,
                                 'vae_latent_args': vae_kl_weight},
-                 metrics=['acc'])
+                 metrics=['acc', 'mse'])
                 # metrics = {'predictor_latent_layer': 'acc'})
     
     def vae_sampling(self, args):
