@@ -411,8 +411,12 @@ class Chromosome(VAEPredictor):
         
         self.neural_net.save_weights(wghts_save_loc, overwrite=True)
         self.neural_net.save(model_save_loc, overwrite=True)
-        joblib.dump({'best_loss':self.best_loss,'history':self.history}, 
+
+        try:
+            joblib.dump({'best_loss':self.best_loss,'history':self.history}, 
                         joblib_save_loc)
+        except Exception as e:
+            print(str(e))
 
 def save_generation_to_tree(generation, verbose = False):
     generation_dict = {}
