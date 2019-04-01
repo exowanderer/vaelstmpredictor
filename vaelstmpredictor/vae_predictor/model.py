@@ -278,7 +278,7 @@ class VAEPredictor(object):
                                 'predictor_latent_mod':dnn_weight,
                                 'vae_latent_args': vae_kl_weight},
 
-                metrics = {'predictor_output': 'accuracy'})
+                metrics = {'predictor_latent_layer': 'accuracy'})
     
     def vae_sampling(self, args):
         eps = K.random_normal(shape = (self.batch_size, self.vae_latent_dim), 

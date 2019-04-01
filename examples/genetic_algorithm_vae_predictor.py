@@ -381,7 +381,9 @@ class Chromosome(VAEPredictor):
         self.best_loss = {k: self.history.history[k][self.best_ind] \
                                         for k in self.history.history}
         
-        self.best_val_loss = sum([val for key,val in self.best_loss.items() if 'val_' in key])
+        self.best_val_loss = sum([val for key,val in self.best_loss.items() \
+                                    if 'val_' in key and 'loss' in key])
+        
         self.fitness = 1.0 / self.best_val_loss
 
         if verbose: 
