@@ -477,3 +477,29 @@ class VAEPredictor(object):
         rando = np.random.rand(len(dnn_latent_mean.squeeze()))
 
         return np.float32(rando <= dnn_latent_mean)
+
+    def save(self):
+        joblib_save_loc = '{}/{}_{}_{}_trained_model_output_{}.joblib.save'
+        joblib_save_loc = joblib_save_loc.format(self.model_dir, self.run_name,
+                                         self.generationID, self.chromosomeID,
+                                         self.time_stamp)
+
+        wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
+        wghts_save_loc = wghts_save_loc.format(self.model_dir, self.run_name,
+                                         self.generationID, self.chromosomeID,
+                                         self.time_stamp)
+        
+        model_save_loc = '{}/{}_{}_{}_trained_model_full_{}.save'
+        model_save_loc = model_save_loc.format(self.model_dir, self.run_name,
+                                         self.generationID, self.chromosomeID,
+                                         self.time_stamp)
+        
+        self.neural_net.save_weights(wghts_save_loc, overwrite=True)
+        self.neural_net.save(model_save_loc, overwrite=True)
+
+        try:
+            joblib.dump({'best_loss':self.best_loss,'history':self.history}, 
+                        joblib_save_loc)
+        except Exception as e:
+            print(str(e))
+

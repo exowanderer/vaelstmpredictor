@@ -141,5 +141,6 @@ if __name__ == '__main__':
     
     vae_model.model.save_weights(weights_save_loc, overwrite=True)
     vae_model.model.save(model_save_loc, overwrite=True)
+    vae_model.save()
     
     joblib.dump({'best_loss':best_loss,'history':history}, joblib_save_loc)

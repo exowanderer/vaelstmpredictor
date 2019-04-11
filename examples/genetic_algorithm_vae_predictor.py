@@ -402,31 +402,6 @@ class Chromosome(VAEPredictor):
         
         if self.save_as_you_train: self.save()
 
-    def save(self):
-        joblib_save_loc = '{}/{}_{}_{}_trained_model_output_{}.joblib.save'
-        joblib_save_loc = joblib_save_loc.format(self.model_dir, self.run_name,
-                                         self.generationID, self.chromosomeID,
-                                         self.time_stamp)
-
-        wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
-        wghts_save_loc = wghts_save_loc.format(self.model_dir, self.run_name,
-                                         self.generationID, self.chromosomeID,
-                                         self.time_stamp)
-        
-        model_save_loc = '{}/{}_{}_{}_trained_model_full_{}.save'
-        model_save_loc = model_save_loc.format(self.model_dir, self.run_name,
-                                         self.generationID, self.chromosomeID,
-                                         self.time_stamp)
-        
-        self.neural_net.save_weights(wghts_save_loc, overwrite=True)
-        self.neural_net.save(model_save_loc, overwrite=True)
-
-        try:
-            joblib.dump({'best_loss':self.best_loss,'history':self.history}, 
-                        joblib_save_loc)
-        except Exception as e:
-            print(str(e))
-
 def save_generation_to_tree(generation, verbose = False):
     generation_dict = {}
     if verbose: print('[INFO] Current Generation: ' )
@@ -509,7 +484,7 @@ if __name__ == '__main__':
     
     if not os.path.exists(clargs.model_dir): os.mkdir(clargs.model_dir)
     if not os.path.exists(clargs.log_dir): os.mkdir(clargs.log_dir)
-    
+
     # run_name = 'ga_test_mutli_gpus'
     # clargs.run_name = run_name
     run_name = clargs.run_name
