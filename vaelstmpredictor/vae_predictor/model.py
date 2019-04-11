@@ -273,8 +273,8 @@ class VAEPredictor(object):
         self.enc_model = Model(input_stack, enc_stack)
 
         self.compile()
-    
-    del compile(self, n_gpus = None):
+
+    def compile(self, n_gpus = None):
         
         n_gpus = n_gpus or self.n_gpus
         

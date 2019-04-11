@@ -370,7 +370,7 @@ class Chromosome(VAEPredictor):
         train_labels = [DI.labels_train, predictor_train, predictor_train, DI.labels_train]
         
         self.compile()
-        
+
         self.history = self.model.fit(vae_train, train_labels,
                                     shuffle = True,
                                     epochs = clargs.num_epochs,
@@ -506,8 +506,10 @@ if __name__ == '__main__':
                 help='Input the number of GPUs to use for this operation.')
     
     clargs = parser.parse_args()
-    clargs.n_gpus = 1
-
+    
+    if not os.path.exists(clargs.model_dir): os.mkdir(clargs.model_dir)
+    if not os.path.exists(clargs.log_dir): os.mkdir(clargs.log_dir)
+    
     # run_name = 'ga_test_mutli_gpus'
     # clargs.run_name = run_name
     run_name = clargs.run_name
