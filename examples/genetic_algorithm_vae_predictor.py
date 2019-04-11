@@ -1,7 +1,7 @@
 # from https://github.com/philippesaade11/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
 # python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 --verbose --iterations 500 --population_size 10 --num_epochs 200
 import argparse
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 import os
 # import random
@@ -9,7 +9,7 @@ import os
 from contextlib import redirect_stdout
 
 from keras import backend as K
-from keras.utils import to_categorical
+from keras.utils import to_categorical, multi_gpu_model
 
 from glob import glob
 from numpy import array, arange, vstack, reshape, loadtxt, zeros, random
@@ -244,7 +244,7 @@ def mutate(child, prob, range_change = 25, forced_evolve = False,
 
     return child, mutation_happened
 
-class Chromosome(VAEPredictor):
+class ChromosomeFull(VAEPredictor):
     # params = ["size_vae_hidden1", "size_vae_hidden2", "size_vae_hidden3", 
     #             "size_vae_hidden4", "size_vae_hidden5", 
     #           "vae_latent_dim", 
@@ -255,9 +255,11 @@ class Chromosome(VAEPredictor):
                 vae_hidden_dims, dnn_hidden_dims, 
                 generationID = 0, chromosomeID = 0, 
                 vae_kl_weight = 1.0, dnn_weight = 1.0, 
-                dnn_kl_weight = 1.0, verbose = False):
+                dnn_kl_weight = 1.0, verbose = False,
+                save_as_you_train = True):
 
         self.verbose = verbose
+        self.save_as_you_train = save_as_you_train
         self.clargs = clargs
         self.data_instance = data_instance
         self.generationID = generationID
@@ -337,7 +339,7 @@ class Chromosome(VAEPredictor):
         verbose = verbose or self.verbose
         
         DI = self.data_instance
-
+        
         predictor_train = to_categorical(DI.train_labels, self.clargs.n_labels)
         predictor_validation = to_categorical(DI.valid_labels,self.clargs.n_labels)
 
@@ -367,8 +369,7 @@ class Chromosome(VAEPredictor):
         validation_data = (vae_features_val, vae_labels_val)
         train_labels = [DI.labels_train, predictor_train, predictor_train, DI.labels_train]
         
-        if clargs.n_gpus > 1:
-            self.model = multi_gpu_model(self.model, clargs.n_gpus)
+        self.model = multi_gpu_model(self.model, clargs.n_gpus)
 
         self.history = self.model.fit(vae_train, train_labels,
                                     shuffle = True,
@@ -399,11 +400,14 @@ class Chromosome(VAEPredictor):
 
             print('\nFitness: {}'.format(self.fitness))
         
+        if self.save_as_you_train: self.save()
+    
+    def save(self):
         joblib_save_loc = '{}/{}_{}_{}_trained_model_output_{}.joblib.save'
         joblib_save_loc = joblib_save_loc.format(self.model_dir, self.run_name,
                                          self.generationID, self.chromosomeID,
                                          self.time_stamp)
-
+        
         wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
         wghts_save_loc = wghts_save_loc.format(self.model_dir, self.run_name,
                                          self.generationID, self.chromosomeID,
@@ -444,7 +448,7 @@ def save_generation_to_tree(generation, verbose = False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('run_name', type=str, default='ga_test_',
-                help='tag for current run')
+               help='tag for current run')
     parser.add_argument('--predictor_type', type=str, default="classification",
                 help='select `classification` or `regression`')
     parser.add_argument('--batch_size', type=int, default=128,
@@ -502,10 +506,10 @@ if __name__ == '__main__':
                 help='Input the number of GPUs to use for this operation.')
     
     clargs = parser.parse_args()
-    
-    if clargs.n_gpus > 1:
-        from keras.utils import multi_gpu_model
-    
+    clargs.n_gpus = 1
+
+    # run_name = 'ga_test_mutli_gpus'
+    # clargs.run_name = run_name
     run_name = clargs.run_name
     num_epochs = clargs.num_epochs
     cross_prob = clargs.cross_prob
@@ -545,7 +549,7 @@ if __name__ == '__main__':
     if make_plots:
         fig = plt.gcf()
         fig.show()
-
+        
     start = time()
     # while gen_num < iterations:
     for _ in range(iterations):
