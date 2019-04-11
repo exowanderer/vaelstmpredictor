@@ -367,6 +367,9 @@ class Chromosome(VAEPredictor):
         validation_data = (vae_features_val, vae_labels_val)
         train_labels = [DI.labels_train, predictor_train, predictor_train, DI.labels_train]
         
+        if clargs.n_gpus > 1:
+            self.model = multi_gpu_model(self.model, clargs.n_gpus)
+        
         self.history = self.model.fit(vae_train, train_labels,
                                     shuffle = True,
                                     epochs = clargs.num_epochs,
@@ -495,9 +498,14 @@ if __name__ == '__main__':
                 help='print more [INFO] and [DEBUG] statements')
     parser.add_argument('--make_plots', action='store_true',
                 help='make plots of growth in the best_loss over generations')
+    parser.add_argument('-g', '--n_gpus', type=int, default=1,
+                help='Input the number of GPUs to use for this operation.')
     
     clargs = parser.parse_args()
     
+    if clargs.n_gpus > 1:
+        from keras.utils.training_utils import multi_gpu_model
+
     run_name = clargs.run_name
     num_epochs = clargs.num_epochs
     cross_prob = clargs.cross_prob
