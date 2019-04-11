@@ -244,7 +244,7 @@ def mutate(child, prob, range_change = 25, forced_evolve = False,
 
     return child, mutation_happened
 
-class ChromosomeFull(VAEPredictor):
+class Chromosome(VAEPredictor):
     # params = ["size_vae_hidden1", "size_vae_hidden2", "size_vae_hidden3", 
     #             "size_vae_hidden4", "size_vae_hidden5", 
     #           "vae_latent_dim", 
@@ -339,7 +339,7 @@ class ChromosomeFull(VAEPredictor):
         verbose = verbose or self.verbose
         
         DI = self.data_instance
-        
+
         predictor_train = to_categorical(DI.train_labels, self.clargs.n_labels)
         predictor_validation = to_categorical(DI.valid_labels,self.clargs.n_labels)
 
@@ -369,8 +369,9 @@ class ChromosomeFull(VAEPredictor):
         validation_data = (vae_features_val, vae_labels_val)
         train_labels = [DI.labels_train, predictor_train, predictor_train, DI.labels_train]
         
-        self.model = multi_gpu_model(self.model, clargs.n_gpus)
-
+        if clargs.n_gpus > 1:
+            self.model = multi_gpu_model(self.model, clargs.n_gpus)
+        
         self.history = self.model.fit(vae_train, train_labels,
                                     shuffle = True,
                                     epochs = clargs.num_epochs,
@@ -401,13 +402,13 @@ class ChromosomeFull(VAEPredictor):
             print('\nFitness: {}'.format(self.fitness))
         
         if self.save_as_you_train: self.save()
-    
+
     def save(self):
         joblib_save_loc = '{}/{}_{}_{}_trained_model_output_{}.joblib.save'
         joblib_save_loc = joblib_save_loc.format(self.model_dir, self.run_name,
                                          self.generationID, self.chromosomeID,
                                          self.time_stamp)
-        
+
         wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
         wghts_save_loc = wghts_save_loc.format(self.model_dir, self.run_name,
                                          self.generationID, self.chromosomeID,
@@ -549,7 +550,7 @@ if __name__ == '__main__':
     if make_plots:
         fig = plt.gcf()
         fig.show()
-        
+
     start = time()
     # while gen_num < iterations:
     for _ in range(iterations):
