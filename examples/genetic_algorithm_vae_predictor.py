@@ -369,7 +369,7 @@ class Chromosome(VAEPredictor):
         
         if clargs.n_gpus > 1:
             self.model = multi_gpu_model(self.model, clargs.n_gpus)
-        
+
         self.history = self.model.fit(vae_train, train_labels,
                                     shuffle = True,
                                     epochs = clargs.num_epochs,
@@ -504,8 +504,8 @@ if __name__ == '__main__':
     clargs = parser.parse_args()
     
     if clargs.n_gpus > 1:
-        from keras.utils.training_utils import multi_gpu_model
-
+        from keras.utils import multi_gpu_model
+    
     run_name = clargs.run_name
     num_epochs = clargs.num_epochs
     cross_prob = clargs.cross_prob
