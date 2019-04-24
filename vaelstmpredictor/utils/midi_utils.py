@@ -11,7 +11,6 @@ import numpy as np
 import sys
 import argparse
 import numpy as np
-import pretty_midi
 # import librosa
 
 RANGE = 128
@@ -37,6 +36,7 @@ def piano_roll_to_pretty_midi(piano_roll, fs=100, program=0):
         the piano roll.
 
     '''
+    import pretty_midi
     notes, frames = piano_roll.shape
     pm = pretty_midi.PrettyMIDI()
     instrument = pretty_midi.Instrument(program=program)
