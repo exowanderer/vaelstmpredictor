@@ -110,11 +110,11 @@ if __name__ == '__main__':
 	chrom_params['vae_hidden_dims'] = vae_hidden_dims
 	chrom_params['dnn_hidden_dims'] = dnn_hidden_dims
 	chrom_params['vae_latent_dim'] = clargs.size_vae_latent
-	chrom_params['batch_size'] = clargs.batch_size
-	chrom_params['dnn_log_var_prior'] = clargs.dnn_log_var_prior
-	chrom_params['optimizer'] = clargs.optimizer
-	chrom_params['use_prev_input'] = False
-	chrom_params['predictor_type'] = clargs.predictor_type
+	# chrom_params['batch_size'] = clargs.batch_size
+	# chrom_params['dnn_log_var_prior'] = clargs.dnn_log_var_prior
+	# chrom_params['optimizer'] = clargs.optimizer
+	# chrom_params['use_prev_input'] = False
+	# chrom_params['predictor_type'] = clargs.predictor_type
 	chrom_params['clargs'] = clargs
 	chrom_params['generationID'] = clargs.generationID
 	chrom_params['chromosomeID'] = clargs.chromosomeID
@@ -123,7 +123,7 @@ if __name__ == '__main__':
 	chrom_params['dnn_weight'] = clargs.dnn_weight
 	chrom_params['dnn_kl_weight'] = clargs.dnn_kl_weight
 
-	data_instance = MNISTData(batch_size = chrom_params['batch_size'])
+	data_instance = MNISTData(batch_size = clargs.batch_size)
 	
 	n_train, n_features = data_instance.data_train.shape
 	n_test, n_features = data_instance.data_valid.shape
@@ -132,9 +132,9 @@ if __name__ == '__main__':
 	clargs.n_labels = len(np.unique(data_instance.train_labels))
 	
 	chrom_params['data_instance'] = data_instance
-	chrom_params['original_dim'] = clargs.original_dim
-	chrom_params['dnn_out_dim'] = clargs.n_labels
-	chrom_params['dnn_latent_dim'] = clargs.n_labels - 1
+	# chrom_params['original_dim'] = clargs.original_dim
+	# chrom_params['dnn_out_dim'] = clargs.n_labels
+	# chrom_params['dnn_latent_dim'] = clargs.n_labels - 1
 	
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
