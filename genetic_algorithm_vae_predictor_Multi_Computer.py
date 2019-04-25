@@ -36,7 +36,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 
 	private_key = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	key_filename = private_key
-	'''
+	
 	machines = [# {"host": "192.168.0.1", "username": "acc", 
 				#   "key_filename": key_filename},
 				{"host": "172.16.50.181", "username": "acc", 
@@ -60,14 +60,12 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				{"host": "172.16.50.237", "username": "acc", 
 					"key_filename": key_filename}
 				]
-	'''
-	machines = [{"host": "192.168.86.43", "username": "jonathan", 
-					"key_filename": key_filename}]
+	
 	queue = mp.Queue()
-
+	
 	#Create Processes
 	for machine in machines: queue.put(machine)
-
+	
 	alldone = False
 	while not alldone:
 		alldone = True
@@ -100,10 +98,14 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 
 				sql_json = requests.get(getFitness, params=json_ID).json()
 
-				with open(table_name, 'a') as f_out:
-				    json.dump(sql_json, f_out)
-				
-				chrom.fitness = sql_json['fitness']
+				if isinstance(sql_json, dict):
+					with open(table_name, 'a') as f_out:
+					    json.dump(sql_json, f_out)
+					
+					chrom.fitness = sql_json['fitness']
+				else:
+					print('SQL Request Failed: sql_json = {}'.format(sql_json))
+					chrom.fitness = sql_json or 0
 
 def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 					 zip_filename="vaelstmpredictor.zip", verbose=True):
