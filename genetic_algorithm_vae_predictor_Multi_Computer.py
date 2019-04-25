@@ -206,10 +206,25 @@ def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 	# transport.close()
 
 	queue.put(machine)
+
+	table_location = clargs.table_location
+	table_name = '{}/{}_{}_{}_fitness_table_{}.csv'
+	table_name = table_name.format(clargs.table_location, 
+								clargs.run_name, clargs.generationID, 
+								clargs.chromosomeID, clargs.time_stamp)
+
+	with open(table_name, 'r') as f_in:
+		check = 'fitness:'
+		for line in f_in.readlines():
+			if 'generationID:{}'.format(clargs.generationID) in line:
+				if 'chromosomeID:{}'.format(clargs.chromosomeID) in line:
+					fitness = line.split(check)[1].split(',')[0]
+					chromosome.fitness = float(fitness)
+					break
+
 	chromosome.isTrained = True
 	print("Command Executed")
-	ssh.close()
-				
+	ssh.close()				
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -358,7 +373,7 @@ if __name__ == '__main__':
 												verbose=verbose)
 			
 		train_generation(new_generation, clargs)
-
+		
 		print('Time for Generation{}: {} minutes'.format(child1.generationID, 
 												(time() - start_while)//60))
 
