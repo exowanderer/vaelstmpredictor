@@ -104,7 +104,6 @@ if __name__ == '__main__':
 	port = 22
 	vae_hidden_dims = [clargs.size_vae_hidden]*clargs.num_vae_layers
 	dnn_hidden_dims = [clargs.size_dnn_hidden]*clargs.num_dnn_layers
-	data_instance = MNISTData(batch_size = chrom_params['batch_size'])
 
 	chrom_params = {}
 	chrom_params['verbose'] = clargs.verbose
@@ -127,6 +126,8 @@ if __name__ == '__main__':
 	chrom_params['vae_kl_weight'] = clargs.vae_kl_weight
 	chrom_params['dnn_weight'] = clargs.dnn_weight
 	chrom_params['dnn_kl_weight'] = clargs.dnn_kl_weight
+	
+	data_instance = MNISTData(batch_size = chrom_params['batch_size'])
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
@@ -177,7 +178,7 @@ if __name__ == '__main__':
 	stdin, stdout, stderr = ssh.exec_command(command)
 
 	clargs.fitness = chrom.fitness
-	
+
 	print('Result: ', end=" ")
 	print('GenerationID: {}'.format(clargs.generationID), end=" ")
 	print('ChromosomeID: {}'.format(clargs.chromosomeID), end=" ")
