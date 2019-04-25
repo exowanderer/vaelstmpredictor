@@ -9,7 +9,7 @@ from keras.layers import Input, Dense, Lambda, Reshape, concatenate
 from keras.models import Model
 from keras.losses import binary_crossentropy, categorical_crossentropy
 from keras.losses import mean_squared_error
-from keras.utils import multi_gpu_model
+#from keras.utils.multi_gpu_utils import multi_gpu_model
 
 # from ..utils.midi_utils import write_sample
 
@@ -54,7 +54,7 @@ class VAEPredictor(object):
                     vae_latent_dim, dnn_out_dim = None, 
                     dnn_latent_dim = None, batch_size = 128, 
                     dnn_log_var_prior = 0.0, optimizer = 'adam-wn', 
-                    use_prev_input = False, dnn_type = 'classification'):
+                    use_prev_input = False, predictor_type = 'classification'):
         
         self.predictor_type = predictor_type
         self.original_dim = original_dim
@@ -174,11 +174,15 @@ class VAEPredictor(object):
         return -0.5*K.sum(vs, axis = -1)
 
     def dnn_rec_loss(self, labels, preds):
+        
         if self.predictor_type is 'classification':
             rec_loss = categorical_crossentropy(labels, preds)
             # rec_loss = self.dnn_latent_dim * rec_loss
-        if self.predictor_type is 'regression':
+        elif self.predictor_type is 'regression':
             rec_loss = mean_squared_error(labels, preds)
+        else:
+            rec_loss = categorical_crossentropy(labels, preds)
+        
         return rec_loss
 
     def dnn_sampling(self, args):
@@ -199,19 +203,13 @@ class VAEPredictor(object):
         sum_exp_dnn_norm = K.sum(K.exp(dnn_norm), axis = -1)[:,None]
         return K.exp(dnn_norm)/sum_exp_dnn_norm
 
-    def get_model(self, batch_size = None, original_dim = None, 
+    def get_model(self, num_gpus = 0, batch_size = None, original_dim = None, 
                   vae_hidden_dims = None, vae_latent_dim = None, 
                   dnn_hidden_dims = None, use_prev_input = False, 
-                  dnn_weight = 1.0, vae_kl_weight = 1.0, n_gpus = 1,
+                  dnn_weight = 1.0, vae_kl_weight = 1.0, 
                   dnn_kl_weight = 1.0, dnn_log_var_prior = 0.0, 
                   hidden_activation = 'relu', output_activation = 'sigmoid'):
         
-        # for self.compile()
-        self.n_gpus = n_gpus
-        self.dnn_weight = dnn_weight
-        self.dnn_kl_weight = dnn_kl_weight
-        self.vae_kl_weight = vae_kl_weight
-
         self.hidden_activation = hidden_activation
         self.output_activation = output_activation
         if dnn_log_var_prior is not None:
@@ -272,15 +270,10 @@ class VAEPredictor(object):
         self.model = Model(input_stack, out_stack)
         self.enc_model = Model(input_stack, enc_stack)
 
-        self.compile()
+        #Make The Model Parallel Using Multiple GPUs
+        #if(num_gpus >= 2):
+        #    self.model = multi_gpu_model(self.model, gpus=num_gpus)
 
-    def compile(self, n_gpus = None):
-        
-        n_gpus = n_gpus or self.n_gpus
-        
-        if n_gpus > 1:
-            self.model = multi_gpu_model(self.model, gpus=n_gpus)
-        
         self.model.compile(  
                 optimizer = self.optimizer,
 
@@ -290,9 +283,9 @@ class VAEPredictor(object):
                         'vae_latent_args': self.vae_kl_loss},
 
                 loss_weights = {'vae_reconstruction': 1.0,
-                                'predictor_latent_layer': self.dnn_kl_weight,
-                                'predictor_latent_mod':self.dnn_weight,
-                                'vae_latent_args': self.vae_kl_weight},
+                                'predictor_latent_layer': dnn_kl_weight,
+                                'predictor_latent_mod':dnn_weight,
+                                'vae_latent_args': vae_kl_weight},
 
                  # metrics=['acc', 'mse'])
                 metrics = {'predictor_latent_layer': ['acc', 'mse']})
@@ -310,7 +303,7 @@ class VAEPredictor(object):
             inp_vae_loss = binary_crossentropy(input_layer, vae_reconstruction)
             inp_vae_loss = self.original_dim * inp_vae_loss
         
-        if self.predictor_type is 'classification':
+        elif self.predictor_type is 'classification':
             ''' I am left to assume that the vae_reconstruction_loss for a 
                     non-binary data source (i.e. *not* piano keys) should be 
                     a regression problem. 
@@ -318,7 +311,9 @@ class VAEPredictor(object):
                     the features being compared are discrete classes'''
             inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
         
-        if self.predictor_type is 'regression':
+        elif self.predictor_type is 'regression':
+            inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
+        else:
             inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
         
         return inp_vae_loss
@@ -477,29 +472,3 @@ class VAEPredictor(object):
         rando = np.random.rand(len(dnn_latent_mean.squeeze()))
 
         return np.float32(rando <= dnn_latent_mean)
-
-    def save(self):
-        joblib_save_loc = '{}/{}_{}_{}_trained_model_output_{}.joblib.save'
-        joblib_save_loc = joblib_save_loc.format(self.model_dir, self.run_name,
-                                         self.generationID, self.chromosomeID,
-                                         self.time_stamp)
-
-        wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
-        wghts_save_loc = wghts_save_loc.format(self.model_dir, self.run_name,
-                                         self.generationID, self.chromosomeID,
-                                         self.time_stamp)
-        
-        model_save_loc = '{}/{}_{}_{}_trained_model_full_{}.save'
-        model_save_loc = model_save_loc.format(self.model_dir, self.run_name,
-                                         self.generationID, self.chromosomeID,
-                                         self.time_stamp)
-        
-        self.neural_net.save_weights(wghts_save_loc, overwrite=True)
-        self.neural_net.save(model_save_loc, overwrite=True)
-
-        try:
-            joblib.dump({'best_loss':self.best_loss,'history':self.history}, 
-                        joblib_save_loc)
-        except Exception as e:
-            print(str(e))
-
