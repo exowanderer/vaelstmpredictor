@@ -30,8 +30,9 @@ class Chromosome(VAEPredictor):
     def __init__(self, clargs, data_instance, vae_latent_dim, 
                 vae_hidden_dims, dnn_hidden_dims, 
                 generationID = 0, chromosomeID = 0, 
-                vae_kl_weight = 1.0, dnn_weight = 1.0, 
-                dnn_kl_weight = 1.0, verbose = False):
+                vae_kl_weight = 1.0, vae_weight = 1.0, 
+                dnn_weight = 1.0, dnn_kl_weight = 1.0, 
+                verbose = False):
 
         self.verbose = verbose
         self.clargs = clargs
@@ -178,26 +179,27 @@ class Chromosome(VAEPredictor):
             print('\nFitness: {}'.format(self.fitness))
             print('\n\n')
         
-        self.joblib_save_loc = '{}/{}_{}_{}_trained_model_output_{}.joblib.save'
-        self.joblib_save_loc = joblib_save_loc.format(self.model_dir, self.run_name,
-                                         self.generationID, self.chromosomeID,
-                                         self.time_stamp)
+        self.joblib_save_loc ='{}/{}_{}_{}_trained_model_output_{}.joblib.save'
+        self.joblib_save_loc = joblib_save_loc.format(self.model_dir, 
+                                        self.run_name, self.generationID, 
+                                        self.chromosomeID, self.time_stamp)
 
         self.wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
-        self.wghts_save_loc = wghts_save_loc.format(self.model_dir, self.run_name,
-                                         self.generationID, self.chromosomeID,
-                                         self.time_stamp)
+        self.wghts_save_loc = wghts_save_loc.format(self.model_dir, 
+                                        self.run_name, self.generationID, 
+                                        self.chromosomeID, self.time_stamp)
         
         self.model_save_loc = '{}/{}_{}_{}_trained_model_full_{}.save'
-        self.model_save_loc = model_save_loc.format(self.model_dir, self.run_name,
-                                         self.generationID, self.chromosomeID,
-                                         self.time_stamp)
+        self.model_save_loc = model_save_loc.format(self.model_dir, 
+                                        self.run_name, self.generationID, 
+                                        self.chromosomeID, self.time_stamp)
         
         self.neural_net.save_weights(wghts_save_loc, overwrite=True)
         self.neural_net.save(model_save_loc, overwrite=True)
 
         try:
-            joblib.dump({'best_loss':self.best_loss,'history':self.history}, 
-                        joblib_save_loc)
+            joblib.dump({'best_loss':self.best_loss,
+                            'history':self.history}, 
+                            joblib_save_loc)
         except Exception as e:
             print(str(e))

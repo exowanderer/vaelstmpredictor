@@ -206,7 +206,7 @@ class VAEPredictor(object):
     def get_model(self, num_gpus = 0, batch_size = None, original_dim = None, 
                   vae_hidden_dims = None, vae_latent_dim = None, 
                   dnn_hidden_dims = None, use_prev_input = False, 
-                  dnn_weight = 1.0, vae_kl_weight = 1.0, 
+                  dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
                   dnn_kl_weight = 1.0, dnn_log_var_prior = 0.0, 
                   hidden_activation = 'relu', output_activation = 'sigmoid'):
         
@@ -282,7 +282,7 @@ class VAEPredictor(object):
                         'predictor_latent_mod': self.dnn_rec_loss,
                         'vae_latent_args': self.vae_kl_loss},
 
-                loss_weights = {'vae_reconstruction': 1.0,
+                loss_weights = {'vae_reconstruction': vae_weight,
                                 'predictor_latent_layer': dnn_kl_weight,
                                 'predictor_latent_mod':dnn_weight,
                                 'vae_latent_args': vae_kl_weight},
