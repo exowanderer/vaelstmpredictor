@@ -110,8 +110,6 @@ if __name__ == '__main__':
 	chrom_params['vae_hidden_dims'] = vae_hidden_dims
 	chrom_params['dnn_hidden_dims'] = dnn_hidden_dims
 	chrom_params['vae_latent_dim'] = clargs.size_vae_latent
-	
-	chrom_params['dnn_latent_dim'] = clargs.n_labels - 1
 	chrom_params['batch_size'] = clargs.batch_size
 	chrom_params['dnn_log_var_prior'] = clargs.dnn_log_var_prior
 	chrom_params['optimizer'] = clargs.optimizer
@@ -134,9 +132,10 @@ if __name__ == '__main__':
 	clargs.original_dim = n_features
 	clargs.n_labels = len(np.unique(data_instance.train_labels))
 	
-	chrom_params['dnn_out_dim'] = clargs.n_labels
 	chrom_params['original_dim'] = clargs.original_dim
-
+	chrom_params['dnn_out_dim'] = clargs.n_labels
+	chrom_params['dnn_latent_dim'] = clargs.n_labels - 1
+	
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
 	hostname = s.getsockname()[0]
