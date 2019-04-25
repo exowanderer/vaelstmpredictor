@@ -165,9 +165,9 @@ def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 	for key,val in clargs.__dict__.items():
 		command.append('--{} {}'.format(key,val))
 	
-	command += " ".join(command)
-
-	print("Executing command:\n\t" + command)
+	command = " ".join(command)
+	
+	print("Executing command:\n\t{}".format(command))
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
 	
