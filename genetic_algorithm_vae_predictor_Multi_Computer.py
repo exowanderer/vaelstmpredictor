@@ -72,18 +72,22 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 		alldone = True
 		for chrom in generation:
 			if not chrom.isTrained:
-				print("Creating Process for Chromosome {}".format(chrom.chromosomeID), end=" on machine ")
-				#Find a Chromosome that is not trained yet
+				print("Creating Process for Chromosome {}".format(
+							chrom.chromosomeID), end=" on machine ")
+				# Find a Chromosome that is not trained yet
 				alldone = False
-				#Wait for queue to have a value, which is the ID of the machine that is done.
+				
+				# Wait for queue to have a value, 
+				#	which is the ID of the machine that is done.
 				machine = queue.get()
 				print('{}'.format(machine['host']))
-				process = mp.Process(target=train_chromosome, args=(chrom, machine, queue))
+				process = mp.Process(target=train_chromosome, 
+									args=(chrom, machine, queue))
 				process.start()
 				
-				clargs.generationID = chromosome.generationID
-				clargs.chromosomeID = chromosome.chromosomeID
-				
+				clargs.generationID = chrom.generationID
+				clargs.chromosomeID = chrom.chromosomeID
+
 				table_location = clargs.table_location
 				table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
 				table_name= table_name.format(clargs.table_location, 
@@ -92,7 +96,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 
 				sql_json = requests.get(getURL).json()
 				json.dump(sql_json, table_name)
-
+				
 				# sql_json = sql_json.content.decode('utf-8')
 				# # Store dictionary of planetary identification parameters
 				# json.loads(sql_json)
