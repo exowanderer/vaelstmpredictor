@@ -31,7 +31,7 @@ from paramiko import SSHClient, SFTPClient, Transport, AutoAddPolicy, ECDSAKey
 import multiprocessing as mp
 
 def train_generation(generation, clargs, private_key='id_ecdsa'):
-	getURL = 'http://philippesaade11.pythonanywhere.com/GetChrom'
+	getURL = 'https://philippesaade11.pythonanywhere.com/GetChrom'
 
 	private_key = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	key_filename = private_key
@@ -94,13 +94,18 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 										clargs.run_name, clargs.generationID, 
 										clargs.chromosomeID, clargs.time_stamp)
 
-				sql_json = requests.get(getURL).json()
-				json.dump(sql_json, table_name)
-				
-				# sql_json = sql_json.content.decode('utf-8')
-				# # Store dictionary of planetary identification parameters
-				# json.loads(sql_json)
+				json_ID = {'generationID':clargs.generationID,
+						   'chromosomeID':clargs.chromosomeID}
 
+				sql_json = requests.get(getURL, params=json_ID).json()
+
+				with open(table_name, 'w') as f_out:
+				    json.dump(sql_json, f_out)
+				
+				for entry in sql_json:
+					if entry['generationID'] is json_ID['generationID']:
+						if entry['chromosomeID'] is json_ID['chromosomeID']:
+							chrom.fitness = entry['fitness']
 
 def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 					 zip_filename="vaelstmpredictor.zip", verbose=True):

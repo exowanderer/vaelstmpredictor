@@ -185,21 +185,22 @@ if __name__ == '__main__':
 	stdin, stdout, stderr = ssh.exec_command(command)
 
 	clargs.fitness = chrom.fitness
-
+	
+	print('\n[INFO]')
 	print('Result: ', end=" ")
 	print('GenerationID: {}'.format(clargs.generationID), end=" ")
 	print('ChromosomeID: {}'.format(clargs.chromosomeID), end=" ")
-	print('Fitness: {}'.format(clargs.fitness))
-
+	print('Fitness: {}\n'.format(clargs.fitness))
+	
 	putURL = 'https://philippesaade11.pythonanywhere.com/AddChrom'
 	
-	print('Storing to SQL db at {}'.format(putURL))
+	print('[INFO] Storing to SQL db at {}'.format(putURL))
 	
 	try:
 		req = requests.get(url = putURL, params = clargs.__dict__)
 		if req.json() == 1:
-			print('SQL Injectin Completed Successfully')
+			print('[INFO] Remote SQL Entry Added Successfully')
 		else:
-			print('The World Has Ended!')
+			print('[WARNING] !! The World Has Ended !!')
 	except Exception as e:
-		print('[WARNING] SQL Entry Failed:\n{}'.format(str(e)))
+		print('[WARNING] Remote SQL Entry Failed:\n{}'.format(str(e)))
