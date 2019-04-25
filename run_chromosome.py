@@ -177,7 +177,7 @@ if __name__ == '__main__':
 	stdin, stdout, stderr = ssh.exec_command(command)
 
 	clargs.fitness = chrom.fitness
-	print('this is confusing')
+	
 	print('Result: ', end=" ")
 	print('GenerationID: {}'.format(clargs.generationID), end=" ")
 	print('ChromosomeID: {}'.format(clargs.chromosomeID), end=" ")
