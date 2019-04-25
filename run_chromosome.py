@@ -107,7 +107,6 @@ if __name__ == '__main__':
 
 	chrom_params = {}
 	chrom_params['verbose'] = clargs.verbose
-	chrom_params['original_dim'] = clargs.original_dim # MNIST
 	chrom_params['vae_hidden_dims'] = vae_hidden_dims
 	chrom_params['dnn_hidden_dims'] = dnn_hidden_dims
 	chrom_params['vae_latent_dim'] = clargs.size_vae_latent
@@ -126,9 +125,15 @@ if __name__ == '__main__':
 	chrom_params['vae_kl_weight'] = clargs.vae_kl_weight
 	chrom_params['dnn_weight'] = clargs.dnn_weight
 	chrom_params['dnn_kl_weight'] = clargs.dnn_kl_weight
-	
-	data_instance = MNISTData(batch_size = chrom_params['batch_size'])
 
+	data_instance = MNISTData(batch_size = chrom_params['batch_size'])
+	
+	n_train, n_features = data_instance.data_train.shape
+	n_test, n_features = data_instance.data_valid.shape
+	
+	clargs.original_dim = n_features
+	chrom_params['original_dim'] = clargs.original_dim # MNIST
+	
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
 	hostname = s.getsockname()[0]
@@ -195,4 +200,4 @@ if __name__ == '__main__':
 		else:
 			print('The World Has Ended!')
 	except Exception as e:
-		print('[WARNING] SQL Entry Failed:\n{}'.format(putURL))
+		print('[WARNING] SQL Entry Failed:\n{}'.format(str(e)))
