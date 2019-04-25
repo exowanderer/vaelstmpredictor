@@ -157,7 +157,7 @@ def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 	
 	command = []
 	command.append('cd vaelstmpredictor; ')
-	command.append('../anaconda3/envs/tf_pu/bin/python run_chromosome.py ')
+	command.append('../anaconda3/envs/tf_gpu/bin/python run_chromosome.py ')
 	command.append('--table_location {} '.format(clargs.table_location))
 	command.append('--generationID {} '.format(chromosome.generationID))
 	command.append('--chromosomeID {} '.format(chromosome.chromosomeID))
