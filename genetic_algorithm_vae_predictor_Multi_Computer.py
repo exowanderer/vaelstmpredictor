@@ -166,7 +166,7 @@ def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 		command.append('--{} {}'.format(key,val))
 	
 	command = " ".join(command)
-	
+
 	print("Executing command:\n\t{}".format(command))
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
@@ -195,15 +195,15 @@ def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 	if "".join(stdout.readlines()[-4:]) == "done":
 		print("Trained Successfully")
 
-	transport = Transport((machine["host"], port))
-	pk = ECDSAKey.from_private_key(open(machine['key_filename']))
-	transport.connect(username = machine["username"], pkey=pk)
-	
-	sftp = SFTPClient.from_transport(transport)
-	sftp.pull(param_filename, 'vaelstmpredictor/{}'.format(param_filename))
-	
-	sftp.close()
-	transport.close()
+	# transport = Transport((machine["host"], port))
+	# pk = ECDSAKey.from_private_key(open(machine['key_filename']))
+	# transport.connect(username = machine["username"], pkey=pk)
+	# 
+	# sftp = SFTPClient.from_transport(transport)
+	# sftp.put(param_filename, 'vaelstmpredictor/{}'.format(param_filename))
+	# 
+	# sftp.close()
+	# transport.close()
 
 	queue.put(machine)
 	chromosome.isTrained = True
