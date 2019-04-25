@@ -4,6 +4,7 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import socket
 from time import time
 import json
 import requests
@@ -82,10 +83,10 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				table_name= table_name.format(clargs.table_location, 
 										clargs.run_name, clargs.generationID, 
 										clargs.chromosomeID, clargs.time_stamp)
-				
+
 				sql_json = requests.get(getURL).json()
 				json.dump(sql_json, table_name)
-				
+
 				# sql_json = sql_json.content.decode('utf-8')
 				# # Store dictionary of planetary identification parameters
 				# json.loads(sql_json)
