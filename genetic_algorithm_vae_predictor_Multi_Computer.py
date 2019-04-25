@@ -31,7 +31,8 @@ from paramiko import SSHClient, SFTPClient, Transport, AutoAddPolicy, ECDSAKey
 import multiprocessing as mp
 
 def train_generation(generation, clargs, private_key='id_ecdsa'):
-	getURL = 'https://philippesaade11.pythonanywhere.com/GetChrom'
+	getChrom = 'https://philippesaade11.pythonanywhere.com/GetChrom'
+	getFitness = 'http://philippesaade11.pythonanywhere.com/GetFitness'
 
 	private_key = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	key_filename = private_key
@@ -97,15 +98,12 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				json_ID = {'generationID':clargs.generationID,
 						   'chromosomeID':clargs.chromosomeID}
 
-				sql_json = requests.get(getURL, params=json_ID).json()
+				sql_json = requests.get(getFitness, params=json_ID).json()
 
-				with open(table_name, 'w') as f_out:
+				with open(table_name, 'a') as f_out:
 				    json.dump(sql_json, f_out)
 				
-				for entry in sql_json:
-					if entry['generationID'] is json_ID['generationID']:
-						if entry['chromosomeID'] is json_ID['chromosomeID']:
-							chrom.fitness = entry['fitness']
+				chrom.fitness = sql_json['fitness']
 
 def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 					 zip_filename="vaelstmpredictor.zip", verbose=True):
