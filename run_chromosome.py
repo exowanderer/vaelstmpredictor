@@ -116,7 +116,6 @@ if __name__ == '__main__':
 	chrom_params['use_prev_input'] = False
 	chrom_params['predictor_type'] = clargs.predictor_type
 	chrom_params['clargs'] = clargs
-	chrom_params['data_instance'] = data_instance
 	chrom_params['generationID'] = clargs.generationID
 	chrom_params['chromosomeID'] = clargs.chromosomeID
 	chrom_params['vae_weight'] = clargs.vae_weight
@@ -132,6 +131,7 @@ if __name__ == '__main__':
 	clargs.original_dim = n_features
 	clargs.n_labels = len(np.unique(data_instance.train_labels))
 	
+	chrom_params['data_instance'] = data_instance
 	chrom_params['original_dim'] = clargs.original_dim
 	chrom_params['dnn_out_dim'] = clargs.n_labels
 	chrom_params['dnn_latent_dim'] = clargs.n_labels - 1
