@@ -26,18 +26,18 @@ if __name__ == '__main__':
 				help='optimizer name') 
 	parser.add_argument('--num_epochs', type=int, default=200,
 				help='number of epochs')
-	# parser.add_argument('--start_small', action='store_true',
-	#			 help='Only the first hidden layer is initially populated')
-	# parser.add_argument('--init_large', action='store_true', 
-	#			 help='Initial the 1st layer in [num_features/2,num_features]')
-	# parser.add_argument('--max_vae_hidden_layers', type=int, default=5, 
-	#			 help='Maximum number of VAE hidden layers')
-	# parser.add_argument('--max_vae_latent', type=int, default=512, 
-	#			 help='Maximum number of VAE neurons per layer')
-	# parser.add_argument('--max_dnn_latent', type=int, default=512, 
-	#			 help='Maximum number of DNN neurons per layer')
-	# parser.add_argument('--max_dnn_hidden_layers', type=int, default=5,
-	#			 help='Maximum number of DNN hidden layers')
+	parser.add_argument('--start_small', action='store_true',
+				 help='Only the first hidden layer is initially populated')
+	parser.add_argument('--init_large', action='store_true', 
+				 help='Initial the 1st layer in [num_features/2,num_features]')
+	parser.add_argument('--max_vae_hidden_layers', type=int, default=5, 
+				 help='Maximum number of VAE hidden layers')
+	parser.add_argument('--max_vae_latent', type=int, default=512, 
+				 help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--max_dnn_latent', type=int, default=512, 
+				 help='Maximum number of DNN neurons per layer')
+	parser.add_argument('--max_dnn_hidden_layers', type=int, default=5,
+				 help='Maximum number of DNN hidden layers')
 	parser.add_argument('--dnn_weight', type=float, default=1.0,
 				help='relative weight on prediction loss')
 	parser.add_argument('--vae_weight', type=float, default=1.0,
