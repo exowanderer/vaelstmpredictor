@@ -113,7 +113,7 @@ if __name__ == '__main__':
 	chrom_params['batch_size'] = clargs.batch_size
 	chrom_params['dnn_log_var_prior'] = clargs.dnn_log_var_prior
 	chrom_params['optimizer'] = clargs.optimizer
-	chrom_params['use_prev_input'] = clargs.use_prev_input
+	chrom_params['use_prev_input'] = False
 	chrom_params['predictor_type'] = clargs.predictor_type
 	chrom_params['clargs'] = clargs
 	chrom_params['data_instance'] = data_instance
