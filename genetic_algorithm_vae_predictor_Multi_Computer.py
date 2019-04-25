@@ -35,7 +35,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 
 	private_key = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	key_filename = private_key
-
+	'''
 	machines = [# {"host": "192.168.0.1", "username": "acc", 
 				#   "key_filename": key_filename},
 				{"host": "172.16.50.181", "username": "acc", 
@@ -59,6 +59,9 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				{"host": "172.16.50.237", "username": "acc", 
 					"key_filename": key_filename}
 				]
+	'''
+	machines = [{"host": "192.168.86.43", "username": "jonathan", 
+					"key_filename": key_filename}]
 	queue = mp.Queue()
 
 	#Create Processes
@@ -77,6 +80,9 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				print('{}'.format(machine['host']))
 				process = mp.Process(target=train_chromosome, args=(chrom, machine, queue))
 				process.start()
+				
+				clargs.generationID = chromosome.generationID
+				clargs.chromosomeID = chromosome.chromosomeID
 				
 				table_location = clargs.table_location
 				table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
