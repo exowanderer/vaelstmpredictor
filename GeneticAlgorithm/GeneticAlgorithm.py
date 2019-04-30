@@ -193,14 +193,14 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				#	which is the ID of the machine that is done.
 				machine = queue.get()
 				print('{}'.format(machine['host']))
-				process = mp.Process(target=blank_function, 
+				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
 				
 				chromosome.fitness = query_sql_database(clargs, chromosome)
 				chromosome.isTrained = 1
 				generation.iloc[k] = chromosome # finally, we figured this out!
-				
+
 				print('\n\n[INFO]')
 				print('GenerationID:{}'.format(chromosome.generationID))
 				print('ChromosomeID:{}'.format(chromosome.chromosomeID))
