@@ -153,7 +153,7 @@ if __name__ == '__main__':
 					 'size_vae_latent': (10,1), 
 					 'size_vae_hidden': (50,1), 
 					 'size_dnn_hidden': (50,1)}
-	
+
 	start = time()
 	# while gen_num < num_generations:
 	for _ in range(num_generations):
@@ -178,7 +178,7 @@ if __name__ == '__main__':
 											param_choices, verbose=verbose)
 
 			gen_query = 'chromosomeID == {}'.format(chromosomeID)
-
+			print(generation.query(gen_query).index)
 			chromID = generation.query(gen_query).index[0]
 			generation.iloc[chromID] = child
 
