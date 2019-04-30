@@ -458,7 +458,7 @@ def cross_over(parent1, parent2, prob, param_choices, verbose=False):
 	if verbose: 
 		print('[INFO] Crossing over with probability: {}'.format(prob))
 
-	if np.random.uniform() >= prob:
+	if random.random() >= prob:
 		child = parent1.copy() # this only sets up the pd.Series framework
 		for param in param_choices:
 			child[param] = random.choice([parent1[param], parent2[param]])
@@ -466,7 +466,7 @@ def cross_over(parent1, parent2, prob, param_choices, verbose=False):
 		child = parent1 if parent1.fitness > parent2.fitness else parent2
 
 	return child
-
+"""
 def cross_over_orig(parent1, parent2, prob, verbose=False):
 	if verbose:
 		print('Crossing over with Parent {} and Parent {}'.format(
@@ -504,8 +504,8 @@ def cross_over_orig(parent1, parent2, prob, verbose=False):
 		return child1, child2, crossover_happened
 	
 	return parent1, parent2, not crossover_happened
-
-def mutate(child, prob, range_change = 25, forced_evolve = False, 
+"""
+def mutate(child, prob, param_choices, forced_evolve = False, 
 			min_layer_size = 2, verbose = False):
 	
 	# explicit declaration
@@ -516,25 +516,21 @@ def mutate(child, prob, range_change = 25, forced_evolve = False,
 														 child.generationID))
 	
 	mutation_happened = False
-	for param in child.params_dict.keys():
+	for param, (range_change, min_val) in param_choices.items():
 		if(random.random() <= prob):
 			mutation_happened = True
 
 			# Compute delta_param step
 			change_p = np.random.uniform(-range_change, range_change)
 
-			if forced_evolve and child.params_dict[param] == zero:
-				# if the layer is empty, then force a mutation
-				change_p = min([min_layer_size, abs(change_p)])
-
 			# Add delta_param to param
-			current_p = child.params_dict[param] + change_p
-			
-			# If layer size param is negative, then set layer size to zero
-			child.params_dict[param] = np.max([child.params_dict[param],zero])
+			current_p = child[param] + change_p, min_val
 
-			# All layers must be integer sized: round and convert
-			child.params_dict[param] = np.int(np.round(current_p))
+			# If param less than `min_val`, then set param to `min_val`
+			child[param] = np.max([child[param], min_val])
+
+			# All params must be integer sized: round and convert
+			child[param] = np.int(np.round(current_p))
 
 	return child, mutation_happened
 
@@ -542,16 +538,16 @@ def save_generation_to_tree(generation, verbose = False):
 	generation_dict = {}
 	if verbose: print('[INFO] Current Generation: ' )
 
-	for ID, member in enumerate(generation):
+	for ID, member in generation.iterrow():
 		if ID not in generation_dict.keys(): generation_dict[ID] = {}
 		
 		if verbose: 
 			print('memberID: {}'.format(ID))
 			print('Fitness: {}'.format(member.fitness))
-			for key,val in member.params_dict.items():
+			for key,val in member.items():
 				print('\t{}: {}'.format(key, val))
 
-		generation_dict[ID]['params'] = member.params_dict
+		generation_dict[ID]['params'] = member
 		generation_dict[ID]['fitness'] = member.fitness
 	
 	return generation_dict

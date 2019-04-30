@@ -148,8 +148,11 @@ if __name__ == '__main__':
 		fig = plt.gcf()
 		fig.show()
 
-	param_choices = ['num_vae_layers', 'num_dnn_layers', 'size_vae_latent', 
-						'size_vae_hidden', 'size_dnn_hidden']
+	param_choices = {'num_vae_layers': (1,1), 
+					 'num_dnn_layers': (1,1), 
+					 'size_vae_latent': (10,1), 
+					 'size_vae_hidden': (50,1), 
+					 'size_dnn_hidden': (50,1)}
 	
 	start = time()
 	# while gen_num < num_generations:
@@ -160,21 +163,29 @@ if __name__ == '__main__':
 		generationID += 1
 		new_generation = []
 		chromosomeID = 0
-		for _ in range(population_size//2):
+		for _ in range(population_size):
 			parent1, parent2 = select_parents(generation)
-			child1, child2, crossover_happened = cross_over(parent1, parent2, 
-									cross_prob, param_choices, verbose=verbose)
+			child, crossover_happened = cross_over(parent1, parent2, 
+											cross_prob, param_choices.keys(), 
+											verbose=verbose)
 			
-			child1.generationID = generationID
-			child1.chromosomeID = chromosomeID; chromosomeID += 1 
-			child2.generationID = generationID
-			child2.chromosomeID = chromosomeID; chromosomeID += 1 
+			child.generationID = generationID
+			child.chromosomeID = chromosomeID
 			
-			child1, mutation_happened1 = mutate(child1, mutate_prob, 
-												verbose=verbose)
-			child1, mutation_happened2 = mutate(child2, mutate_prob, 
-												verbose=verbose)
+			chromosomeID += 1 
 			
+			child, mutation_happened = mutate(child, mutate_prob, 
+											param_choices, verbose=verbose)
+
+			gen_query = 'chromosomeID == {}'.format(chromosomeID)
+
+			chromID = generation.query(gen_query).index[0]
+			generation.iloc[chromID] = child
+
+		assert((generation['generationID'].values == generationID)).all(),\
+			"The GenerationID did not update: should be {}; but is {}".format(
+				generationID, generation['generationID'].values)
+
 		generation = train_generation(generation, clargs)
 		
 		print('Time for Generation{}: {} minutes'.format(child1.generationID, 
