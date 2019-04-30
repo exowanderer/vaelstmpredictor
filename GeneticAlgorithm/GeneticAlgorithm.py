@@ -68,7 +68,9 @@ def query_sql_database(clargs, chromosome):
 	
 	sql_json = requests.get(getFitness, params=json_ID).json()
 	
-	# if isinstance(sql_json, dict):
+	assert(isinstance(sql_json, dict)),\
+		'SQL Request Failed: sql_json = {} with {}'.format(sql_json, json_ID)
+	
 	with open(table_name, 'a') as f_out:
 		json.dump(sql_json, f_out)
 	
@@ -215,7 +217,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 		print('\n\n')
 
 		generation.iloc[k] = chromosome # finally, we figured this out!
-	
+
 	# After all is done: return what you received
 	return generation
 
