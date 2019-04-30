@@ -182,7 +182,8 @@ if __name__ == '__main__':
 			"The GenerationID did not update: should be {}; but is {}".format(
 				generationID, generation['generationID'].values)
 
-		print(new_generation)
+		print('[DEBUG]',new_generation)
+
 		generation = train_generation(new_generation, clargs)
 		
 		print('Time for Generation{}: {} minutes'.format(generationID, 
