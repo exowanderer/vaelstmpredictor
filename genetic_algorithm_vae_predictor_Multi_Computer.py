@@ -163,7 +163,7 @@ if __name__ == '__main__':
 		generationID += 1
 		new_generation = pd.DataFrame([])
 		chromosomeID = 0
-		for _ in range(population_size):
+		for chromosomeID in range(population_size):
 			parent1, parent2 = select_parents(generation)
 			child, crossover_happened = cross_over(parent1, parent2, 
 											cross_prob, param_choices.keys(), 
@@ -175,9 +175,9 @@ if __name__ == '__main__':
 			child, mutation_happened = mutate(child, mutate_prob, 
 											param_choices, verbose=verbose)
 			print(new_generation)
-			new_generation.append(child)
-			chromosomeID += 1
-
+			# new_generation.append(child, index=False)
+			new_generation.loc[chromosomeID] = child
+		
 		assert((new_generation['generationID'].values == generationID)).all(),\
 			"The GenerationID did not update: should be {}; but is {}".format(
 				generationID, generation['generationID'].values)
