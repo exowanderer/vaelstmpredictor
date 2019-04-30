@@ -56,13 +56,13 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 
 def query_sql_database(clargs, chromosome):
 	getFitness = 'http://philippesaade11.pythonanywhere.com/GetFitness'
-
+	
 	table_dir = clargs.table_dir
 	table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
 	table_name = table_name.format(clargs.table_dir, 
 						clargs.run_name, chromosome.generationID, 
 						chromosome.chromosomeID, clargs.time_stamp)
-
+	
 	json_ID = {'generationID':chromosome.generationID,
 			   'chromosomeID':chromosome.chromosomeID}
 	

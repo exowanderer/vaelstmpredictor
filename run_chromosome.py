@@ -30,7 +30,7 @@ def make_sql_output(clargs, chromosome):
 	output['num_epochs'] = clargs.num_epochs
 	output['optimizer'] = clargs.optimizer
 	output['patience'] = clargs.patience
-	output['population_size'] = clargs.population
+	output['population_size'] = clargs.population_size
 	output['prediction_log_var_prior'] = clargs.prediction_log_var_prior
 	output['predictor_type'] = clargs.predictor
 	output['table_dir'] = clargs.table_dir
@@ -76,7 +76,7 @@ def ssh_out_table_entry(clargs, chromosome):
 	table_name = table_name.format(clargs.table_dir, 
 									clargs.run_name, 
 									clargs.time_stamp)
-	
+
 	entry = []
 	entry.append('generationID:{}'.format(clargs.generationID))
 	entry.append('chromosomeID:{}'.format(clargs.chromosomeID))
