@@ -196,7 +196,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
-				
+				print(process)
 				chromosome.fitness = query_sql_database(clargs, chromosome)
 				chromosome.isTrained = 1
 				generation.iloc[k] = chromosome # finally, we figured this out!
