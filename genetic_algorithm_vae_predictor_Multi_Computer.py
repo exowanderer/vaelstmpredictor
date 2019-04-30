@@ -27,6 +27,22 @@ from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
 from GeneticAlgorithm import *
 
+def create_blank_dataframe(generationID, population_size):
+	generation = pd.DataFrame()
+	generation['generationID'] = np.ones(population_size, dtype = int)
+	generation['chromosomeID'] = np.arange(population_size, dtype = int)
+	generation['isTrained'] = np.zeros(population_size, dtype = bool)
+	generation['num_vae_layers'] = np.zeros(population_size, dtype = int)
+	generation['num_dnn_layers'] = np.zeros(population_size, dtype = int)
+	generation['size_vae_latent'] = np.zeros(population_size, dtype = int)
+	generation['size_vae_hidden'] = np.zeros(population_size, dtype = int)
+	generation['size_dnn_hidden'] = np.zeros(population_size, dtype = int)
+	generation['fitness'] = np.zeros(population_size, dtype = int) - 1
+
+	generation['generationID'] = generation['generationID'] * generationID
+
+	return generation
+
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('run_name', type=str, default='ga_test',
@@ -165,12 +181,12 @@ if __name__ == '__main__':
 
 	start = time()
 	# while gen_num < num_generations:
-	for _ in range(num_generations):
+	for _ in range(num_generations-1):
 		start_while = time()
 
 		# Create new generation
 		generationID += 1
-		new_generation = pd.DataFrame(columns=generation.columns)
+		new_generation = create_blank_dataframe(generationID, population_size)
 		chromosomeID = 0
 		for chromosomeID in tqdm(range(population_size)):
 			parent1, parent2 = select_parents(generation)
@@ -185,9 +201,8 @@ if __name__ == '__main__':
 											param_choices, verbose=verbose)
 			
 			print('[INFO] Adding Chromosome: {}'.format(child))
-			new_generation.append(child, ignore_index=True)
-			# new_generation.loc[chromosomeID] = child
-
+			new_generation.iloc[chromosomeID] = child
+		
 		# Re-sort by chromosomeID
 		new_generation = new_generation.sort_values('chromosomeID')
 		print('[DEBUG]', new_generation)
