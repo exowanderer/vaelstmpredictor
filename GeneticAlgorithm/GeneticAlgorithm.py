@@ -246,7 +246,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 			print('\n\n')
 
 			generation.iloc[k] = chromosome
-
+	
 	# After all is done: return what you received
 	return generation
 

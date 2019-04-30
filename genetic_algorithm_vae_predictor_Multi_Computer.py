@@ -200,6 +200,8 @@ if __name__ == '__main__':
 			child, mutation_happened = mutate(child, mutate_prob, 
 											param_choices, verbose=verbose)
 			
+			child.isTrained = mutation_happened*crossover_happened
+			
 			print('[INFO] Adding Chromosome: {}'.format(child))
 			new_generation.iloc[chromosomeID] = child
 
