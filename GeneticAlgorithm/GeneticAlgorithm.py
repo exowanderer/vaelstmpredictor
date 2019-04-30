@@ -189,6 +189,58 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 					print('SQL Request Failed: sql_json = {}'.format(sql_json))
 					chromosome.fitness = sql_json or 0
 
+def generate_ssh_command(clargs, chromosome):
+	command = []
+	command.append('--cd vaelstmpredictor; ')
+	command.append('--../anaconda3/envs/tf_gpu/bin/python run_chromosome.py ')
+	command.append('--run_name {}'.format(clargs.run_name))
+	command.append('--predictor_type {}'.format(clargs.predictor_type))
+	command.append('--batch_size {}'.format(clargs.batch_size))
+	command.append('--optimizer {}'.format(clargs.optimizer))
+	command.append('--num_epochs {}'.format(clargs.num_epochs))
+	command.append('--start_small {}'.format(clargs.start_small))
+	command.append('--init_large {}'.format(clargs.init_large))
+	command.append('--max_vae_hidden_layers {}'.format(
+											clargs.max_vae_hidden_layers))
+	command.append('--max_vae_latent {}'.format(clargs.max_vae_latent))
+	command.append('--max_dnn_latent {}'.format(clargs.max_dnn_latent))
+	command.append('--max_dnn_hidden_layers {}'.format(
+											clargs.max_dnn_hidden_layers))
+	command.append('--dnn_weight {}'.format(clargs.dnn_weight))
+	command.append('--vae_weight {}'.format(clargs.vae_weight))
+	command.append('--vae_kl_weight {}'.format(clargs.vae_kl_weight))
+	command.append('--dnn_kl_weight {}'.format(clargs.dnn_kl_weight))
+	command.append('--prediction_log_var_prior {}'.format(clargs.
+											clargs.prediction_log_var_prior))
+	command.append('--do_log {}'.format(clargs.do_log))
+	command.append('--do_chckpt {}'.format(clargs.do_chckpt))
+	command.append('--patience {}'.format(clargs.patience))
+	command.append('--kl_anneal {}'.format(clargs.kl_anneal))
+	command.append('--w_kl_anneal {}'.format(clargs.w_kl_anneal))
+	command.append('--dnn_log_var_prior {}'.format(clargs.dnn_log_var_prior))
+	command.append('--log_dir {}'.format(clargs.log_dir))
+	command.append('--model_dir {}'.format(clargs.model_dir))
+	command.append('--table_dir {}'.format(clargs.table_dir))
+	command.append('--train_file {}'.format(clargs.train_file))
+	command.append('--cross_prob {}'.format(clargs.cross_prob))
+	command.append('--mutate_prob {}'.format(clargs.mutate_prob))
+	command.append('--population_size {}'.format(clargs.population_size))
+	command.append('--iterations {}'.format(clargs.iterations))
+	command.append('--verbose {}'.format(clargs.verbose))
+	command.append('--time_stamp {}'.format(clargs.time_stamp))
+	command.append('--hostname {}'.format(clargs.hostname))
+	command.append('--port {}'.format(clargs.port))
+	command.append('--table_dir {} '.format(clargs.clargs.table_dir))
+	command.append('--num_vae_layers {}'.format(chromosome.num_vae_layers))
+	command.append('--num_dnn_layers {}'.format(chromosome.num_dnn_layers))
+	command.append('--size_vae_latent {}'.format(chromosome.size_vae_latent))
+	command.append('--size_vae_hidden {}'.format(chromosome.size_vae_hidden))
+	command.append('--size_dnn_hidden {}'.format(chromosome.size_dnn_hidden))
+	command.append('--generationID {} '.format(chromosome.generationID))
+	command.append('--chromosomeID {} '.format(chromosome.chromosomeID))
+	
+	return " ".join(command)
+
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
 					zip_filename = "vaelstmpredictor.zip", 
@@ -253,31 +305,9 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	# sftp.put(param_filename, 'vaelstmpredictor/{}'.format(param_filename))
 	# sftp.close()
 	# transport.close()
+	command = generate_ssh_command(clargs, chromosome)
 	
-	command = []
-	command.append('cd vaelstmpredictor; ')
-	command.append('../anaconda3/envs/tf_gpu/bin/python run_chromosome.py ')
-	# command.append('--table_dir {} '.format(clargs.table_dir))
-	# command.append('--generationID {} '.format(chromosome.generationID))
-	# command.append('--chromosomeID {} '.format(chromosome.chromosomeID))
-	
-	for key,val in clargs.__dict__.items():
-		if key not in ['generationID', 'chromosomeID']:
-			command.append('--{} {}'.format(key,val))
-	
-	for colname in chromosome.keys():
-		command.append('--{} {}'.format(colname, chromosome[colname]))
-
-	"""
-	command.append('--num_vae_layers {} '.format(chromosome.num_vae_layers))
-	command.append('--num_dnn_layers {} '.format(chromosome.num_dnn_layers))
-	command.append('--size_vae_latent {} '.format(chromosome.size_vae_latent))
-	command.append('--size_vae_hidden {} '.format(chromosome.size_vae_hidden))
-	command.append('--size_dnn_hidden {} '.format(chromosome.size_dnn_hidden))
-	"""	
-	command = " ".join(command)
-	
-	print("Executing command:\n\t{}".format(command))
+	print("\n\nExecuting command:\n\t{}".format(command))
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
 	

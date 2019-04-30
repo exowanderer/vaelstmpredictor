@@ -13,7 +13,6 @@ from GeneticAlgorithm import *
 from time import time, sleep
 from vaelstmpredictor.utils.data_utils import MNISTData
 
-
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--run_name', type=str, default='ga_test',
@@ -112,7 +111,7 @@ if __name__ == '__main__':
 	dnn_hidden_dims = [clargs.size_dnn_hidden]*clargs.num_dnn_layers
 	
 	port = clargs.port
-	
+
 	chrom_params = {}
 	chrom_params['verbose'] = clargs.verbose
 	chrom_params['vae_hidden_dims'] = vae_hidden_dims
