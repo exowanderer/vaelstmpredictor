@@ -85,6 +85,26 @@ def query_sql_database(clargs, chromosome):
 	# 
 	# return chromosome.fitness
 
+def query_local_csv(clargs, chromosome):
+	
+	table_dir = clargs.table_dir
+	table_name = '{}/{}_fitness_table_{}.csv'
+	table_name = table_name.format(clargs.table_dir, 
+									clargs.run_name, 
+									clargs.time_stamp)
+
+	if os.path.exists(table_name):
+		with open(table_name, 'r') as f_in:
+			check = 'fitness:'
+			for line in f_in.readlines():
+				ck1 = 'generationID:{}'.format(chromosome.generationID) in line
+				ck2 = 'chromosomeID:{}'.format(chromosome.chromosomeID) in line
+				if ck2 and ck2:
+					fitness = line.split(check)[1].split(',')[0]
+					return float(fitness)
+
+	return -1
+
 def generate_random_chromosomes(population_size,# clargs, data_instance, 
 						min_vae_hidden_layers = 1, min_dnn_hidden_layers = 1, 
 						max_vae_hidden_layers = 5, max_dnn_hidden_layers = 5, 
@@ -207,6 +227,12 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 	for k, chromosome in generation.iterrows():
 
 		chromosome.fitness = query_sql_database(clargs, chromosome)
+		
+		if chromosome.fitness == -1:
+			chromosome.fitness = query_local_csv(clargs, chromosome)
+
+		if chromosome.fitness == -1:
+			continue
 		
 		print('\n\n[INFO]')
 		print('GenerationID:{}'.format(chromosome.generationID))

@@ -283,6 +283,7 @@ if __name__ == '__main__':
 	
 	# try:
 	req = requests.get(url = putURL, params = put_sql_dict)
+	
 	if req.json() == 1:
 		print('[INFO] Remote SQL Entry Added Successfully')
 	else:
