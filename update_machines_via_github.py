@@ -4,19 +4,21 @@ from multiprocessing import Queue, Process
 from os import environ
 
 def update_all_git():
-	hostnames = ['172.16.50.181',
-				'172.16.50.176',
-				'172.16.50.177',
-				'172.16.50.163',
-				'172.16.50.182',
-				'172.16.50.218',
-				'172.16.50.159',
-				'172.16.50.235',
-				'172.16.50.157',
-				'172.16.50.237']
+	machines = [['172.16.50.187',  'vaelstmpredictor/'],
+				 ['172.16.50.181', 'vaelstmpredictor/'],
+				 ['172.16.50.176', 'vaelstmpredictor/'],
+				 ['172.16.50.177', 'vaelstmpredictor/'],
+				 ['172.16.50.163', 'vaelstmpredictor/'],
+				 ['172.16.50.182', 'vaelstmpredictor/'],
+				 ['172.16.50.218', 'vaelstmpredictor/'],
+				 [']172.16.50.159', 'vaelstmpredictor/'],
+				 ['172.16.50.235', 'vaelstmpredictor/'],
+				 ['172.16.50.157', 'vaelstmpredictor/'],
+				 ['172.16.50.237',  'vaelstmpredictor/']]
 	
-	for hostname in hostnames:
-		partial_update = partial(update_one_git, hostname = hostname)
+	for hostname, basedir in machines:
+		partial_update = partial(update_one_git, 
+					hostname = hostname, basedir = basedir)
 		process = Process(target=partial_update)
 		process.start()
 
@@ -51,8 +53,8 @@ def update_one_git(hostname, username = "acc", basedir = 'vaelstmpredictor/',
 		for line in stderr.readlines(): print(line)
 	except Exception as e:
 		print('error on stderr.readlines(): {}'.format(str(e)))
-	
-	print("Command Executed")
+
+	print("Command Executed Successfully")
 	ssh.close()
 
 if __name__ == '__main__':
