@@ -139,9 +139,9 @@ if __name__ == '__main__':
 	generation = train_generation(generation, clargs)
 
 	generationID = 0
-	evolutionary_tree = {}
-	evolutionary_tree[generationID] = save_generation_to_tree(generation,
-															verbose=verbose)
+	# evolutionary_tree = {}
+	# evolutionary_tree[generationID] = save_generation_to_tree(generation,
+	# 														verbose=verbose)
 
 	best_fitness = []
 	if make_plots:
@@ -177,8 +177,8 @@ if __name__ == '__main__':
 		print('Time for Generation{}: {} minutes'.format(child1.generationID, 
 												(time() - start_while)//60))
 
-		generation = new_generation
-		evolutionary_tree[generationID] = save_generation_to_tree(generation,
+		# generation = new_generation
+		# evolutionary_tree[generationID] = save_generation_to_tree(generation,
 															verbose=verbose)
 
 		best_fitness.append(max(chrom.fitness for chrom in generation))
