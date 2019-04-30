@@ -92,15 +92,15 @@ def generate_random_chromosomes(population_size,# clargs, data_instance,
 	generation['generationID'] = np.zeros(population_size, dtype = int)
 	generation['chromosomeID'] = np.arange(population_size, dtype = int)
 	generation['isTrained'] = np.zeros(population_size, dtype = bool)
-	generation['vae_hidden_layers'] = np.random.choice(vae_nLayers_choices,
+	generation['num_vae_layers'] = np.random.choice(vae_nLayers_choices,
 														size = population_size)
-	generation['dnn_hidden_layers'] = np.random.choice(dnn_nLayers_choices,
+	generation['num_dnn_layers'] = np.random.choice(dnn_nLayers_choices,
 														size = population_size)
-	generation['vae_latent_dim'] = np.random.choice(vae_latent_choices, 
+	generation['size_vae_latent'] = np.random.choice(vae_latent_choices, 
 														size = population_size)
-	generation['vae_hidden_units'] = np.random.choice(vae_nUnits_choices, 
+	generation['size_vae_hidden'] = np.random.choice(vae_nUnits_choices, 
 														size = population_size)
-	generation['dnn_hidden_units'] = np.random.choice(dnn_nUnits_choices, 
+	generation['size_dnn_hidden'] = np.random.choice(dnn_nUnits_choices, 
 														size = population_size)
 	return generation
 	# if(TrainFunction is None):
