@@ -143,7 +143,14 @@ if __name__ == '__main__':
 	# evolutionary_tree[generationID] = save_generation_to_tree(generation,
 	# 														verbose=verbose)
 
-	best_fitness = []
+	fitnesses = [chrom[1].fitness for chrom in generation.iterrows()]
+	best_fitness = [max(fitnesses)]
+	
+	if clargs.verbose:
+		print('[INFO] For Generation: {}, the best fitness was {}'.format(
+				generationID, new_best_fitness))
+
+	best_fitness.append(new_best_fitness)
 	if make_plots:
 		fig = plt.gcf()
 		fig.show()
@@ -193,7 +200,8 @@ if __name__ == '__main__':
 		# evolutionary_tree[generationID] = save_generation_to_tree(generation,
 		# verbose=verbose)
 
-		new_best_fitness = max(chrom.fitness for chrom in generation)
+		fitnesses = [chrom[1].fitness for chrom in generation.iterrows()]
+		new_best_fitness = max(fitnesses)
 
 		if clargs.verbose:
 			print('[INFO] For Generation: {}, the best fitness was {}'.format(
