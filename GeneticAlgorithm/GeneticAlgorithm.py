@@ -63,8 +63,8 @@ def query_sql_database(clargs, chromosome):
 						clargs.run_name, chromosome.generationID, 
 						chromosome.chromosomeID, clargs.time_stamp)
 
-	json_ID = {'generationID':chromosome.generationID,
-			   'chromosomeID':chromosome.chromosomeID}
+	json_ID = {'generationID':int(chromosome.generationID),
+			   'chromosomeID':int(chromosome.chromosomeID)}
 	
 	sql_json = requests.get(getFitness, params=json_ID).json()
 	
@@ -93,12 +93,14 @@ def query_local_csv(clargs, chromosome):
 									clargs.run_name, 
 									clargs.time_stamp)
 
+	generationID = int(chromosome.generationID)
+	chromosomeID = int(chromosome.chromosomeID)
 	if os.path.exists(table_name):
 		with open(table_name, 'r') as f_in:
 			check = 'fitness:'
 			for line in f_in.readlines():
-				ck1 = 'generationID:{}'.format(chromosome.generationID) in line
-				ck2 = 'chromosomeID:{}'.format(chromosome.chromosomeID) in line
+				ck1 = 'generationID:{}'.format(generationID) in line
+				ck2 = 'chromosomeID:{}'.format(chromosomeID) in line
 				if ck2 and ck2:
 					fitness = line.split(check)[1].split(',')[0]
 					return float(fitness)
@@ -223,7 +225,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				
 				chromosome.isTrained = 1
 				generation.iloc[k] = chromosome # finally, we figured this out!
-			
+
 			if chromosome.isTrained:
 				chromosome.fitness = query_sql_database(clargs, chromosome)
 				
