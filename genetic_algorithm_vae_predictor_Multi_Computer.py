@@ -151,7 +151,7 @@ if __name__ == '__main__':
 				generationID, new_best_fitness))
 
 	best_fitness.append(new_best_fitness)
-	
+
 	if make_plots:
 		fig = plt.gcf()
 		fig.show()
@@ -183,9 +183,13 @@ if __name__ == '__main__':
 			child, mutation_happened = mutate(child, mutate_prob, 
 											param_choices, verbose=verbose)
 			print(new_generation)
-			# new_generation.append(child, index=False)
-			new_generation.loc[chromosomeID] = child
+			new_generation.append(child, ignore_index=True)
+			# new_generation.loc[chromosomeID] = child
 
+		# Re-sort by chromosomeID
+		new_generation = new_generation.sort_values('chromosomeID')
+		new_generation.index = np.arange(population_size)
+		
 		assert((new_generation['generationID'].values == generationID)).all(),\
 			"The GenerationID did not update: should be {}; but is {}".format(
 				generationID, generation['generationID'].values)
