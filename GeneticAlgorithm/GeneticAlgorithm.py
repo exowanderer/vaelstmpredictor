@@ -72,7 +72,7 @@ def query_sql_database(clargs, chromosome):
 		print('SQL Request Failed: sql_json = {} with {}'.format(
 												sql_json, json_ID))
 		return -1
-	
+
 	with open(table_name, 'a') as f_out:
 		json.dump(sql_json, f_out)
 	
@@ -285,7 +285,7 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 	print('[INFO] Executing {} on {}'.format(command, hostname))
 
 	stdin, stdout, stderr = ssh.exec_command(command)
-	"""
+	
 	try:
 		stdout.channel.recv_exit_status()
 		for line in stdout.readlines(): print(line)
@@ -297,7 +297,7 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 		for line in stderr.readlines(): print(line)
 	except Exception as e:
 		print('error on stderr.readlines(): {}'.format(str(e)))
-	"""
+	
 	print("Command Executed Successfully")
 	ssh.close()
 
@@ -370,7 +370,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	print("\n\nExecuting command:\n\t{}".format(command))
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
-	"""
+	
 	try:
 		stdout.channel.recv_exit_status()
 		for line in stdout.readlines(): print(line)
@@ -382,7 +382,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		for line in stderr.readlines(): print(line)
 	except Exception as e:
 		print('error on stderr.readlines(): {}'.format(str(e)))
-	"""
+	
 	queue.put(machine)
 
 	table_dir = clargs.table_dir
