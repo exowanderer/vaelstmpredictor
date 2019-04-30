@@ -178,14 +178,14 @@ if __name__ == '__main__':
 			new_generation.append = child
 			chromosomeID += 1
 
-		assert((generation['generationID'].values == generationID)).all(),\
+		assert((new_generation['generationID'].values == generationID)).all(),\
 			"The GenerationID did not update: should be {}; but is {}".format(
 				generationID, generation['generationID'].values)
 
-		generation = train_generation(generation, clargs)
+		generation = train_generation(new_generation, clargs)
 		
-		print('Time for Generation{}: {} minutes'.format(child1.generationID, 
-												(time() - start_while)//60))
+		print('Time for Generation{}: {} minutes'.format(generationID, 
+											int((time() - start_while)//60)))
 
 		# generation = new_generation
 		# evolutionary_tree[generationID] = save_generation_to_tree(generation,
