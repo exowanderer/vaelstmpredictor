@@ -205,7 +205,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				print('Size VAE Hidden:{}'.format(chromosome.size_vae_hidden))
 				print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
 				print('\n\n')
-				
+
 				# generation
 				# chromosome.fitness = np.random.randint(low=1, high=100)
 				# chromosome.isTrained = 1
@@ -398,7 +398,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	print("Command Executed Successfully")
 
 def select_parents(generation):
-	total_fitness = sum(chromosome.fitness for chromosome in generation)
+	total_fitness = sum(chrom.fitness for k, chrom in generation.iterrows())
 	#Generate two random numbers between 0 and total_fitness 
 	#   not including total_fitness
 	rand_parent1 = random.random()*total_fitness
