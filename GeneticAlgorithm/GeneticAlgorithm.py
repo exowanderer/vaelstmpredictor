@@ -56,29 +56,30 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 
 def query_sql_database(clargs, chromosome):
 	getFitness = 'http://philippesaade11.pythonanywhere.com/GetFitness'
-	
+
 	table_dir = clargs.table_dir
 	table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
 	table_name = table_name.format(clargs.table_dir, 
 						clargs.run_name, chromosome.generationID, 
 						chromosome.chromosomeID, clargs.time_stamp)
-	
+
 	json_ID = {'generationID':chromosome.generationID,
 			   'chromosomeID':chromosome.chromosomeID}
 	
 	sql_json = requests.get(getFitness, params=json_ID).json()
 	
-	if isinstance(sql_json, dict):
-		with open(table_name, 'a') as f_out:
-			json.dump(sql_json, f_out)
-		
-		chromosome.fitness = sql_json['fitness']
-	else:
-		print('SQL Request Failed: sql_json = {} with {}'.format(
-												sql_json, json_ID))
-		chromosome.fitness = sql_json or 0
-
-	return chromosome.fitness
+	# if isinstance(sql_json, dict):
+	with open(table_name, 'a') as f_out:
+		json.dump(sql_json, f_out)
+	
+	return sql_json['fitness']
+	# 	chromosome.fitness = sql_json['fitness']
+	# else:
+	# 	print('SQL Request Failed: sql_json = {} with {}'.format(
+	# 											sql_json, json_ID))
+	# 	chromosome.fitness = sql_json or 0
+	# 
+	# return chromosome.fitness
 
 def generate_random_chromosomes(population_size,# clargs, data_instance, 
 						min_vae_hidden_layers = 1, min_dnn_hidden_layers = 1, 
@@ -199,7 +200,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				chromosome.fitness = query_sql_database(clargs, chromosome)
 				chromosome.isTrained = 1
 				generation.iloc[k] = chromosome # finally, we figured this out!
-				
+
 				print('\n\n[INFO]')
 				print('GenerationID:{}'.format(chromosome.generationID))
 				print('ChromosomeID:{}'.format(chromosome.chromosomeID))
