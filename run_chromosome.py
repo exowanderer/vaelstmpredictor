@@ -80,7 +80,7 @@ if __name__ == '__main__':
 	
 	clargs.do_log = True
 	clargs.do_chckpt = True
-	clags.verbose = True
+	clargs.verbose = True
 
 	for key,val in clargs.__dict__.items(): 
 		if 'dir' in key: 
