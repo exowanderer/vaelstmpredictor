@@ -189,8 +189,8 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 
 def generate_ssh_command(clargs, chromosome):
 	command = []
-	command.append('--cd vaelstmpredictor; ')
-	command.append('--../anaconda3/envs/tf_gpu/bin/python run_chromosome.py ')
+	command.append('cd vaelstmpredictor; ')
+	command.append('../anaconda3/envs/tf_gpu/bin/python run_chromosome.py ')
 	command.append('--run_name {}'.format(clargs.run_name))
 	command.append('--predictor_type {}'.format(clargs.predictor_type))
 	command.append('--batch_size {}'.format(clargs.batch_size))
