@@ -181,8 +181,14 @@ def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 		if key not in ['generationID', 'chromosomeID']:
 			command.append('--{} {}'.format(key,val))
 	
+	command.append('--num_vae_layers {} '.format(chromosome.num_vae_layers))
+	command.append('--num_dnn_layers {} '.format(chromosome.num_dnn_layers))
+	command.append('--size_vae_latent {} '.format(chromosome.size_vae_latent))
+	command.append('--size_vae_hidden {} '.format(chromosome.size_vae_hidden))
+	command.append('--size_dnn_hidden {} '.format(chromosome.size_dnn_hidden))
+	
 	command = " ".join(command)
-
+	
 	print("Executing command:\n\t{}".format(command))
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
