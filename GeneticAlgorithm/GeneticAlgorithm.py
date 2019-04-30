@@ -459,13 +459,15 @@ def cross_over(parent1, parent2, prob, param_choices, verbose=False):
 		print('[INFO] Crossing over with probability: {}'.format(prob))
 
 	if random.random() >= prob:
+		crossover_happened = True
 		child = parent1.copy() # this only sets up the pd.Series framework
 		for param in param_choices:
 			child[param] = random.choice([parent1[param], parent2[param]])
 	else: 
+		crossover_happened = False
 		child = parent1 if parent1.fitness > parent2.fitness else parent2
-
-	return child
+	
+	return child, crossover_happened
 """
 def cross_over_orig(parent1, parent2, prob, verbose=False):
 	if verbose:
