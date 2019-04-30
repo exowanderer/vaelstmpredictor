@@ -32,7 +32,7 @@ def make_sql_output(clargs, chromosome):
 	output['patience'] = clargs.patience
 	output['population_size'] = clargs.population_size
 	output['prediction_log_var_prior'] = clargs.prediction_log_var_prior
-	output['predictor_type'] = clargs.predictor
+	output['predictor_type'] = clargs.predictor_type
 	output['table_dir'] = clargs.table_dir
 	output['time_stamp'] = clargs.time_stamp
 	output['train_file'] = clargs.train_file
@@ -257,15 +257,15 @@ if __name__ == '__main__':
 	
 	put_sql_dict = make_sql_output(clargs, chromosome)
 
-	output_table_name = '{}/{}_{}_{}_trained_model_weights_{}.save'
+	output_table_name = '{}/{}_{}_{}_trained_model_entry_{}.save'
 	output_table_name = output_table_name.format(clargs.table_dir, 
-		                                        clargs.run_name, 
-		                                        chromosome.generationID, 
-		                                        chromosome.chromosomeID, 
-		                                        chromosome.time_stamp)
-    
-    joblib.dump(put_sql_dict, output_table_name)
-
+												clargs.run_name, 
+												chromosome.generationID, 
+												chromosome.chromosomeID, 
+												clargs.time_stamp)
+	
+	joblib.dump(put_sql_dict, output_table_name)
+	
 	local_output_table = output_table_name
 	remote_output_table = 'vaelstmpredictor/'.format(output_table_name)
 	

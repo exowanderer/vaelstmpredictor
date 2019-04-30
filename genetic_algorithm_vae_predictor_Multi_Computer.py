@@ -28,7 +28,7 @@ from GeneticAlgorithm import *
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('run_name', type=str, default='ga_test_',
+	parser.add_argument('run_name', type=str, default='ga_test',
 				help='tag for current run')
 	parser.add_argument('--predictor_type', type=str, default="classification",
 				help='select `classification` or `regression`')
@@ -189,7 +189,7 @@ if __name__ == '__main__':
 		# Re-sort by chromosomeID
 		new_generation = new_generation.sort_values('chromosomeID')
 		new_generation.index = np.arange(population_size)
-		
+
 		assert((new_generation['generationID'].values == generationID)).all(),\
 			"The GenerationID did not update: should be {}; but is {}".format(
 				generationID, generation['generationID'].values)
