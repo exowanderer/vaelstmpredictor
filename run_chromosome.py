@@ -43,14 +43,14 @@ def make_sql_output(clargs, chromosome):
 	output['vae_weight'] = clargs.vae_weight
 	output['verbose'] = clargs.verbose
 	output['w_kl_anneal'] = clargs.w_kl_anneal
+	output['num_dnn_layers'] = clargs.num_dnn_layers
+	output['num_vae_layers'] = clargs.num_vae_layers
+	output['size_dnn_hidden'] = clargs.size_dnn_hidden
+	output['size_vae_hidden'] = clargs.size_vae_hidden
+	output['size_vae_latent'] = clargs.size_vae_latent
 	output['generationID'] = chromosome.generationID
 	output['chromosomeID'] = chromosome.chromosomeID
 	output['fitness'] = chromosome.fitness
-	output['num_dnn_layers'] = chromosome.num_dnn_layers
-	output['num_vae_layers'] = chromosome.num_vae_layers
-	output['size_dnn_hidden'] = chromosome.size_dnn_hidden
-	output['size_vae_hidden'] = chromosome.size_vae_hidden
-	output['size_vae_latent'] = chromosome.size_vae_latent
 	
 	return output
 
