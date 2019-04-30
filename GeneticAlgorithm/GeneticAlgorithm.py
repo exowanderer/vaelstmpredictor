@@ -535,11 +535,10 @@ def mutate(child, prob, param_choices, forced_evolve = False,
 			current_p = child[param] + change_p, min_val
 
 			# If param less than `min_val`, then set param to `min_val`
-			child[param] = np.max([child[param], min_val])
-
+			child[param] = np.max([current_p, min_val])
+			
 			# All params must be integer sized: round and convert
-			print(current_p)
-			child[param] = np.int(np.round(current_p))
+			child[param] = np.int(np.round(child[param]))
 
 	return child, mutation_happened
 
