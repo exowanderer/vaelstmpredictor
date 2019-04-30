@@ -176,9 +176,9 @@ if __name__ == '__main__':
 			
 			child, mutation_happened = mutate(child, mutate_prob, 
 											param_choices, verbose=verbose)
-
+			print(generation)
 			generation.iloc[chromosomeID] = child
-		
+
 		assert((generation['generationID'].values == generationID)).all(),\
 			"The GenerationID did not update: should be {}; but is {}".format(
 				generationID, generation['generationID'].values)
