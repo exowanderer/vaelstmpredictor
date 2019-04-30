@@ -8,6 +8,7 @@ import multiprocessing as mp
 import numpy as np
 import os
 import pandas as pd
+import requests
 
 from contextlib import redirect_stdout
 from glob import glob
