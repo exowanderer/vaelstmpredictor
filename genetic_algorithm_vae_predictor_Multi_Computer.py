@@ -15,6 +15,7 @@ from contextlib import redirect_stdout
 
 from keras import backend as K
 from keras.utils import to_categorical
+from tqdm import tqdm
 
 from vaelstmpredictor.utils.model_utils import get_callbacks, init_adam_wn
 from vaelstmpredictor.utils.model_utils import save_model_in_pieces
@@ -171,7 +172,7 @@ if __name__ == '__main__':
 		generationID += 1
 		new_generation = pd.DataFrame(columns=generation.columns)
 		chromosomeID = 0
-		for chromosomeID in range(population_size):
+		for chromosomeID in tqdm(range(population_size)):
 			parent1, parent2 = select_parents(generation)
 			child, crossover_happened = cross_over(parent1, parent2, 
 											cross_prob, param_choices.keys(), 
