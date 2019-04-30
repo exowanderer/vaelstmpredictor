@@ -29,8 +29,21 @@ def wrapped_partial(func, *args, **kwargs):
     update_wrapper(partial_func, func)
     return partial_func
 
-def build_hidden_layers(hidden_dims, input_layer, layer_name, activation,
-                        Layer = Dense):
+def build_hidden_layers(hidden_dims, input_layer, kernel_sizes = None, 
+                base_layer_name = '', activation, Layer = None, strides=None):
+    '''Need to remove all leading zeros for the Decoder 
+    to be properly established'''
+    if Layer is Dense or kernel_sizes is None:
+        return build_hidden_dense_layers(hidden_dims, input_layer, 
+                            base_layer_name, activation, Layer = Dense)
+    if (Layer is Conv2D or Layer is Conv1D) and kernel_sizes is not None:
+        assert(len(kernel_sizes) == len(hidden_dims)), \
+            "each Conv layer requires a given kernel_size"
+        return build_hidden_conv_layers(filter_sizes, kernel_sizes, strides, 
+                input_layer, base_layer_name, activation, Layer = Layer)
+
+def build_hidden_dense_layers(hidden_dims, input_layer, 
+                        base_layer_name, activation, Layer = Dense):
     '''Need to remove all leading zeros for the Decoder 
     to be properly established'''
 
@@ -39,12 +52,34 @@ def build_hidden_layers(hidden_dims, input_layer, layer_name, activation,
     
     # Establish hidden layer structure
     for k, layer_size in enumerate(hidden_dims):
-        name = '{}{}'.format(layer_name, k)
+        name = '{}{}'.format(base_layer_name, k)
         '''If this is the 1st hidden layer, then input as input_w_pred;
             else, input the previous hidden_layer'''
         input_now = input_layer if k is 0 else hidden_layer
 
         hidden_layer = Layer(layer_size, activation = activation, name = name)
+        hidden_layer = hidden_layer(input_now)
+    
+    return hidden_layer
+
+def build_hidden_conv_layers(filter_sizes, kernel_sizes, input_layer, strides,
+                        base_layer_name, activation, Layer = Conv2D):
+    '''Need to remove all leading zeros for the Decoder 
+    to be properly established'''
+
+    filter_sizes = list(filter_sizes)
+    while 0 in filter_sizes: filter_sizes.remove(0)
+    
+    # Establish hidden layer structure
+    for k, (filter_size, kernel_size) in enumerate(filter_sizes, kernel_sizes):
+        name = '{}{}'.format(base_layer_name, k)
+        
+        '''If this is the 1st hidden layer, then input as input_layer;
+            else, input the previous hidden_layer'''
+        input_now = input_layer if k is 0 else hidden_layer
+
+        hidden_layer = Layer(filter_size, kernel_size, 
+                                activation = activation, name = name)
         hidden_layer = hidden_layer(input_now)
     
     return hidden_layer
@@ -251,8 +286,7 @@ class VAEPredictor(object):
         
         self.dnn_w_latent = concatenate(
                         [self.dnn_latent_layer, self.prev_w_vae_latent],
-                        axis = -1, name = 'dnn_latent_out_w_prev_w_vae_lat'
-                        )
+                        axis = -1, name = 'dnn_latent_out_w_prev_w_vae_lat')
         
         self.build_latent_decoder()
         
