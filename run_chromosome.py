@@ -276,11 +276,11 @@ if __name__ == '__main__':
 				key_filename = key_filename, 
 				verbose = clargs.verbose)
 	
-	try:
-		req = requests.get(url = putURL, params = put_sql_dict)
-		if req.json() == 1:
-			print('[INFO] Remote SQL Entry Added Successfully')
-		else:
-			print('[WARNING] !! The World Has Ended !!')
-	except Exception as e:
-		print('[WARNING] Remote SQL Entry Failed:\n{}'.format(str(e)))
+	# try:
+	req = requests.get(url = putURL, params = put_sql_dict)
+	if req.json() == 1:
+		print('[INFO] Remote SQL Entry Added Successfully')
+	else:
+		print('[WARNING] !! The World Has Ended !!')
+	# except Exception as e:
+	# 	print('[WARNING] Remote SQL Entry Failed:\n{}'.format(str(e)))
