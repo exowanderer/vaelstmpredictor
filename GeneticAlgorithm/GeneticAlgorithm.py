@@ -1,5 +1,7 @@
-# from https://github.com/philippesaade11/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
-# python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 --verbose --iterations 500 --population_size 10 --num_epochs 200
+# from https://github.com/philippesaade11/vaelstmpredictor/blob/
+#	GeneticAlgorithm/Genetic-Algorithm.py
+# python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 
+#	--verbose --iterations 500 --population_size 10 --num_epochs 200
 import argparse
 import matplotlib.pyplot as plt
 import multiprocessing as mp
@@ -115,7 +117,7 @@ def generate_random_chromosomes(population_size,# clargs, data_instance,
 def train_generation(generation, clargs, private_key='id_ecdsa'):
 	getChrom = 'https://philippesaade11.pythonanywhere.com/GetChrom'
 	getFitness = 'http://philippesaade11.pythonanywhere.com/GetFitness'
-	
+
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	
 	machines = [# {"host": "192.168.0.1", "username": "acc", 
@@ -225,17 +227,56 @@ def generate_ssh_command(clargs, chromosome):
 	
 	return " ".join(command)
 
+def upload_zip_file(verbose = False):
+	if verbose: 
+			print('[INFO] File {} does not exists on {}'.format(
+									zip_filename, machine['host']))
+		
+	#Upload Files to Machine
+	print("Uploading file to machine")
+	
+	if verbose: 
+		print('[INFO] Transfering {} to {}'.format(
+							zip_filename, machine['host']))
+
+	transport = Transport((machine["host"], port))
+	pk = ECDSAKey.from_private_key(open(machine['key_filename']))
+	transport.connect(username = machine["username"], pkey=pk)
+	
+	sftp = SFTPClient.from_transport(transport)
+	sftp.put(zip_filename, zip_filename)
+	
+	stdin, stdout, stderr = ssh.exec_command('unzip {}'.format(zip_filename))
+	
+	error = "".join(stderr.readlines())
+	if error != "":
+		print("Errors has occured while unzipping file in machine: "\
+				"{} \nError: {}".format(machine, error))
+	
+	stdin, stdout, stderr = ssh.exec_command('cd vaelstmpredictor; '
+					'../anaconda3/envs/tf_gpu/bin/python setup.py install')
+	error = "".join(stderr.readlines())
+	if error != "":
+		print("Errors setting up vaelstmpredictor: "
+				"{}\nError: {}".format(machine, error))
+
+	sftp.close()
+	transport.close()
+	print("File uploaded")
+
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
 					zip_filename = "vaelstmpredictor.zip", 
 					verbose = True):
 	
 	if not os.path.exists(logdir): os.mkdir('train_logs')
-	if verbose: print('[INFO] Checking if file {} exists on {}'.format(zip_filename, machine['host']))
-
-	# sys.stdout = open(logdir+'/output'+str(chromosome.chromosomeID)+".txt", 'w')
-	# sys.stderr = open(logdir+'/error'+str(chromosome.chromosomeID)+".txt", 'w')
+	if verbose: 
+		print('[INFO] Checking if file {} exists on {}'.format(
+										zip_filename, machine['host']))
 	
+	# chromosomeID = chromosome.chromosomeID
+	# sys.stdout = open('{}/output{}.txt'.format(logdir, chromosomeID),'w')
+	# sys.stderr = open('{}/error{}.txt'.format(logdir, chromosomeID), 'w')
 	
 	ssh = SSHClient()
 	ssh.set_missing_host_key_policy(AutoAddPolicy())
@@ -244,38 +285,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	stdin, stdout, stderr = ssh.exec_command('ls | grep vaelstmpredictor')
 	
 	if(len(stdout.readlines()) == 0):
-		if verbose: 
-			print('[INFO] File {} does not exists on {}'.format(
-									zip_filename, machine['host']))
-		
-		#Upload Files to Machine
-		print("Uploading file to machine")
-		
-		if verbose: print('[INFO] Transfering {} to {}'.format(zip_filename, machine['host']))
-		transport = Transport((machine["host"], port))
-		pk = ECDSAKey.from_private_key(open(machine['key_filename']))
-		transport.connect(username = machine["username"], pkey=pk)
-		
-		sftp = SFTPClient.from_transport(transport)
-		sftp.put(zip_filename, zip_filename)
-		
-		stdin, stdout, stderr = ssh.exec_command('unzip {}'.format(zip_filename))
-		error = "".join(stderr.readlines())
-		if error != "":
-			print("Errors has occured while unzipping file in machine: "+str(machine)+"\nError: "+error)
-				
-		stdin, stdout, stderr = ssh.exec_command('cd vaelstmpredictor; '
-						'../anaconda3/envs/tf_gpu/bin/python setup.py install')
-		error = "".join(stderr.readlines())
-		if error != "":
-			print("Errors setting up vaelstmpredictor: "
-					+ str(machine)
-					+ "\nError: "
-					+ error)
-
-		sftp.close()
-		transport.close()
-		print("File uploaded")
+		upload_zip_file()
 	else:
 		if verbose: 
 			print('[INFO] File {} exists on {}'.format(zip_filename, 
@@ -311,12 +321,13 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		with open(table_name, 'r') as f_in:
 			check = 'fitness:'
 			for line in f_in.readlines():
-				if 'generationID:{}'.format(chromosome.generationID) in line:
-					if 'chromosomeID:{}'.format(chromosome.chromosomeID) in line:
-						fitness = line.split(check)[1].split(',')[0]
-						chromosome.fitness = float(fitness)
-						break
-
+				ck1 = 'generationID:{}'.format(chromosome.generationID) in line
+				ck2 = 'chromosomeID:{}'.format(chromosome.chromosomeID) in line
+				if ck2 and ck2:
+					fitness = line.split(check)[1].split(',')[0]
+					chromosome.fitness = float(fitness)
+					break
+	
 	chromosome.isTrained = True
 	
 	print("Command Executed")
