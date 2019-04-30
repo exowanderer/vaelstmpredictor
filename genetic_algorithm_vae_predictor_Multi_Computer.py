@@ -202,18 +202,15 @@ if __name__ == '__main__':
 			
 			print('[INFO] Adding Chromosome: {}'.format(child))
 			new_generation.iloc[chromosomeID] = child
-		
+
 		# Re-sort by chromosomeID
 		new_generation = new_generation.sort_values('chromosomeID')
-		print('[DEBUG]', new_generation)
 		new_generation.index = np.arange(population_size)
 
 		assert((new_generation['generationID'].values == generationID)).all(),\
 			"The GenerationID did not update: should be {}; but is {}".format(
 				generationID, generation['generationID'].values)
-
-		print('[DEBUG]', new_generation)
-
+		
 		generation = train_generation(new_generation, clargs)
 		
 		print('Time for Generation{}: {} minutes'.format(generationID, 
