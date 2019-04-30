@@ -68,9 +68,11 @@ def query_sql_database(clargs, chromosome):
 	
 	sql_json = requests.get(getFitness, params=json_ID).json()
 	
-	assert(isinstance(sql_json, dict)),\
-		'SQL Request Failed: sql_json = {} with {}'.format(sql_json, json_ID)
-
+	if not isinstance(sql_json, dict):
+		print('SQL Request Failed: sql_json = {} with {}'.format(
+												sql_json, json_ID))
+		return -1
+	
 	with open(table_name, 'a') as f_out:
 		json.dump(sql_json, f_out)
 	
