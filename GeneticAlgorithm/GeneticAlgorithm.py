@@ -304,14 +304,13 @@ def upload_zip_file(zip_filename, machine, verbose = False):
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
 					git_dir = 'vaelstmpredictor',
-					# zip_filename = "vaelstmpredictor.zip", 
 					verbose = True):
 	
 	if not os.path.exists(logdir): os.mkdir(logdir)
 
 	if verbose: 
 		print('[INFO] Checking if file {} exists on {}'.format(
-										zip_filename, machine['host']))
+										git_dir, machine['host']))
 	
 	# chromosomeID = chromosome.chromosomeID
 	# sys.stdout = open('{}/output{}.txt'.format(logdir, chromosomeID),'w')
@@ -327,7 +326,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		git_clone()
 	elif verbose: 
 			print('[INFO] File {} exists on {}'.format(
-								zip_filename, machine['host']))
+								git_dir, machine['host']))
 
 	command = generate_ssh_command(clargs, chromosome)
 	
