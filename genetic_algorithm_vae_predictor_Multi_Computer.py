@@ -196,6 +196,7 @@ if __name__ == '__main__':
 			
 			child.generationID = generationID
 			child.chromosomeID = chromosomeID
+			child.fitness = -1
 			
 			child, mutation_happened = mutate(child, mutate_prob, 
 											param_choices, verbose=verbose)
