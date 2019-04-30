@@ -57,6 +57,8 @@ if __name__ == '__main__':
 				help='file of training data (.pickle)')
 	# parser.add_argument('--verbose', action='store_true',
 	# 			help='print more [INFO] and [DEBUG] statements')
+	parser.add_argument('--time_stamp', type=int, default=0,
+				help='Keeps track of runs and re-runs')
 	parser.add_argument('--hostname', type=str, default='127.0.0.1',
 				help='The hostname of the computer to send results back to.')
 	parser.add_argument('--port', type=int, default=22,

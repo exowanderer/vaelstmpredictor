@@ -212,6 +212,7 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--model_dir {}'.format(clargs.model_dir))
 	command.append('--table_dir {}'.format(clargs.table_dir))
 	command.append('--train_file {}'.format(clargs.train_file))
+	command.append('--time_stamp {}'.format(int(clargs.time_stamp)))
 	# command.append('--verbose {}'.format(int(clargs.verbose)))
 	command.append('--hostname {}'.format(clargs.hostname))
 	command.append('--port {}'.format(clargs.port))
