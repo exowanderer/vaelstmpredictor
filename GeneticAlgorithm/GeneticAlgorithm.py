@@ -264,7 +264,7 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 	print("Command Executed Successfully")
 	ssh.close()
 
-def upload_zip_file(verbose = False):
+def upload_zip_file(zip_filename, machine, verbose = False):
 	if verbose: 
 			print('[INFO] File {} does not exists on {}'.format(
 									zip_filename, machine['host']))
@@ -348,7 +348,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		print('error on stderr.readlines(): {}'.format(str(e)))
 
 	queue.put(machine)
-	
+
 	table_dir = clargs.table_dir
 	table_name = '{}/{}_{}_{}_fitness_table_{}.csv'
 	table_name = table_name.format(clargs.table_dir, 
