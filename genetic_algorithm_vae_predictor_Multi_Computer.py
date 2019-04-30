@@ -183,7 +183,8 @@ if __name__ == '__main__':
 			
 			child, mutation_happened = mutate(child, mutate_prob, 
 											param_choices, verbose=verbose)
-			print(new_generation)
+			
+			print('[INFO] Adding Chromosome: {}'.format(child))
 			new_generation.append(child, ignore_index=True)
 			# new_generation.loc[chromosomeID] = child
 
