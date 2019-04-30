@@ -5,6 +5,7 @@ import scipy.stats
 from functools import partial, update_wrapper
 
 from keras import backend as K
+from keras import layers
 from keras.layers import Input, Dense, Lambda, Reshape, concatenate
 from keras.models import Model
 from keras.losses import binary_crossentropy, categorical_crossentropy
@@ -29,24 +30,44 @@ def wrapped_partial(func, *args, **kwargs):
     update_wrapper(partial_func, func)
     return partial_func
 
-def build_hidden_layers(hidden_dims, input_layer, kernel_sizes = None, 
-                base_layer_name = '', activation, Layer = None, strides=None):
-    '''Need to remove all leading zeros for the Decoder 
-    to be properly established'''
-    if Layer is Dense or kernel_sizes is None:
-        return build_hidden_dense_layers(hidden_dims, input_layer, 
-                            base_layer_name, activation, Layer = Dense)
-    if (Layer is Conv2D or Layer is Conv1D) and kernel_sizes is not None:
+def build_hidden_layers(hidden_dims, input_layer, Layer = None, 
+                kernel_sizes = None, strides=None, base_layer_name = '', 
+                activation = 'relu'):
+    
+    assert('conv' in Layer.lower() or 'dense' in Layer.lower()),\
+            "Only 'conv' and 'dense' layers are supported here."
+
+    if 'dense' in Layer.lower() or kernel_sizes is None:
+        if 'dense' == Layer.lower(): Layer = Dense
+        return build_hidden_dense_layers(hidden_dims = hidden_dims, 
+                                        input_layer = input_layer, 
+                                        base_layer_name = base_layer_name, 
+                                        activation = activation, 
+                                        Layer = Dense)
+
+    if 'conv' in Layer.lower() and kernel_sizes is not None:
         assert(len(kernel_sizes) == len(hidden_dims)), \
             "each Conv layer requires a given kernel_size"
-        return build_hidden_conv_layers(filter_sizes, kernel_sizes, strides, 
-                input_layer, base_layer_name, activation, Layer = Layer)
 
-def build_hidden_dense_layers(hidden_dims, input_layer, 
-                        base_layer_name, activation, Layer = Dense):
+        if 'conv1d' == Layer.lower(): Layer = layers.Conv1D
+        if 'conv2d' == Layer.lower(): Layer = layers.Conv2D
+        if 'conv3d' == Layer.lower(): Layer = layers.Conv3D
+        if 'conv1dT' == Layer.lower(): Layer = layers.Conv1DTranspose
+        if 'conv2dT' == Layer.lower(): Layer = layers.Conv2DTranspose
+        if 'conv3dT' == Layer.lower(): Layer = layers.Conv3DTranspose
+
+        return build_hidden_conv_layers(filter_sizes = hidden_dims, 
+                                        input_layer = input_layer, 
+                                        kernel_sizes = kernel_sizes, 
+                                        strides = strides, 
+                                        base_layer_name = base_layer_name, 
+                                        activation = activation, 
+                                        Layer = Layer)
+
+def build_hidden_dense_layers(hidden_dims, input_layer, base_layer_name, 
+                                activation, Layer = Dense):
     '''Need to remove all leading zeros for the Decoder 
     to be properly established'''
-
     hidden_dims = list(hidden_dims)
     while 0 in hidden_dims: hidden_dims.remove(0)
     
