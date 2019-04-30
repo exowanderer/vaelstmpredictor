@@ -455,8 +455,13 @@ def reconfigure_vae_params(params, static_params_):
 	return params
 
 def cross_over(parent1, parent2, prob, param_choices, verbose=False):
-	for param in param_choices:
-		child[param] = random.choice([parent1[param], parent2[param]])
+	
+	if np.random.uniform() >= prob:
+		child = parent1.copy() # this only sets up the pd.Series framework
+		for param in param_choices:
+			child[param] = random.choice([parent1[param], parent2[param]])
+	else: 
+		child = parent1 if parent1.fitness > parent2.fitness else parent2
 	
 	return child
 
