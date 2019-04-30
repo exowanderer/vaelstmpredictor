@@ -35,10 +35,10 @@ if __name__ == '__main__':
 				help='relative weight on prediction loss')
 	parser.add_argument('--prediction_log_var_prior', type=float, default=0.0,
 				help='w log var prior')
-	parser.add_argument("--do_log", action="store_true", 
-				help="save log files")
-	parser.add_argument("--do_chckpt", action="store_true",
-				help="save model checkpoints")
+	# parser.add_argument("--do_log", action="store_true", 
+	# 			help="save log files")
+	# parser.add_argument("--do_chckpt", action="store_true",
+	# 			help="save model checkpoints")
 	parser.add_argument('--patience', type=int, default=10,
 				help='# of epochs, for early stopping')
 	parser.add_argument("--kl_anneal", type=int, default=0, 
@@ -55,8 +55,8 @@ if __name__ == '__main__':
 				help='basedir for storing the table of params and fitnesses.')
 	parser.add_argument('--train_file', type=str, default='MNIST',
 				help='file of training data (.pickle)')
-	parser.add_argument('--verbose', action='store_true',
-				help='print more [INFO] and [DEBUG] statements')
+	# parser.add_argument('--verbose', action='store_true',
+	# 			help='print more [INFO] and [DEBUG] statements')
 	parser.add_argument('--hostname', type=str, default='127.0.0.1',
 				help='The hostname of the computer to send results back to.')
 	parser.add_argument('--port', type=int, default=22,
@@ -77,6 +77,10 @@ if __name__ == '__main__':
 				help='Size of the DNN Hidden Layer')
 
 	clargs = parser.parse_args()
+	
+	clargs.do_log = True
+	clargs.do_chckpt = True
+	clags.verbose = True
 
 	for key,val in clargs.__dict__.items(): 
 		if 'dir' in key: 
@@ -126,7 +130,7 @@ if __name__ == '__main__':
 	print('\n\nParams for this VAE_NN:')
 	for key,val in clargs.__dict__.items():
 		print('{:20}{}'.format(key,val))
-	
+
 	chrom = Chromosome(**chrom_params)
 	chrom.verbose = True
 	chrom.train(verbose=True)
