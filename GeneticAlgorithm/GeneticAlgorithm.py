@@ -115,9 +115,8 @@ def generate_random_chromosomes(population_size,# clargs, data_instance,
 def train_generation(generation, clargs, private_key='id_ecdsa'):
 	getChrom = 'https://philippesaade11.pythonanywhere.com/GetChrom'
 	getFitness = 'http://philippesaade11.pythonanywhere.com/GetFitness'
-
-	private_key = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
-	key_filename = private_key
+	
+	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	
 	machines = [# {"host": "192.168.0.1", "username": "acc", 
 				#   "key_filename": key_filename},

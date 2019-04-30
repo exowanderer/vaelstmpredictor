@@ -136,10 +136,12 @@ if __name__ == '__main__':
 	chrom = Chromosome(**chrom_params)
 	chrom.verbose = True
 	chrom.train(verbose=True)
+	
+	key_filename = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
 
 	transport = Transport((clargs.hostname, port))
-	pk = ECDSAKey.from_private_key(open(machine['key_filename']))
-	transport.connect(username = machine["username"], pkey=pk)
+	pk = ECDSAKey.from_private_key(open(key_filename))
+	transport.connect(username = 'acc', pkey=pk)
 
 	sftp = SFTPClient.from_transport(transport)
 	sftp.put(chrom.wghts_save_loc, 
