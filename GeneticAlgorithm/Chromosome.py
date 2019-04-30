@@ -194,12 +194,12 @@ class Chromosome(VAEPredictor):
                                         self.run_name, self.generationID, 
                                         self.chromosomeID, self.time_stamp)
         
-        self.neural_net.save_weights(wghts_save_loc, overwrite=True)
-        self.neural_net.save(model_save_loc, overwrite=True)
+        self.neural_net.save_weights(self.wghts_save_loc, overwrite=True)
+        self.neural_net.save(self.model_save_loc, overwrite=True)
 
         try:
             joblib.dump({'best_loss':self.best_loss,
                             'history':self.history}, 
-                            joblib_save_loc)
+                            self.joblib_save_loc)
         except Exception as e:
             print(str(e))
