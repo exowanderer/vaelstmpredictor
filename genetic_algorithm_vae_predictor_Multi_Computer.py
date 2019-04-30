@@ -83,8 +83,8 @@ if __name__ == '__main__':
 	parser.add_argument('--population_size', type=int, default=200,
 				help='size of the population to evolve; '\
 						'preferably divisible by 2')
-	parser.add_argument('--iterations', type=int, default=100,
-				help='number of iterations for genetic algorithm')
+	parser.add_argument('--num_generations', type=int, default=100,
+				help='number of generations for genetic algorithm')
 	parser.add_argument('--verbose', action='store_true',
 				help='print more [INFO] and [DEBUG] statements')
 	parser.add_argument('--make_plots', action='store_true',
