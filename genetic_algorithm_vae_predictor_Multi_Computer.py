@@ -148,6 +148,9 @@ if __name__ == '__main__':
 		fig = plt.gcf()
 		fig.show()
 
+	param_choices = ['num_vae_layers', 'num_dnn_layers', 'size_vae_latent', 
+						'size_vae_hidden', 'size_dnn_hidden']
+	
 	start = time()
 	# while gen_num < num_generations:
 	for _ in range(num_generations):
@@ -160,7 +163,7 @@ if __name__ == '__main__':
 		for _ in range(population_size//2):
 			parent1, parent2 = select_parents(generation)
 			child1, child2, crossover_happened = cross_over(parent1, parent2, 
-												cross_prob, verbose=verbose)
+									cross_prob, param_choices, verbose=verbose)
 			
 			child1.generationID = generationID
 			child1.chromosomeID = chromosomeID; chromosomeID += 1 
@@ -186,7 +189,7 @@ if __name__ == '__main__':
 		if clargs.verbose:
 			print('[INFO] For Generation: {}, the best fitness was {}'.format(
 					generationID, new_best_fitness))
-		
+
 		best_fitness.append(new_best_fitness)
 		
 		if make_plots:

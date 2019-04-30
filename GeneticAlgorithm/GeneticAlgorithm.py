@@ -406,6 +406,7 @@ def select_parents(generation):
 	#   not including total_fitness
 	rand_parent1 = random.random()*total_fitness
 	rand_parent2 = random.random()*total_fitness
+	
 	parent1 = None
 	parent2 = None
 	
@@ -453,13 +454,20 @@ def reconfigure_vae_params(params, static_params_):
 	
 	return params
 
-def cross_over(parent1, parent2, prob, verbose=False):
+def cross_over(parent1, parent2, prob, param_choices, verbose=False):
+	for param in param_choices:
+		child[param] = random.choice([parent1[param], parent2[param]])
+	
+	return child
+
+def cross_over_orig(parent1, parent2, prob, verbose=False):
 	if verbose:
 		print('Crossing over with Parent {} and Parent {}'.format(
 						parent1.chromosomeID, parent2.chromosomeID))
 
 	static_params_ = {  'clargs':parent1.clargs, 
 						'data_instance':parent1.data_instance, 
+						'vae_weight':parent1.vae_weight, 
 						'vae_kl_weight':parent1.vae_kl_weight, 
 						'dnn_weight':parent1.dnn_weight,
 						'dnn_kl_weight':parent1.dnn_kl_weight,
@@ -483,8 +491,8 @@ def cross_over(parent1, parent2, prob, verbose=False):
 		params1 = reconfigure_vae_params(params1, static_params_)
 		params2 = reconfigure_vae_params(params2, static_params_)
 		
-		child1 = Chromosome(**params1)
-		child2 = Chromosome(**params2)
+		# child1 = Chromosome(**params1)
+		# child2 = Chromosome(**params2)
 
 		return child1, child2, crossover_happened
 	
