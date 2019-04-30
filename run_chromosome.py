@@ -186,7 +186,9 @@ if __name__ == '__main__':
 	clargs.do_log = True
 	clargs.do_chckpt = True
 	clargs.verbose = True
-
+	clargs.cross_prob = 0.7
+	clargs.mutate_prob = 0.01
+	
 	for key,val in clargs.__dict__.items(): 
 		if 'dir' in key: 
 			if not os.path.exists(val): 
@@ -265,7 +267,7 @@ if __name__ == '__main__':
 												clargs.time_stamp)
 	
 	joblib.dump(put_sql_dict, output_table_name)
-	
+
 	local_output_table = output_table_name
 	remote_output_table = 'vaelstmpredictor/'.format(output_table_name)
 	
