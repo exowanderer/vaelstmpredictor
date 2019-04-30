@@ -56,6 +56,7 @@ def build_hidden_layers(hidden_dims, input_layer, Layer = None,
         if 'conv2dT' == Layer.lower(): Layer = layers.Conv2DTranspose
         if 'conv3dT' == Layer.lower(): Layer = layers.Conv3DTranspose
 
+        # MickeyMouse
         return build_hidden_conv_layers(filter_sizes = hidden_dims, 
                                         input_layer = input_layer, 
                                         kernel_sizes = kernel_sizes, 
