@@ -175,7 +175,7 @@ if __name__ == '__main__':
 			child, mutation_happened = mutate(child, mutate_prob, 
 											param_choices, verbose=verbose)
 			print(new_generation)
-			new_generation.append = child
+			new_generation.append(child)
 			chromosomeID += 1
 
 		assert((new_generation['generationID'].values == generationID)).all(),\
