@@ -178,7 +178,8 @@ def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 	command.append('--chromosomeID {} '.format(chromosome.chromosomeID))
 
 	for key,val in clargs.__dict__.items():
-		command.append('--{} {}'.format(key,val))
+		if key not in ['generationID', 'chromosomeID']:
+			command.append('--{} {}'.format(key,val))
 	
 	command = " ".join(command)
 
