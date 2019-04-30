@@ -176,17 +176,19 @@ def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 	command.append('--table_dir {} '.format(clargs.table_dir))
 	command.append('--generationID {} '.format(chromosome.generationID))
 	command.append('--chromosomeID {} '.format(chromosome.chromosomeID))
-
+	print('[DEBUG] 1 command: {}'.format(command))
 	for key,val in clargs.__dict__.items():
 		if key not in ['generationID', 'chromosomeID']:
 			command.append('--{} {}'.format(key,val))
 	
+	print('[DEBUG] 2 command: {}'.format(command))
 	command.append('--num_vae_layers {} '.format(chromosome.num_vae_layers))
 	command.append('--num_dnn_layers {} '.format(chromosome.num_dnn_layers))
 	command.append('--size_vae_latent {} '.format(chromosome.size_vae_latent))
 	command.append('--size_vae_hidden {} '.format(chromosome.size_vae_hidden))
 	command.append('--size_dnn_hidden {} '.format(chromosome.size_dnn_hidden))
 	
+	print('[DEBUG] 3 command: {}'.format(command))
 	command = " ".join(command)
 	
 	print("Executing command:\n\t{}".format(command))
@@ -358,7 +360,7 @@ if __name__ == '__main__':
 	generation = generate_random_chromosomes(population_size = population_size,
 											 clargs = clargs, 
 											 data_instance = data_instance, 
-											 TrainFunction=train_generation)
+											 TrainFunction = train_generation)
 
 	generationID = 0	
 	evolutionary_tree = {}
