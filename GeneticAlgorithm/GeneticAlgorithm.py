@@ -152,6 +152,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 	while not alldone:
 		alldone = True
 		for k, chromosome in generation.iterrows():
+			print(chromosome)
 			if not chromosome.isTrained:
 				print("Creating Process for Chromosome {}".format(
 							chromosome.chromosomeID), end=" on machine ")
