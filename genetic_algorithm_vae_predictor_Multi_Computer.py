@@ -93,6 +93,8 @@ if __name__ == '__main__':
 				help='print more [INFO] and [DEBUG] statements')
 	parser.add_argument('--make_plots', action='store_true',
 				help='make plots of growth in the best_loss over generations')
+	parser.add_argument('--port', type=int, default=22,
+				help='IP port over which to ssh')
 
 	clargs = parser.parse_args()
 
