@@ -74,9 +74,10 @@ def query_sql_database(clargs, chromosome):
 		
 		chromosome.fitness = sql_json['fitness']
 	else:
-		print('SQL Request Failed: sql_json = {}'.format(sql_json))
+		print('SQL Request Failed: sql_json = {} with {}'.format(
+												sql_json, json_ID))
 		chromosome.fitness = sql_json or 0
-
+	
 	return chromosome.fitness
 
 def generate_random_chromosomes(population_size,# clargs, data_instance, 

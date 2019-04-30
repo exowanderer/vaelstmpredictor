@@ -181,6 +181,7 @@ if __name__ == '__main__':
 		assert((new_generation['generationID'].values == generationID)).all(),\
 			"The GenerationID did not update: should be {}; but is {}".format(
 				generationID, generation['generationID'].values)
+
 		print(new_generation)
 		generation = train_generation(new_generation, clargs)
 		
