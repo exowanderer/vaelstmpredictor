@@ -84,6 +84,8 @@ if __name__ == '__main__':
 				help='Keep track of which table and GA we are populating.')
 	parser.add_argument('--hostname', type=str, default='127.0.0.1',
 				help='The hostname of the computer to send results back to.')
+	parser.add_argument('--port', type=int, default=22,
+				help='The port on the work computer to send ssh over.')
 	parser.add_argument('--generationID', type=int, default=-1,
 				help='Chromosome Generation ID')
 	parser.add_argument('--chromosomeID', type=int, default=-1,
@@ -101,10 +103,16 @@ if __name__ == '__main__':
 
 	clargs = parser.parse_args()
 
-	port = 22
+	for key,val in clargs.__dict__.items(): 
+		if 'dir' in key: 
+			if not os.path.exists(val): 
+				os.mkdir(val)
+
 	vae_hidden_dims = [clargs.size_vae_hidden]*clargs.num_vae_layers
 	dnn_hidden_dims = [clargs.size_dnn_hidden]*clargs.num_dnn_layers
-
+	
+	port = clargs.port
+	
 	chrom_params = {}
 	chrom_params['verbose'] = clargs.verbose
 	chrom_params['vae_hidden_dims'] = vae_hidden_dims
