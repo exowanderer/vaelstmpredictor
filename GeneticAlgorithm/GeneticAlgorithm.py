@@ -153,7 +153,6 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 	while not alldone:
 		alldone = True
 		for k, chromosome in generation.iterrows():
-			print(chromosome)
 			if not chromosome.isTrained:
 				print("Creating Process for Chromosome {}".format(
 							chromosome.chromosomeID), end=" on machine ")
@@ -227,6 +226,44 @@ def generate_ssh_command(clargs, chromosome):
 	
 	return " ".join(command)
 
+def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
+				gituser = 'exowanderer', 
+				branchname = 'MultiComputerGeneticAlgorithm',
+				port = 22, verbose = True, private_key='id_ecdsa'):
+	
+	key_filename = environ['HOME'] + '/.ssh/{}'.format(private_key)
+	
+	ssh = SSHClient()
+	ssh.set_missing_host_key_policy(AutoAddPolicy())
+	ssh.connect(hostname, key_filename = key_filename)
+
+	command = []
+	command.append('git clone https://github.com/{}/{}'.format(gituser,gitdir))
+	command.append('cd {}'.format(gitdir))
+	command.append('git pull')
+	command.append('git checkout {}'.format(branchname))
+	command.append('git pull')
+	command = '; '.join(command)
+
+	print('[INFO] Executing {} on {}'.format(command, hostname))
+
+	stdin, stdout, stderr = ssh.exec_command(command)
+	
+	try:
+		stdout.channel.recv_exit_status()
+		for line in stdout.readlines(): print(line)
+	except Exception as e:
+		print('error on stdout.readlines(): {}'.format(str(e)))
+
+	try:
+		stderr.channel.recv_exit_status()
+		for line in stderr.readlines(): print(line)
+	except Exception as e:
+		print('error on stderr.readlines(): {}'.format(str(e)))
+
+	print("Command Executed Successfully")
+	ssh.close()
+
 def upload_zip_file(verbose = False):
 	if verbose: 
 			print('[INFO] File {} does not exists on {}'.format(
@@ -266,10 +303,12 @@ def upload_zip_file(verbose = False):
 
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
-					zip_filename = "vaelstmpredictor.zip", 
+					git_dir = 'vaelstmpredictor',
+					# zip_filename = "vaelstmpredictor.zip", 
 					verbose = True):
 	
-	if not os.path.exists(logdir): os.mkdir('train_logs')
+	if not os.path.exists(logdir): os.mkdir(logdir)
+
 	if verbose: 
 		print('[INFO] Checking if file {} exists on {}'.format(
 										zip_filename, machine['host']))
@@ -282,14 +321,13 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	ssh.set_missing_host_key_policy(AutoAddPolicy())
 	ssh.connect(machine["host"], key_filename=machine['key_filename'])
 
-	stdin, stdout, stderr = ssh.exec_command('ls | grep vaelstmpredictor')
+	stdin, stdout, stderr = ssh.exec_command('ls | grep {}'.format(git_dir))
 	
 	if(len(stdout.readlines()) == 0):
-		upload_zip_file()
-	else:
-		if verbose: 
-			print('[INFO] File {} exists on {}'.format(zip_filename, 
-													machine['host']))
+		git_clone()
+	elif verbose: 
+			print('[INFO] File {} exists on {}'.format(
+								zip_filename, machine['host']))
 
 	command = generate_ssh_command(clargs, chromosome)
 	
@@ -310,7 +348,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		print('error on stderr.readlines(): {}'.format(str(e)))
 
 	queue.put(machine)
-
+	
 	table_dir = clargs.table_dir
 	table_name = '{}/{}_{}_{}_fitness_table_{}.csv'
 	table_name = table_name.format(clargs.table_dir, 
@@ -327,13 +365,13 @@ def train_chromosome(chromosome, machine, queue, clargs,
 					fitness = line.split(check)[1].split(',')[0]
 					chromosome.fitness = float(fitness)
 					break
-	
+
 	chromosome.isTrained = True
 	
-	print("Command Executed")
-	
 	ssh.close()
-
+	
+	print("Command Executed Successfully")
+	
 	return chromosome
 
 def select_parents(generation):
