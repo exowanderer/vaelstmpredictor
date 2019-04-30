@@ -1,5 +1,5 @@
 # from https://github.com/philippesaade11/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
-# python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 --verbose --iterations 500 --population_size 10 --num_epochs 200
+# python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 --verbose --num_generations 500 --population_size 10 --num_epochs 200
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
@@ -111,7 +111,7 @@ if __name__ == '__main__':
 	cross_prob = clargs.cross_prob
 	mutate_prob = clargs.mutate_prob
 	population_size = clargs.population_size
-	iterations = clargs.iterations
+	num_generations = clargs.num_generations
 	verbose = clargs.verbose
 	make_plots = clargs.make_plots
 
@@ -149,8 +149,8 @@ if __name__ == '__main__':
 		fig.show()
 
 	start = time()
-	# while gen_num < iterations:
-	for _ in range(iterations):
+	# while gen_num < num_generations:
+	for _ in range(num_generations):
 		start_while = time()
 
 		# Create new generation
@@ -185,13 +185,13 @@ if __name__ == '__main__':
 		
 		if make_plots:
 			plt.plot(best_fitness, color="c")
-			plt.xlim([0, iterations])
+			plt.xlim([0, num_generations])
 			fig.canvas.draw()
 
 	evtree_save_name = 'evolutionary_tree_{}_ps{}_iter{}_epochs{}_cp{}_mp{}'
 	evtree_save_name = evtree_save_name + '.joblib.save'
 	evtree_save_name = evtree_save_name.format(run_name, population_size, 
-								iterations, num_epochs, cross_prob,mutate_prob)
+						num_generations, num_epochs, cross_prob,mutate_prob)
 	evtree_save_name = os.path.join(clargs.model_dir, evtree_save_name)
 
 	print('[INFO] Saving evolutionary tree to {}'.format(evtree_save_name))
