@@ -188,6 +188,7 @@ if __name__ == '__main__':
 
 		# Re-sort by chromosomeID
 		new_generation = new_generation.sort_values('chromosomeID')
+		print(new_generation)
 		new_generation.index = np.arange(population_size)
 
 		assert((new_generation['generationID'].values == generationID)).all(),\
