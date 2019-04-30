@@ -189,8 +189,9 @@ if __name__ == '__main__':
 	clargs.cross_prob = 0.7
 	clargs.mutate_prob = 0.01
 	clargs.num_generations = 100
+	clargs.population_size = 100
 	clargs.make_plots = False
-	
+
 	for key,val in clargs.__dict__.items(): 
 		if 'dir' in key: 
 			if not os.path.exists(val): 
