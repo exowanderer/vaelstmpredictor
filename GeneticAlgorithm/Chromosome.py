@@ -179,17 +179,17 @@ class Chromosome(VAEPredictor):
             print('\nFitness: {}'.format(self.fitness))
             print('\n\n')
         
-        self.joblib_save_loc ='{}/{}_{}_{}_trained_model_output_{}.joblib.save'
+        joblib_save_loc ='{}/{}_{}_{}_trained_model_output_{}.joblib.save'
         self.joblib_save_loc = joblib_save_loc.format(self.model_dir, 
                                         self.run_name, self.generationID, 
                                         self.chromosomeID, self.time_stamp)
 
-        self.wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
+        wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
         self.wghts_save_loc = wghts_save_loc.format(self.model_dir, 
                                         self.run_name, self.generationID, 
                                         self.chromosomeID, self.time_stamp)
         
-        self.model_save_loc = '{}/{}_{}_{}_trained_model_full_{}.save'
+        model_save_loc = '{}/{}_{}_{}_trained_model_full_{}.save'
         self.model_save_loc = model_save_loc.format(self.model_dir, 
                                         self.run_name, self.generationID, 
                                         self.chromosomeID, self.time_stamp)
