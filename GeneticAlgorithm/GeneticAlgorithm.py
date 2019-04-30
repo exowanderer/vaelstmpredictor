@@ -466,7 +466,7 @@ def cross_over(parent1, parent2, prob, param_choices, verbose=False):
 	else: 
 		crossover_happened = False
 		child = parent1 if parent1.fitness > parent2.fitness else parent2
-	
+
 	return child, crossover_happened
 """
 def cross_over_orig(parent1, parent2, prob, verbose=False):
