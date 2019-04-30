@@ -196,22 +196,26 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
-				print(process)
-				chromosome.fitness = query_sql_database(clargs, chromosome)
+				
 				chromosome.isTrained = 1
 				generation.iloc[k] = chromosome # finally, we figured this out!
 
-				print('\n\n[INFO]')
-				print('GenerationID:{}'.format(chromosome.generationID))
-				print('ChromosomeID:{}'.format(chromosome.chromosomeID))
-				print('Fitness:{}'.format(chromosome.fitness))
-				print('Num VAE Layers:{}'.format(chromosome.num_vae_layers))
-				print('Num DNN Layers:{}'.format(chromosome.num_dnn_layers))
-				print('Size VAE Latent:{}'.format(chromosome.size_vae_latent))
-				print('Size VAE Hidden:{}'.format(chromosome.size_vae_hidden))
-				print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
-				print('\n\n')
+	for k, chromosome in generation.iterrows():
+		chromosome.fitness = query_sql_database(clargs, chromosome)
+		
+		print('\n\n[INFO]')
+		print('GenerationID:{}'.format(chromosome.generationID))
+		print('ChromosomeID:{}'.format(chromosome.chromosomeID))
+		print('Fitness:{}'.format(chromosome.fitness))
+		print('Num VAE Layers:{}'.format(chromosome.num_vae_layers))
+		print('Num DNN Layers:{}'.format(chromosome.num_dnn_layers))
+		print('Size VAE Latent:{}'.format(chromosome.size_vae_latent))
+		print('Size VAE Hidden:{}'.format(chromosome.size_vae_hidden))
+		print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
+		print('\n\n')
 
+		generation.iloc[k] = chromosome # finally, we figured this out!
+	
 	# After all is done: return what you received
 	return generation
 
