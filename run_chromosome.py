@@ -170,7 +170,7 @@ if __name__ == '__main__':
 
 	table_dir = clargs.table_dir
 	table_name = '{}/{}_{}_{}_fitness_table_{}.csv'
-	table_name= table_name.format(clargs.table_dir, 
+	table_name = table_name.format(clargs.table_dir, 
 		clargs.run_name, clargs.generationID, 
 		clargs.chromosomeID, clargs.time_stamp)
 
