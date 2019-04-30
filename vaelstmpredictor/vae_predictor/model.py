@@ -133,9 +133,9 @@ class VAEPredictor(object):
     def build_predictor(self):
         if bool(sum(self.dnn_hidden_dims)):
             ''' Establish VAE Encoder layer structure '''
-            dnn_hidden_layer = build_hidden_layers(
-                                    self.dnn_hidden_dims, 
-                                    self.input_layer, 
+            dnn_hidden_layer = build_hidden_layers(Layer = 'Dense',
+                                    hidden_dims = self.dnn_hidden_dims, 
+                                    input_layer = self.input_layer, 
                                     base_layer_name='predictor_hidden_layer', 
                                     activation=self.hidden_activation)
         else:
@@ -166,7 +166,9 @@ class VAEPredictor(object):
         
     def build_latent_decoder(self):
         if bool(sum(self.vae_hidden_dims)):
-            vae_dec_hid_layer = build_hidden_layers(self.vae_hidden_dims[::-1],
+            # reverse order for decoder
+            vae_dec_hid_layer = build_hidden_layers(Layer = 'Dense',
+                                    hidden_dims = self.vae_hidden_dims[::-1],
                                     input_layer = self.dnn_w_latent,
                                     base_layer_name = 'vae_dec_hidden_layer', 
                                     activation = self.hidden_activation)
@@ -180,9 +182,10 @@ class VAEPredictor(object):
 
     def bak_build_latent_decoder_1stpass(self):
         if bool(sum(self.vae_hidden_dims)):
-            vae_dec_hid_layer = build_hidden_layers(# reverse order for decoder
-                                    self.vae_hidden_dims[::-1],
-                                    self.dnn_w_latent, 
+            # reverse order for decoder
+            vae_dec_hid_layer = build_hidden_layers(Layer = 'Dense',
+                                    hidden_dims = self.vae_hidden_dims[::-1],
+                                    input_layer = self.dnn_w_latent, 
                                     base_layer_name = 'vae_dec_hidden_layer', 
                                     activation = self.hidden_activation)
         else:
@@ -197,8 +200,9 @@ class VAEPredictor(object):
     def build_latent_encoder(self):
         if bool(sum(self.vae_hidden_dims)):
             ''' Establish VAE Encoder layer structure '''
-            vae_enc_hid_layer = build_hidden_layers(self.vae_hidden_dims, 
-                                self.input_w_pred, 
+            vae_enc_hid_layer = build_hidden_layers(Layer = 'Dense',
+                                hidden_dims = self.vae_hidden_dims, 
+                                input_layer = self.input_w_pred, 
                                 base_layer_name='vae_enc_hidden_layer', 
                                 activation=self.hidden_activation)
         else:
