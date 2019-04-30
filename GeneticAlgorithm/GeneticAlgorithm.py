@@ -207,7 +207,7 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--vae_weight {}'.format(clargs.vae_weight))
 	command.append('--vae_kl_weight {}'.format(clargs.vae_kl_weight))
 	command.append('--dnn_kl_weight {}'.format(clargs.dnn_kl_weight))
-	command.append('--prediction_log_var_prior {}'.format(clargs.
+	command.append('--prediction_log_var_prior {}'.format(
 											clargs.prediction_log_var_prior))
 	command.append('--do_log {}'.format(clargs.do_log))
 	command.append('--do_chckpt {}'.format(clargs.do_chckpt))
@@ -227,7 +227,7 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--time_stamp {}'.format(clargs.time_stamp))
 	command.append('--hostname {}'.format(clargs.hostname))
 	command.append('--port {}'.format(clargs.port))
-	command.append('--table_dir {} '.format(clargs.clargs.table_dir))
+	command.append('--table_dir {} '.format(clargs.table_dir))
 	command.append('--num_vae_layers {}'.format(chromosome.num_vae_layers))
 	command.append('--num_dnn_layers {}'.format(chromosome.num_dnn_layers))
 	command.append('--size_vae_latent {}'.format(chromosome.size_vae_latent))
