@@ -97,10 +97,10 @@ if __name__ == '__main__':
 	chrom_params['vae_hidden_dims'] = vae_hidden_dims
 	chrom_params['dnn_hidden_dims'] = dnn_hidden_dims
 	chrom_params['vae_latent_dim'] = clargs.size_vae_latent
-	chrom_params['batch_size'] = clargs.batch_size
-	chrom_params['dnn_log_var_prior'] = clargs.dnn_log_var_prior
-	chrom_params['optimizer'] = clargs.optimizer
-	chrom_params['predictor_type'] = clargs.predictor_type
+	# chrom_params['batch_size'] = clargs.batch_size
+	# chrom_params['dnn_log_var_prior'] = clargs.dnn_log_var_prior
+	# chrom_params['optimizer'] = clargs.optimizer
+	# chrom_params['predictor_type'] = clargs.predictor_type
 	chrom_params['clargs'] = clargs
 	chrom_params['generationID'] = clargs.generationID
 	chrom_params['chromosomeID'] = clargs.chromosomeID
