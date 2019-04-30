@@ -77,7 +77,7 @@ def query_sql_database(clargs, chromosome):
 		print('SQL Request Failed: sql_json = {} with {}'.format(
 												sql_json, json_ID))
 		chromosome.fitness = sql_json or 0
-	
+
 	return chromosome.fitness
 
 def generate_random_chromosomes(population_size,# clargs, data_instance, 
@@ -196,6 +196,10 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				# 					args=(chromosome, machine, queue, clargs))
 				# process.start()
 				
+				chromosome.fitness = query_sql_database(clargs, chromosome)
+				chromosome.isTrained = 1
+				generation.iloc[k] = chromosome # finally, we figured this out!
+				
 				print('\n\n[INFO]')
 				print('GenerationID:{}'.format(chromosome.generationID))
 				print('ChromosomeID:{}'.format(chromosome.chromosomeID))
@@ -206,13 +210,6 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				print('Size VAE Hidden:{}'.format(chromosome.size_vae_hidden))
 				print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
 				print('\n\n')
-
-				# generation
-				# chromosome.fitness = np.random.randint(low=1, high=100)
-				# chromosome.isTrained = 1
-				chromosome.fitness = query_sql_database(clargs, chromosome)
-				chromosome.isTrained = 1
-				generation.iloc[k] = chromosome # finally, we figured this out!
 
 	# After all is done: return what you received
 	return generation
