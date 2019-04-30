@@ -410,7 +410,7 @@ def select_parents(generation):
 	parent2 = None
 	
 	fitness_count = 0
-	for chromosome in generation:
+	for k, chromosome in generation.iterrows():
 		fitness_count += chromosome.fitness
 		if(parent1 == None and fitness_count >= rand_parent1):
 			parent1 = chromosome
@@ -418,7 +418,7 @@ def select_parents(generation):
 			parent2 = chromosome
 		if(parent1 != None and parent2 != None):
 			break
-
+	
 	return parent1, parent2
 
 def reconfigure_vae_params(params, static_params_):
