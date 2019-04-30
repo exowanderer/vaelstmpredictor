@@ -84,7 +84,7 @@ def build_hidden_dense_layers(hidden_dims, input_layer, base_layer_name,
     return hidden_layer
 
 def build_hidden_conv_layers(filter_sizes, kernel_sizes, input_layer, strides,
-                        base_layer_name, activation, Layer = Conv2D):
+                        base_layer_name, activation, Layer = None):
     '''Need to remove all leading zeros for the Decoder 
     to be properly established'''
 
