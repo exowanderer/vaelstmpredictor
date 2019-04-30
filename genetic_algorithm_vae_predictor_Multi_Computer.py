@@ -179,7 +179,7 @@ if __name__ == '__main__':
 
 		# generation = new_generation
 		# evolutionary_tree[generationID] = save_generation_to_tree(generation,
-															verbose=verbose)
+															# verbose=verbose)
 
 		best_fitness.append(max(chrom.fitness for chrom in generation))
 		
