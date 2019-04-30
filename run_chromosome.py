@@ -13,6 +13,109 @@ from GeneticAlgorithm import *
 from time import time, sleep
 from vaelstmpredictor.utils.data_utils import MNISTData
 
+def make_sql_output(clargs, chromosome):
+	output = {}
+	output['run_name'] = clargs.run_name
+	output['batch_size'] = clargs.batch_size
+	output['cross_prob'] = clargs.cross_prob
+	output['do_chckpt'] = clargs.do_chckpt
+	output['do_log'] = clargs.do_log
+	output['hostname'] = clargs.hostname
+	output['iterations'] = clargs.num_generations
+	output['kl_anneal'] = clargs.kl_anneal
+	output['log_dir'] = clargs.log_dir
+	output['make_plots'] = clargs.make_plots
+	output['model_dir'] = clargs.model_dir
+	output['mutate_prob'] = clargs.mutate_prob
+	output['num_epochs'] = clargs.num_epochs
+	output['optimizer'] = clargs.optimizer
+	output['patience'] = clargs.patience
+	output['population_size'] = clargs.population
+	output['prediction_log_var_prior'] = clargs.prediction_log_var_prior
+	output['predictor_type'] = clargs.predictor
+	output['table_dir'] = clargs.table_dir
+	output['time_stamp'] = clargs.time_stamp
+	output['train_file'] = clargs.train_file
+	output['dnn_log_var_prior'] = clargs.dnn_log_var_prior
+	output['dnn_kl_weight'] = clargs.dnn_kl_weight
+	output['dnn_weight'] = clargs.dnn_weight
+	output['vae_kl_weight'] = clargs.vae_kl_weight
+	output['vae_weight'] = clargs.vae_weight
+	output['verbose'] = clargs.verbose
+	output['w_kl_anneal'] = clargs.w_kl_anneal
+	output['generationID'] = chromosome.generationID
+	output['chromosomeID'] = chromosome.chromosomeID
+	output['fitness'] = chromosome.fitness
+	output['num_dnn_layers'] = chromosome.num_dnn_layers
+	output['num_vae_layers'] = chromosome.num_vae_layers
+	output['size_dnn_hidden'] = chromosome.size_dnn_hidden
+	output['size_vae_hidden'] = chromosome.size_vae_hidden
+	output['size_vae_latent'] = chromosome.size_vae_latent
+	
+	return output
+
+def sftp_send(local_file, remote_file, hostname, port, key_filename, 
+				verbose = False):
+	transport = Transport((clargs.hostname, clargs.port))
+	pk = ECDSAKey.from_private_key(open(key_filename))
+	transport.connect(username = 'acc', pkey=pk)
+
+	if chromosome.verbose: 
+		print('[INFO] SFTPing Model Weights from {} to {} on {}'.format(
+										local_wghts, remote_wghts, hostname))
+
+	sftp = SFTPClient.from_transport(transport)
+	sftp.put(local_wghts, remote_wghts)
+
+	sftp.close()
+	transport.close()
+
+def ssh_out_table_entry(clargs, chromosome):
+	table_dir = clargs.table_dir
+	table_name = '{}/{}_fitness_table_{}.csv'
+	table_name = table_name.format(clargs.table_dir, 
+									clargs.run_name, 
+									clargs.time_stamp)
+	
+	entry = []
+	entry.append('generationID:{}'.format(clargs.generationID))
+	entry.append('chromosomeID:{}'.format(clargs.chromosomeID))
+	entry.append('fitness:{}'.format(chromosome.fitness))
+	for key,val in clargs.__dict__.items():
+		if key not in ['generationID', 'chromosomeID']:
+			entry.append('{}:{}'.format(key,val))
+
+	entry = ','.join(entry)
+
+	private_key = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
+	command = 'echo "{}" >> vaelstmpredictor/{}'.format(entry, table_name)
+	
+	if chromosome.verbose:
+		print('\n\n')
+		print('[INFO] Remotely entry storing ON {}'.format(clargs.hostname))
+		print('\n\n{}'.format(entry))
+		print('\n\nAT vaelstmpredictor/{} '.format(table_name))
+		print('\n\nWITH \n\n{}'.format(command))
+	
+	ssh = SSHClient()
+	ssh.set_missing_host_key_policy(AutoAddPolicy())
+	ssh.connect(clargs.hostname, key_filename=private_key)
+	stdin, stdout, stderr = ssh.exec_command(command)
+
+	try:
+		stdout.channel.recv_exit_status()
+		for line in stdout.readlines(): print(line)
+	except Exception as e:
+		print('error on stdout.readlines(): {}'.format(str(e)))
+
+	try:
+		stderr.channel.recv_exit_status()
+		for line in stderr.readlines(): print(line)
+	except Exception as e:
+		print('error on stderr.readlines(): {}'.format(str(e)))
+
+	ssh.close()
+
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--run_name', type=str, default='ga_test',
@@ -91,18 +194,12 @@ if __name__ == '__main__':
 
 	vae_hidden_dims = [clargs.size_vae_hidden]*clargs.num_vae_layers
 	dnn_hidden_dims = [clargs.size_dnn_hidden]*clargs.num_dnn_layers
-	
-	port = clargs.port
 
 	chrom_params = {}
 	chrom_params['verbose'] = clargs.verbose
 	chrom_params['vae_hidden_dims'] = vae_hidden_dims
 	chrom_params['dnn_hidden_dims'] = dnn_hidden_dims
 	chrom_params['vae_latent_dim'] = clargs.size_vae_latent
-	# chrom_params['batch_size'] = clargs.batch_size
-	# chrom_params['dnn_log_var_prior'] = clargs.dnn_log_var_prior
-	# chrom_params['optimizer'] = clargs.optimizer
-	# chrom_params['predictor_type'] = clargs.predictor_type
 	chrom_params['clargs'] = clargs
 	chrom_params['generationID'] = clargs.generationID
 	chrom_params['chromosomeID'] = clargs.chromosomeID
@@ -120,10 +217,7 @@ if __name__ == '__main__':
 	clargs.n_labels = len(np.unique(data_instance.train_labels))
 	
 	chrom_params['data_instance'] = data_instance
-	# chrom_params['original_dim'] = clargs.original_dim
-	# chrom_params['dnn_out_dim'] = clargs.n_labels
-	# chrom_params['dnn_latent_dim'] = clargs.n_labels - 1
-	
+
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
 	hostname = s.getsockname()[0]
@@ -133,61 +227,57 @@ if __name__ == '__main__':
 	for key,val in clargs.__dict__.items():
 		print('{:20}{}'.format(key,val))
 
-	chrom = Chromosome(**chrom_params)
-	chrom.verbose = True
-	chrom.train(verbose=True)
+	chromosome = Chromosome(**chrom_params)
+	chromosome.verbose = True
+	chromosome.train(verbose=True)
 	
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
 
-	transport = Transport((clargs.hostname, port))
-	pk = ECDSAKey.from_private_key(open(key_filename))
-	transport.connect(username = 'acc', pkey=pk)
-
-	sftp = SFTPClient.from_transport(transport)
-	sftp.put(chrom.wghts_save_loc, 
-			 'vaelstmpredictor/{}'.format(chrom.wghts_save_loc))
-
-	sftp.close()
-	transport.close()
-
-	table_dir = clargs.table_dir
-	table_name = '{}/{}_{}_{}_fitness_table_{}.csv'
-	table_name = table_name.format(clargs.table_dir, 
-		clargs.run_name, clargs.generationID, 
-		clargs.chromosomeID, clargs.time_stamp)
-
-	entry = []
-	entry.append('generationID:{}'.format(clargs.generationID))
-	entry.append('chromosomeID:{}'.format(clargs.chromosomeID))
-	entry.append('fitness:{}'.format(chrom.fitness))
-	for key,val in clargs.__dict__.items():
-		if key not in ['generationID', 'chromosomeID']:
-			entry.append('{}:{}'.format(key,val))
-
-	entry = ','.join(entry)
-
-	private_key = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
-	command = 'echo "{}" >> vaelstmpredictor/{}'.format(entry, table_name)
 	
-	ssh = SSHClient()
-	ssh.set_missing_host_key_policy(AutoAddPolicy())
-	ssh.connect(hostname, key_filename=private_key)
-	stdin, stdout, stderr = ssh.exec_command(command)
+	local_wghts = chromosome.wghts_save_loc
+	remote_wghts = 'vaelstmpredictor/{}'.format(chromosome.wghts_save_loc)
+	sftp_send(local_file=local_wghts, 
+				remote_file=remote_wghts,
+				hostname = clargs.hostname, 
+				port = clargs.port, 
+				key_filename = key_filename, 
+				verbose = clargs.verbose)
 
-	clargs.fitness = chrom.fitness
-	
+	ssh_out_table_entry(clargs, chromosome)
+
 	print('\n[INFO]')
 	print('Result: ', end=" ")
-	print('GenerationID: {}'.format(clargs.generationID), end=" ")
-	print('ChromosomeID: {}'.format(clargs.chromosomeID), end=" ")
-	print('Fitness: {}\n'.format(clargs.fitness))
+	print('GenerationID: {}'.format(chromosome.generationID), end=" ")
+	print('ChromosomeID: {}'.format(chromosome.chromosomeID), end=" ")
+	print('Fitness: {}\n'.format(chromosome.fitness))
 	
 	putURL = 'https://philippesaade11.pythonanywhere.com/AddChrom'
 	
 	print('[INFO] Storing to SQL db at {}'.format(putURL))
 	
+	put_sql_dict = make_sql_output(clargs, chromosome)
+
+	output_table_name = '{}/{}_{}_{}_trained_model_weights_{}.save'
+	output_table_name = output_table_name.format(clargs.table_dir, 
+		                                        clargs.run_name, 
+		                                        chromosome.generationID, 
+		                                        chromosome.chromosomeID, 
+		                                        chromosome.time_stamp)
+    
+    joblib.dump(put_sql_dict, output_table_name)
+
+	local_output_table = output_table_name
+	remote_output_table = 'vaelstmpredictor/'.format(output_table_name)
+	
+	sftp_send(local_file=local_output_table, 
+				remote_file=remote_output_table,
+				hostname = clargs.hostname, 
+				port = clargs.port, 
+				key_filename = key_filename, 
+				verbose = clargs.verbose)
+	
 	try:
-		req = requests.get(url = putURL, params = clargs.__dict__)
+		req = requests.get(url = putURL, params = put_sql_dict)
 		if req.json() == 1:
 			print('[INFO] Remote SQL Entry Added Successfully')
 		else:

@@ -54,6 +54,31 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 
 	return hidden_dims
 
+def query_sql_database(clargs, chromosome):
+	getFitness = 'http://philippesaade11.pythonanywhere.com/GetFitness'
+
+	table_dir = clargs.table_dir
+	table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
+	table_name = table_name.format(clargs.table_dir, 
+						clargs.run_name, chromosome.generationID, 
+						chromosome.chromosomeID, clargs.time_stamp)
+
+	json_ID = {'generationID':chromosome.generationID,
+			   'chromosomeID':chromosome.chromosomeID}
+	
+	sql_json = requests.get(getFitness, params=json_ID).json()
+	
+	if isinstance(sql_json, dict):
+		with open(table_name, 'a') as f_out:
+			json.dump(sql_json, f_out)
+		
+		chromosome.fitness = sql_json['fitness']
+	else:
+		print('SQL Request Failed: sql_json = {}'.format(sql_json))
+		chromosome.fitness = sql_json or 0
+
+	return chromosome.fitness
+
 def generate_random_chromosomes(population_size,# clargs, data_instance, 
 						min_vae_hidden_layers = 1, min_dnn_hidden_layers = 1, 
 						max_vae_hidden_layers = 5, max_dnn_hidden_layers = 5, 
@@ -106,6 +131,8 @@ def generate_random_chromosomes(population_size,# clargs, data_instance,
 														size = population_size)
 	generation['size_dnn_hidden'] = np.random.choice(dnn_nUnits_choices, 
 														size = population_size)
+	generation['fitness'] = np.zeros(population_size, dtype = int) - 1
+
 	return generation
 	# if(TrainFunction is None):
 
@@ -118,8 +145,7 @@ def generate_random_chromosomes(population_size,# clargs, data_instance,
 
 def train_generation(generation, clargs, private_key='id_ecdsa'):
 	getChrom = 'https://philippesaade11.pythonanywhere.com/GetChrom'
-	getFitness = 'http://philippesaade11.pythonanywhere.com/GetFitness'
-
+	
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	
 	machines = [# {"host": "192.168.0.1", "username": "acc", 
@@ -163,31 +189,29 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				
 				# Wait for queue to have a value, 
 				#   which is the ID of the machine that is done.
-				machine = queue.get()
-				print('{}'.format(machine['host']))
-				process = mp.Process(target=train_chromosome, 
-									args=(chromosome, machine, queue, clargs))
-				process.start()
+				# machine = queue.get()
+				# print('{}'.format(machine['host']))
+				# process = mp.Process(target=blank_function, 
+				# 					args=(chromosome, machine, queue, clargs))
+				# process.start()
 				
-				table_dir = clargs.table_dir
-				table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
-				table_name= table_name.format(clargs.table_dir, 
-									clargs.run_name, chromosome.generationID, 
-									chromosome.chromosomeID, clargs.time_stamp)
-
-				json_ID = {'generationID':chromosome.generationID,
-						   'chromosomeID':chromosome.chromosomeID}
-
-				sql_json = requests.get(getFitness, params=json_ID).json()
-
-				if isinstance(sql_json, dict):
-					with open(table_name, 'a') as f_out:
-						json.dump(sql_json, f_out)
-					
-					chromosome.fitness = sql_json['fitness']
-				else:
-					print('SQL Request Failed: sql_json = {}'.format(sql_json))
-					chromosome.fitness = sql_json or 0
+				print('\n\n[INFO]')
+				print('GenerationID:{}'.format(chromosome.generationID))
+				print('ChromosomeID:{}'.format(chromosome.chromosomeID))
+				print('Fitness:{}'.format(chromosome.fitness))
+				print('Num VAE Layers:{}'.format(chromosome.num_vae_layers))
+				print('Num DNN Layers:{}'.format(chromosome.num_dnn_layers))
+				print('Size VAE Latent:{}'.format(chromosome.size_vae_latent))
+				print('Size VAE Hidden:{}'.format(chromosome.size_vae_hidden))
+				print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
+				print('\n\n')
+				
+				# generation
+				# chromosome.fitness = np.random.randint(low=1, high=100)
+				# chromosome.isTrained = 1
+				chromosome.fitness = query_sql_database(clargs, chromosome)
+				chromosome.isTrained = 1
+				generation.iloc[k] = chromosome # finally, we figured this out!
 
 def generate_ssh_command(clargs, chromosome):
 	command = []
@@ -351,11 +375,11 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	queue.put(machine)
 
 	table_dir = clargs.table_dir
-	table_name = '{}/{}_{}_{}_fitness_table_{}.csv'
+	table_name = '{}/{}_fitness_table_{}.csv'
 	table_name = table_name.format(clargs.table_dir, 
-								clargs.run_name, chromosome.generationID, 
-								chromosome.chromosomeID, clargs.time_stamp)
-
+									clargs.run_name, 
+									clargs.time_stamp)
+	"""
 	if os.path.exists(table_name):
 		with open(table_name, 'r') as f_in:
 			check = 'fitness:'
@@ -368,12 +392,10 @@ def train_chromosome(chromosome, machine, queue, clargs,
 					break
 
 	chromosome.isTrained = True
-	
+	"""
 	ssh.close()
 	
 	print("Command Executed Successfully")
-	
-	return chromosome
 
 def select_parents(generation):
 	total_fitness = sum(chromosome.fitness for chromosome in generation)
