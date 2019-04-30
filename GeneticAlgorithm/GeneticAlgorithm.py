@@ -223,7 +223,8 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				
 				chromosome.isTrained = 1
 				generation.iloc[k] = chromosome # finally, we figured this out!
-			elif:
+			
+			if chromosome.isTrained:
 				chromosome.fitness = query_sql_database(clargs, chromosome)
 				
 				if chromosome.fitness is -1:
