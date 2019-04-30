@@ -295,14 +295,6 @@ def train_chromosome(chromosome, machine, queue, clargs,
 			print('[INFO] File {} exists on {}'.format(zip_filename, 
 													machine['host']))
 
-	# transport = Transport((machine["host"], port))
-	# pk = ECDSAKey.from_private_key(open(machine['key_filename']))
-	# transport.connect(username = machine["username"], pkey=pk)
-	
-	# sftp = SFTPClient.from_transport(transport)
-	# sftp.put(param_filename, 'vaelstmpredictor/{}'.format(param_filename))
-	# sftp.close()
-	# transport.close()
 	command = generate_ssh_command(clargs, chromosome)
 	
 	print("\n\nExecuting command:\n\t{}".format(command))
@@ -320,28 +312,6 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		for line in stderr.readlines(): print(line)
 	except Exception as e:
 		print('error on stderr.readlines(): {}'.format(str(e)))
-
-	try:
-		stdin.channel.recv_exit_status()
-		for line in stdin.readlines(): print(line)
-	except Exception as e:
-		print('error on stdin.readlines(): {}'.format(str(e)))
-
-	error = "".join(stderr.readlines())
-	if error != "":
-		print("Errors has occured while tainging in machine: "+str(machine)+"\nError: "+error)
-	if "".join(stdout.readlines()[-4:]) == "done":
-		print("Trained Successfully")
-
-	# transport = Transport((machine["host"], port))
-	# pk = ECDSAKey.from_private_key(open(machine['key_filename']))
-	# transport.connect(username = machine["username"], pkey=pk)
-	# 
-	# sftp = SFTPClient.from_transport(transport)
-	# sftp.put(param_filename, 'vaelstmpredictor/{}'.format(param_filename))
-	# 
-	# sftp.close()
-	# transport.close()
 
 	queue.put(machine)
 
@@ -362,6 +332,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 						break
 
 	chromosome.isTrained = True
+	
 	print("Command Executed")
 	ssh.close()
 
