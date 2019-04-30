@@ -25,18 +25,6 @@ if __name__ == '__main__':
 				help='optimizer name') 
 	parser.add_argument('--num_epochs', type=int, default=200,
 				help='number of epochs')
-	parser.add_argument('--start_small', action='store_true',
-				 help='Only the first hidden layer is initially populated')
-	parser.add_argument('--init_large', action='store_true', 
-				 help='Initial the 1st layer in [num_features/2,num_features]')
-	parser.add_argument('--max_vae_hidden_layers', type=int, default=5, 
-				 help='Maximum number of VAE hidden layers')
-	parser.add_argument('--max_vae_latent', type=int, default=512, 
-				 help='Maximum number of VAE neurons per layer')
-	parser.add_argument('--max_dnn_latent', type=int, default=512, 
-				 help='Maximum number of DNN neurons per layer')
-	parser.add_argument('--max_dnn_hidden_layers', type=int, default=5,
-				 help='Maximum number of DNN hidden layers')
 	parser.add_argument('--dnn_weight', type=float, default=1.0,
 				help='relative weight on prediction loss')
 	parser.add_argument('--vae_weight', type=float, default=1.0,
@@ -67,20 +55,8 @@ if __name__ == '__main__':
 				help='basedir for storing the table of params and fitnesses.')
 	parser.add_argument('--train_file', type=str, default='MNIST',
 				help='file of training data (.pickle)')
-	parser.add_argument('--cross_prob', type=float, default=0.7,
-				help='Probability of crossover between generations')
-	parser.add_argument('--mutate_prob', type=float, default=0.01,
-				help='Probability of mutation for each member')
-	parser.add_argument('--population_size', type=int, default=200,
-				help='size of the population to evolve -- divisible by 2')
-	parser.add_argument('--iterations', type=int, default=100,
-				help='number of iterations for genetic algorithm')
 	parser.add_argument('--verbose', action='store_true',
 				help='print more [INFO] and [DEBUG] statements')
-	parser.add_argument('--make_plots', action='store_true',
-				help='make plots of growth in the best_loss over generations')
-	parser.add_argument('--time_stamp', type=int, default=0,
-				help='Keep track of which table and GA we are populating.')
 	parser.add_argument('--hostname', type=str, default='127.0.0.1',
 				help='The hostname of the computer to send results back to.')
 	parser.add_argument('--port', type=int, default=22,
@@ -117,11 +93,10 @@ if __name__ == '__main__':
 	chrom_params['vae_hidden_dims'] = vae_hidden_dims
 	chrom_params['dnn_hidden_dims'] = dnn_hidden_dims
 	chrom_params['vae_latent_dim'] = clargs.size_vae_latent
-	# chrom_params['batch_size'] = clargs.batch_size
-	# chrom_params['dnn_log_var_prior'] = clargs.dnn_log_var_prior
-	# chrom_params['optimizer'] = clargs.optimizer
-	# chrom_params['use_prev_input'] = False
-	# chrom_params['predictor_type'] = clargs.predictor_type
+	chrom_params['batch_size'] = clargs.batch_size
+	chrom_params['dnn_log_var_prior'] = clargs.dnn_log_var_prior
+	chrom_params['optimizer'] = clargs.optimizer
+	chrom_params['predictor_type'] = clargs.predictor_type
 	chrom_params['clargs'] = clargs
 	chrom_params['generationID'] = clargs.generationID
 	chrom_params['chromosomeID'] = clargs.chromosomeID
@@ -151,7 +126,7 @@ if __name__ == '__main__':
 	print('\n\nParams for this VAE_NN:')
 	for key,val in clargs.__dict__.items():
 		print('{:20}{}'.format(key,val))
-
+	
 	chrom = Chromosome(**chrom_params)
 	chrom.verbose = True
 	chrom.train(verbose=True)

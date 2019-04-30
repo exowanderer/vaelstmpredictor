@@ -196,14 +196,6 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--batch_size {}'.format(clargs.batch_size))
 	command.append('--optimizer {}'.format(clargs.optimizer))
 	command.append('--num_epochs {}'.format(clargs.num_epochs))
-	command.append('--start_small {}'.format(clargs.start_small))
-	command.append('--init_large {}'.format(clargs.init_large))
-	command.append('--max_vae_hidden_layers {}'.format(
-											clargs.max_vae_hidden_layers))
-	command.append('--max_vae_latent {}'.format(clargs.max_vae_latent))
-	command.append('--max_dnn_latent {}'.format(clargs.max_dnn_latent))
-	command.append('--max_dnn_hidden_layers {}'.format(
-											clargs.max_dnn_hidden_layers))
 	command.append('--dnn_weight {}'.format(clargs.dnn_weight))
 	command.append('--vae_weight {}'.format(clargs.vae_weight))
 	command.append('--vae_kl_weight {}'.format(clargs.vae_kl_weight))
@@ -220,15 +212,9 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--model_dir {}'.format(clargs.model_dir))
 	command.append('--table_dir {}'.format(clargs.table_dir))
 	command.append('--train_file {}'.format(clargs.train_file))
-	command.append('--cross_prob {}'.format(clargs.cross_prob))
-	command.append('--mutate_prob {}'.format(clargs.mutate_prob))
-	command.append('--population_size {}'.format(clargs.population_size))
-	command.append('--iterations {}'.format(clargs.iterations))
 	command.append('--verbose {}'.format(clargs.verbose))
-	command.append('--time_stamp {}'.format(clargs.time_stamp))
 	command.append('--hostname {}'.format(clargs.hostname))
 	command.append('--port {}'.format(clargs.port))
-	command.append('--table_dir {} '.format(clargs.table_dir))
 	command.append('--num_vae_layers {}'.format(chromosome.num_vae_layers))
 	command.append('--num_dnn_layers {}'.format(chromosome.num_dnn_layers))
 	command.append('--size_vae_latent {}'.format(chromosome.size_vae_latent))
@@ -334,6 +320,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	chromosome.isTrained = True
 	
 	print("Command Executed")
+	
 	ssh.close()
 
 	return chromosome
