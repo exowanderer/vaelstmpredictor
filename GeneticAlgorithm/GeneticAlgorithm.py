@@ -166,14 +166,11 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 									args=(chromosome, machine, queue, clargs))
 				process.start()
 				
-				# clargs.generationID = chromosome.generationID
-				# clargs.chromosomeID = chromosome.chromosomeID
-
 				table_dir = clargs.table_dir
 				table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
 				table_name= table_name.format(clargs.table_dir, 
-										clargs.run_name, clargs.generationID, 
-										clargs.chromosomeID, clargs.time_stamp)
+									clargs.run_name, chromosome.generationID, 
+									chromosome.chromosomeID, clargs.time_stamp)
 
 				json_ID = {'generationID':chromosome.generationID,
 						   'chromosomeID':chromosome.chromosomeID}
@@ -357,8 +354,8 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		with open(table_name, 'r') as f_in:
 			check = 'fitness:'
 			for line in f_in.readlines():
-				if 'generationID:{}'.format(clargs.generationID) in line:
-					if 'chromosomeID:{}'.format(clargs.chromosomeID) in line:
+				if 'generationID:{}'.format(chromosome.generationID) in line:
+					if 'chromosomeID:{}'.format(chromosome.chromosomeID) in line:
 						fitness = line.split(check)[1].split(',')[0]
 						chromosome.fitness = float(fitness)
 						break
