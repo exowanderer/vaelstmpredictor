@@ -87,9 +87,9 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				clargs.generationID = chrom.generationID
 				clargs.chromosomeID = chrom.chromosomeID
 
-				table_location = clargs.table_location
+				table_dir = clargs.table_dir
 				table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
-				table_name= table_name.format(clargs.table_location, 
+				table_name= table_name.format(clargs.table_dir, 
 										clargs.run_name, clargs.generationID, 
 										clargs.chromosomeID, clargs.time_stamp)
 
@@ -173,7 +173,7 @@ def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 	command = []
 	command.append('cd vaelstmpredictor; ')
 	command.append('../anaconda3/envs/tf_gpu/bin/python run_chromosome.py ')
-	command.append('--table_location {} '.format(clargs.table_location))
+	command.append('--table_dir {} '.format(clargs.table_dir))
 	command.append('--generationID {} '.format(chromosome.generationID))
 	command.append('--chromosomeID {} '.format(chromosome.chromosomeID))
 
@@ -222,9 +222,9 @@ def train_chromosome(chromosome, machine, queue, port=22, logdir='train_logs',
 
 	queue.put(machine)
 
-	table_location = clargs.table_location
+	table_dir = clargs.table_dir
 	table_name = '{}/{}_{}_{}_fitness_table_{}.csv'
-	table_name = table_name.format(clargs.table_location, 
+	table_name = table_name.format(clargs.table_dir, 
 								clargs.run_name, clargs.generationID, 
 								clargs.chromosomeID, clargs.time_stamp)
 
@@ -291,7 +291,7 @@ if __name__ == '__main__':
 				help='basedir for saving log files')
 	parser.add_argument('--model_dir', type=str, default='data/models',
 				help='basedir for saving model weights')
-	parser.add_argument('--table_location', type=str, default='data/tables',
+	parser.add_argument('--table_dir', type=str, default='data/tables',
 				help='basedir for storing the table of params and fitnesses.')
 	parser.add_argument('--train_file', type=str, default='MNIST',
 				help='file of training data (.pickle)')
