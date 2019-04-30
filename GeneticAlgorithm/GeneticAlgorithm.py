@@ -538,6 +538,7 @@ def mutate(child, prob, param_choices, forced_evolve = False,
 			child[param] = np.max([child[param], min_val])
 
 			# All params must be integer sized: round and convert
+			print(current_p)
 			child[param] = np.int(np.round(current_p))
 
 	return child, mutation_happened
