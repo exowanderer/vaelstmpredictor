@@ -226,24 +226,27 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 			elif:
 				chromosome.fitness = query_sql_database(clargs, chromosome)
 				
-				if chromosome.fitness == -1:
+				if chromosome.fitness is -1:
 					chromosome.fitness = query_local_csv(clargs, chromosome)
 
-				if chromosome.fitness == -1:
-					continue
-				
-				print('\n\n[INFO]')
-				print('GenerationID:{}'.format(chromosome.generationID))
-				print('ChromosomeID:{}'.format(chromosome.chromosomeID))
-				print('Fitness:{}'.format(chromosome.fitness))
-				print('Num VAE Layers:{}'.format(chromosome.num_vae_layers))
-				print('Num DNN Layers:{}'.format(chromosome.num_dnn_layers))
-				print('Size VAE Latent:{}'.format(chromosome.size_vae_latent))
-				print('Size VAE Hidden:{}'.format(chromosome.size_vae_hidden))
-				print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
-				print('\n\n')
+				if chromosome.fitness is not -1:
+					print('\n\n[INFO]')
+					print('GenerationID:{}'.format(chromosome.generationID))
+					print('ChromosomeID:{}'.format(chromosome.chromosomeID))
+					print('Fitness:{}'.format(chromosome.fitness))
+					print('Num VAE Layers:{}'.format(
+							chromosome.num_vae_layers))
+					print('Num DNN Layers:{}'.format(
+							chromosome.num_dnn_layers))
+					print('Size VAE Latent:{}'.format(
+							chromosome.size_vae_latent))
+					print('Size VAE Hidden:{}'.format(
+							chromosome.size_vae_hidden))
+					print('Size DNN Hidden:{}'.format(
+							chromosome.size_dnn_hidden))
+					print('\n\n')
 
-				generation.iloc[k] = chromosome # finally, we figured this out!
+					generation.iloc[k] = chromosome
 
 	# After all is done: return what you received
 	return generation
