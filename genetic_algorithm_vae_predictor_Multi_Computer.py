@@ -136,9 +136,9 @@ if __name__ == '__main__':
 											 # data_instance = data_instance, 
 											 # TrainFunction = train_generation
 
+	generationID = 0
 	generation = train_generation(generation, clargs)
 
-	generationID = 0
 	# evolutionary_tree = {}
 	# evolutionary_tree[generationID] = save_generation_to_tree(generation,
 	# 														verbose=verbose)
@@ -172,22 +172,29 @@ if __name__ == '__main__':
 			child1, mutation_happened2 = mutate(child2, mutate_prob, 
 												verbose=verbose)
 			
-		train_generation(new_generation, clargs)
+		generation = train_generation(generation, clargs)
 		
 		print('Time for Generation{}: {} minutes'.format(child1.generationID, 
 												(time() - start_while)//60))
 
 		# generation = new_generation
 		# evolutionary_tree[generationID] = save_generation_to_tree(generation,
-															# verbose=verbose)
+		# verbose=verbose)
 
-		best_fitness.append(max(chrom.fitness for chrom in generation))
+		new_best_fitness = max(chrom.fitness for chrom in generation)
+
+		if clargs.verbose:
+			print('[INFO] For Generation: {}, the best fitness was {}'.format(
+					generationID, new_best_fitness))
+		
+		best_fitness.append(new_best_fitness)
 		
 		if make_plots:
 			plt.plot(best_fitness, color="c")
 			plt.xlim([0, num_generations])
 			fig.canvas.draw()
 
+	"""
 	evtree_save_name = 'evolutionary_tree_{}_ps{}_iter{}_epochs{}_cp{}_mp{}'
 	evtree_save_name = evtree_save_name + '.joblib.save'
 	evtree_save_name = evtree_save_name.format(run_name, population_size, 
@@ -196,3 +203,4 @@ if __name__ == '__main__':
 
 	print('[INFO] Saving evolutionary tree to {}'.format(evtree_save_name))
 	joblib.dump(evolutionary_tree, evtree_save_name)
+	"""

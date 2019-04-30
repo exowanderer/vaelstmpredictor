@@ -213,6 +213,9 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				chromosome.isTrained = 1
 				generation.iloc[k] = chromosome # finally, we figured this out!
 
+	# After all is done: return what you received
+	return generation
+
 def generate_ssh_command(clargs, chromosome):
 	command = []
 	command.append('cd vaelstmpredictor; ')
