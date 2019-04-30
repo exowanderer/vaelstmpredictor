@@ -533,13 +533,14 @@ def mutate(child, prob, param_choices, forced_evolve = False,
 
 			# Add delta_param to param
 			current_p = child[param] + change_p, min_val
-
+			print(current_p)
 			# If param less than `min_val`, then set param to `min_val`
 			child[param] = np.max([current_p, min_val])
-			
+			print(child[param])
 			# All params must be integer sized: round and convert
 			child[param] = np.int(np.round(child[param]))
-
+			print(child[param])
+	
 	return child, mutation_happened
 
 def save_generation_to_tree(generation, verbose = False):
