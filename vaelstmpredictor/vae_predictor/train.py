@@ -93,19 +93,31 @@ def train_vae_predictor(clargs, data_instance, test_test = False):
     vae_dims = (clargs.vae_hidden_dim, clargs.vae_latent_dim)
     predictor_dims = (clargs.predictor_hidden_dim, clargs.n_labels)
 
-    vae_predictor = VAEPredictor(predictor_type = clargs.predictor_type,
-                            batch_size = clargs.batch_size, 
-                            original_dim = clargs.original_dim, 
-                            vae_dims = vae_dims,
-                            predictor_dims = predictor_dims, 
-                            predictor_latent_dim = clargs.predictor_latent_dim,
-                            optimizer = clargs.optimizer,
-                            predictor_weight = clargs.predictor_weight, 
-                            vae_kl_weight = vae_kl_weight, 
-                            use_prev_input = clargs.use_prev_input,
-                            predictor_kl_weight = predictor_kl_weight)
+    vae_predictor = VAEPredictor(original_dim = clargs.original_dim, 
+                                vae_hidden_dims = [clargs.vae_hidden_dim], 
+                                dnn_hidden_dims =[clargs.predictor_hidden_dim],
+                                vae_latent_dim = clargs.vae_latent_dim, 
+                                dnn_out_dim = clargs.n_labels, 
+                                dnn_latent_dim = clargs.n_labels-1, 
+                                optimizer = 'adam'
+                    )
+
+    # vae_predictor = VAEPredictor(predictor_type = clargs.predictor_type,
+    #                         batch_size = clargs.batch_size, 
+    #                         original_dim = clargs.original_dim, 
+    #                         vae_dims = vae_dims,
+    #                         predictor_dims = predictor_dims, 
+    #                         predictor_latent_dim=clargs.predictor_latent_dim,
+    #                         optimizer = clargs.optimizer,
+    #                         predictor_weight = clargs.predictor_weight, 
+    #                         vae_kl_weight = vae_kl_weight, 
+    #                         use_prev_input = clargs.use_prev_input,
+    #                         predictor_kl_weight = predictor_kl_weight)
     
-    vae_predictor.get_model()
+    vae_predictor.get_model(dnn_weight = clargs.dnn_weight,
+                            vae_weight = clargs.vae_weight,
+                            dnn_kl_weight = clargs.dnn_kl_weight,
+                            vae_kl_weight = clargs.vae_kl_weight)
     
     clargs.optimizer = 'adam-wn' if was_adam_wn else clargs.optimizer
     
