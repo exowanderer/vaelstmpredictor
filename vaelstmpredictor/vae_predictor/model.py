@@ -269,9 +269,10 @@ class VAEPredictor(object):
                   dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
                   dnn_kl_weight = 1.0, dnn_log_var_prior = 0.0, 
                   hidden_activation = 'relu', output_activation = 'sigmoid'):
-        
+
         self.hidden_activation = hidden_activation
         self.output_activation = output_activation
+        
         if dnn_log_var_prior is not None:
             self.dnn_log_var_prior = dnn_log_var_prior
         

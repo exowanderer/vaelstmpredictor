@@ -29,7 +29,13 @@ if __name__ == '__main__':
                 help='latent dim')
     parser.add_argument('--seq_length', type=int, default=1,
                 help='sequence length (concat)')
-    parser.add_argument('--predictor_weight', type=float, default=1.0,
+    parser.add_argument('--dnn_weight', type=float, default=1.0,
+                help='relative weight on classifying key')
+    parser.add_argument('--vae_weight', type=float, default=30.53,
+                help='relative weight on classifying key')
+    parser.add_argument('--vae_kl_weight', type=float, default=1.39e6,
+                help='relative weight on classifying key')
+    parser.add_argument('--dnn_kl_weight', type=float, default=6.35,
                 help='relative weight on classifying key')
     parser.add_argument('--prediction_log_var_prior', type=float, default=0.0,
                 help='w log var prior')
@@ -51,12 +57,12 @@ if __name__ == '__main__':
                 help="number of epochs before kl loss term is 1.0")
     parser.add_argument("--w_kl_anneal", type=int, default=0, 
                 help="number of epochs before w's kl loss term is 1.0")
-    parser.add_argument('--log_dir', type=str, default='data/logs',
+    parser.add_argument('--log_dir', type=str, default='../data/logs',
                 help='basedir for saving log files')
-    parser.add_argument('--model_dir', type=str, default='data/models',
+    parser.add_argument('--model_dir', type=str, default='../data/models',
                 help='basedir for saving model weights')    
     parser.add_argument('--train_file', type=str,
-                default='data/input/JSB Chorales_Cs.pickle',
+                default='../data/input/JSB Chorales_Cs.pickle',
                 help='file of training data (.pickle)')
     parser.add_argument('--no_squeeze_x', action="store_true",
                 help='whether to squeeze the x dimension')
@@ -69,6 +75,22 @@ if __name__ == '__main__':
     parser.add_argument('--debug', action="store_true",
                 help="if debug; then stop before model.fit")
     args = parser.parse_args()
+    
+    """
+    '''Weights Determined from First Few Run-throughs
+        All weights are relative to sum-normalization
+    '''
+    vae_weight = 36.34479883984246 # ~ 36.4
+    dnn_weight = 1.190315303141271 # ~ 1.2
+    vae_kl_weight = 1657184.0548487047 # ~ 1.7e6
+    dnn_kl_weight = 7.55449024567151 # ~ 7.6
+
+    ''' All weights normalized to largest loss'''
+    vae_weight 30.5337575211607 # ~30.53
+    dnn_weight = 1.0 # ~1.00
+    dnn_kl_weight =  6.346629523904319 # ~6.35
+    vae_kl_weight 1392222.7585206672 # ~1.39e6
+    """
     
     if 'class' in args.predictor_type.lower():
         args.predictor_type = 'classification'
