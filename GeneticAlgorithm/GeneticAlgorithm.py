@@ -1,4 +1,4 @@
-# from https://github.com/philippesaade11/vaelstmpredictor/blob/
+# from https://github.com/exowanderer/vaelstmpredictor/blob/
 #	GeneticAlgorithm/Genetic-Algorithm.py
 # python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 
 #	--verbose --num_generations 500 --population_size 10 --num_epochs 200
@@ -55,7 +55,7 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 	return hidden_dims
 
 def query_sql_database(clargs, chromosome):
-	getFitness = 'http://philippesaade11.pythonanywhere.com/GetFitness'
+	getFitness = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/GetFitness'
 
 	table_dir = clargs.table_dir
 	table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
@@ -172,7 +172,7 @@ def generate_random_chromosomes(population_size,# clargs, data_instance,
 	# return generation_0
 
 def train_generation(generation, clargs, private_key='id_ecdsa'):
-	getChrom = 'https://philippesaade11.pythonanywhere.com/GetChrom'
+	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
 	
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	

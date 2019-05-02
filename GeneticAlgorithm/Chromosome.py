@@ -1,4 +1,4 @@
-# from https://github.com/philippesaade11/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
+# from https://github.com/exowanderer/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
 # python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 --verbose --num_generations 500 --population_size 10 --num_epochs 200
 import numpy as np
 import os

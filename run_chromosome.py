@@ -1,4 +1,4 @@
-# from https://github.com/philippesaade11/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
+# from https://github.com/exowanderer/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
 # python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 --verbose --num_generations 500 --population_size 10 --num_epochs 200
 import argparse
 import json
@@ -256,7 +256,7 @@ if __name__ == '__main__':
 	print('ChromosomeID: {}'.format(chromosome.chromosomeID), end=" ")
 	print('Fitness: {}\n'.format(chromosome.fitness))
 	
-	putURL = 'https://philippesaade11.pythonanywhere.com/AddChrom'
+	putURL = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/AddChrom'
 	
 	print('[INFO] Storing to SQL db at {}'.format(putURL))
 	
