@@ -82,8 +82,8 @@ def build_hidden_dense_layers(hidden_dims, input_layer, base_layer_name,
 	
 	return hidden_layer
 
-build_hidden_conv_layers(filter_sizes, input_layer, Layer, 
-						kernel_sizes = 3, Layer = None, strides = 2, 
+def build_hidden_conv_layers(filter_sizes, input_layer, Layer, 
+						kernel_sizes = 3, strides = 2, 
 						base_layer_name = '', activation  = 'relu'):
 	'''Need to remove all leading zeros for the Decoder 
 		to be properly established'''
@@ -625,7 +625,7 @@ class ConVAEPredictor(object):
 
 		if isinstance(self.strides, int):
 			stides = [self.strides]*self.num_vae_hidden_layers
-		
+
 		if bool(sum(self.vae_hidden_dims)):
 			''' Establish VAE Encoder layer structure '''
 			vae_enc_hid_layer = build_hidden_conv_layers(
