@@ -82,11 +82,11 @@ def build_hidden_dense_layers(hidden_dims, input_layer, base_layer_name,
 	
 	return hidden_layer
 
-def build_hidden_conv_layers(filter_sizes, kernel_sizes, input_layer, strides,
-						base_layer_name, activation, Layer = None):
+build_hidden_conv_layers(filter_sizes, input_layer, Layer, 
+						kernel_sizes = 3, Layer = None, strides = 2, 
+						base_layer_name = '', activation  = 'relu'):
 	'''Need to remove all leading zeros for the Decoder 
 		to be properly established'''
-	filter_sizes = list(filter_sizes)
 	while 0 in filter_sizes: filter_sizes.remove(0)
 	
 	# Establish hidden layer structure
@@ -574,11 +574,16 @@ class ConVAEPredictor(object):
 		self.dnn_latent_mod = dnn_latent_mod(self.dnn_latent_layer)
 		
 	def build_latent_decoder(self):
-		shape = K.int_shape(x)
 		
-		if self.layer_type in 'conv2d':
-			upscale = Dense(shape[1] * shape[2] * shape[3], activation='relu')(self.dnn_w_latent)
-			x = Reshape((shape[1], shape[2], shape[3]))(x)
+		if len(self.vae_encoder_output_shape) > 2:
+			# Upscale and resize to prepare for deconvolution
+			enc_size_ = np.prod(self.vae_encoder_output_shape[1:])
+			upscale = Dense(enc_size_, activation = self.hidden_activation, 
+							name = 'upscale_layer')
+			upscale = upscale(self.dnn_w_latent)
+			reshape_ = Reshape(enc_shape[1:], name = 'reshape')(upscale)
+		else:
+			reshape_ = self.dnn_w_latent
 
 		if bool(sum(self.vae_hidden_dims)):
 			# reverse order for decoder
@@ -586,7 +591,7 @@ class ConVAEPredictor(object):
 									filter_sizes = self.vae_hidden_filter_size,
 									num_filters = self.num_vae_hidden_layers,
 									kernel_sizes = self.vae_hidden_kernel_size,
-									input_layer = self.dnn_w_latent,
+									input_layer = reshape_, # reshaped input
 									strides = self.strides,
 									base_layer_name = 'vae_dec_hidden_layer',
 									activation  = self.hidden_activation,
@@ -608,26 +613,46 @@ class ConVAEPredictor(object):
 		self.vae_reconstruction = vae_reconstruction(vae_dec_hid_layer)
 
 	def build_latent_encoder(self):
+
+		filters_sizes = []
+		for _ in range(self.num_vae_hidden_layers):
+			filters_sizes.append(self.vae_hidden_filter_size)
+			self.vae_hidden_filter_size = self.vae_hidden_filter_size//2
+		
+		if isinstance(self.vae_hidden_kernel_size, int):
+			kernel_sizes = [self.vae_hidden_kernel_size]
+			kernel_sizes = kernel_sizes*self.num_vae_hidden_layers
+
+		if isinstance(self.strides, int):
+			stides = [self.strides]*self.num_vae_hidden_layers
+		
 		if bool(sum(self.vae_hidden_dims)):
 			''' Establish VAE Encoder layer structure '''
-			vae_enc_hid_layer = build_hidden_layers(Layer = 'Conv1D',
-								hidden_dims = self.vae_hidden_dims, 
-								input_layer = self.input_w_pred, 
-								base_layer_name='vae_enc_hidden_layer', 
-								activation=self.hidden_activation)
+			vae_enc_hid_layer = build_hidden_conv_layers(
+									filter_sizes = filters_sizes,
+									kernel_sizes = kernel_sizes,
+									input_layer = self.input_w_pred,
+									strides = stides,
+									base_layer_name = 'vae_enc_hidden_layer',
+									activation  = self.hidden_activation,
+									Layer = self.layer_type)
 		else:
 			'''if there are no hidden layers, then the input to the 
 				vae latent layers is the input_w_pred layer'''
 			vae_enc_hid_layer = self.input_w_pred
 		
-		vae_latent_mean = layers.Dense(self.vae_latent_dim,name='vae_latent_mean')
+		self.vae_encoder_output_shape = K.int_shape(vae_enc_hid_layer)
+
+		vae_latent_mean = layers.Dense(self.vae_latent_dim,
+										name='vae_latent_mean')
 		self.vae_latent_mean = vae_latent_mean(vae_enc_hid_layer)
 		
 		vae_latent_log_var =layers.Dense(self.vae_latent_dim,
-								  name = 'vae_latent_log_var')
+								  		name = 'vae_latent_log_var')
 		self.vae_latent_log_var = vae_latent_log_var(vae_enc_hid_layer)
 		
-		vae_latent_layer = layers.Lambda(self.vae_sampling, name = 'vae_latent_layer')
+		vae_latent_layer = layers.Lambda(self.vae_sampling, 
+										name = 'vae_latent_layer')
 		self.vae_latent_layer = vae_latent_layer([self.vae_latent_mean, 
 												  self.vae_latent_log_var])
 
