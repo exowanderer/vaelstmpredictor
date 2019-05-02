@@ -202,7 +202,7 @@ class VAEPredictor(object):
 		self.vae_latent_layer = vae_latent_layer([self.vae_latent_mean, 
 												  self.vae_latent_log_var])
 
-		self.vae_latent_args = concatenate([self.vae_latent_mean, 
+		self.vae_latent_args = layers.concatenate([self.vae_latent_mean, 
 											self.vae_latent_log_var], 
 											axis = -1, 
 											name = 'vae_latent_args')
@@ -239,7 +239,7 @@ class VAEPredictor(object):
 		
 		# need to add 0's so we can sum it all to 1
 		padding = K.tf.zeros(self.batch_size, 1)[:,None]
-		dnn_norm = concatenate([dnn_norm, padding], 
+		dnn_norm = layers.concatenate([dnn_norm, padding], 
 								name='dnn_norm')
 		sum_exp_dnn_norm = K.sum(K.exp(dnn_norm), axis = -1)[:,None]
 		return K.exp(dnn_norm)/sum_exp_dnn_norm
@@ -277,7 +277,7 @@ class VAEPredictor(object):
 										name = 'previous_input_layer')
 		self.build_predictor()
 		
-		self.input_w_pred = concatenate([self.input_layer, 
+		self.input_w_pred = layers.concatenate([self.input_layer, 
 										self.dnn_latent_layer], 
 										axis = -1,
 										name = 'data_input_w_dnn_latent_out')
@@ -285,13 +285,13 @@ class VAEPredictor(object):
 		self.build_latent_encoder()
 		
 		if use_prev_input or self.use_prev_input:
-			self.prev_w_vae_latent = concatenate(
+			self.prev_w_vae_latent = layers.concatenate(
 				[self.prev_input_layer, self.vae_latent_layer], 
 				 axis = -1, name = 'prev_inp_w_vae_lat_layer')
 		else:
 			self.prev_w_vae_latent = self.vae_latent_layer
 		
-		self.dnn_w_latent = concatenate(
+		self.dnn_w_latent = layers.concatenate(
 						[self.dnn_latent_layer, self.prev_w_vae_latent],
 						axis = -1, name = 'dnn_latent_out_w_prev_w_vae_lat')
 		
@@ -401,7 +401,7 @@ class VAEPredictor(object):
 		dnn_input_layer = layers.Input(batch_shape = predictor_batch_shape, 
 							name = 'predictor_input_layer')
 
-		input_w_pred = concatenate([input_layer, dnn_input_layer], 
+		input_w_pred = layers.concatenate([input_layer, dnn_input_layer], 
 									axis = -1, name = 'input_w_dnn_layer')
 		
 		# build latent encoder
@@ -445,11 +445,11 @@ class VAEPredictor(object):
 
 		if use_prev_input or self.use_prev_input:
 			prev_vae_stack = [prev_input_layer, vae_latent_layer]
-			prev_w_vae_latent = concatenate(prev_vae_stack, axis = -1)
+			prev_w_vae_latent = layers.concatenate(prev_vae_stack, axis = -1)
 		else:
 			prev_w_vae_latent = vae_latent_layer
 
-		dnn_w_latent = concatenate([dnn_input_layer,prev_w_vae_latent],
+		dnn_w_latent = layers.concatenate([dnn_input_layer,prev_w_vae_latent],
 										axis = -1)
 
 		# build physical decoder
@@ -656,7 +656,7 @@ class ConVAEPredictor(object):
 		self.vae_latent_layer = vae_latent_layer([self.vae_latent_mean, 
 												  self.vae_latent_log_var])
 
-		self.vae_latent_args = concatenate([self.vae_latent_mean, 
+		self.vae_latent_args = layers.concatenate([self.vae_latent_mean, 
 											self.vae_latent_log_var], 
 											axis = -1, 
 											name = 'vae_latent_args')
@@ -693,7 +693,7 @@ class ConVAEPredictor(object):
 		
 		# need to add 0's so we can sum it all to 1
 		padding = K.tf.zeros(self.batch_size, 1)[:,None]
-		dnn_norm = concatenate([dnn_norm, padding], 
+		dnn_norm = layers.concatenate([dnn_norm, padding], 
 								name='dnn_norm')
 		sum_exp_dnn_norm = K.sum(K.exp(dnn_norm), axis = -1)[:,None]
 		return K.exp(dnn_norm)/sum_exp_dnn_norm
@@ -731,7 +731,7 @@ class ConVAEPredictor(object):
 										name = 'previous_input_layer')
 		self.build_predictor()
 		
-		self.input_w_pred = concatenate([self.input_layer, 
+		self.input_w_pred = layers.concatenate([self.input_layer, 
 										self.dnn_latent_layer], 
 										axis = -1,
 										name = 'data_input_w_dnn_latent_out')
@@ -739,13 +739,13 @@ class ConVAEPredictor(object):
 		self.build_latent_encoder()
 		
 		if use_prev_input or self.use_prev_input:
-			self.prev_w_vae_latent = concatenate(
+			self.prev_w_vae_latent = layers.concatenate(
 				[self.prev_input_layer, self.vae_latent_layer], 
 				 axis = -1, name = 'prev_inp_w_vae_lat_layer')
 		else:
 			self.prev_w_vae_latent = self.vae_latent_layer
 		
-		self.dnn_w_latent = concatenate(
+		self.dnn_w_latent = layers.concatenate(
 						[self.dnn_latent_layer, self.prev_w_vae_latent],
 						axis = -1, name = 'dnn_latent_out_w_prev_w_vae_lat')
 		
@@ -855,7 +855,7 @@ class ConVAEPredictor(object):
 		dnn_input_layer = layers.Input(batch_shape = predictor_batch_shape, 
 							name = 'predictor_input_layer')
 
-		input_w_pred = concatenate([input_layer, dnn_input_layer], 
+		input_w_pred = layers.concatenate([input_layer, dnn_input_layer], 
 									axis = -1, name = 'input_w_dnn_layer')
 		
 		# build latent encoder
@@ -899,11 +899,11 @@ class ConVAEPredictor(object):
 
 		if use_prev_input or self.use_prev_input:
 			prev_vae_stack = [prev_input_layer, vae_latent_layer]
-			prev_w_vae_latent = concatenate(prev_vae_stack, axis = -1)
+			prev_w_vae_latent = layers.concatenate(prev_vae_stack, axis = -1)
 		else:
 			prev_w_vae_latent = vae_latent_layer
 
-		dnn_w_latent = concatenate([dnn_input_layer,prev_w_vae_latent],
+		dnn_w_latent = layers.concatenate([dnn_input_layer,prev_w_vae_latent],
 										axis = -1)
 
 		# build physical decoder
