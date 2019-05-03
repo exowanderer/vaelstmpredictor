@@ -24,13 +24,13 @@ def Conv1DTranspose(filters, kernel_size, strides = 1, padding='same',
 						activation = 'relu', name = None):
 	
 	conv1D = Sequential()
-    conv1D.add(layers.UpSampling1D(size=strides))
+	conv1D.add(layers.UpSampling1D(size=strides))
 
-    # FINDME maybe strides should be == 1 here? Check size ratios after decoder
-    conv1D.add(layers.Conv1D(filters=filters, kernel_size=kernel_size, 
-        					strides=strides, padding=padding,
-        					activation = activation, name = name))
-   	return conv1D
+	# FINDME maybe strides should be == 1 here? Check size ratios after decoder
+	conv1D.add(layers.Conv1D(filters=filters, kernel_size=kernel_size, 
+							strides=strides, padding=padding,
+							activation = activation, name = name))
+	return conv1D
 
 def vae_sampling(args, latent_dim, batch_size = 128, mean = 0.0, stddev = 1.0):
 	latent_mean, latent_log_var = args
@@ -39,10 +39,10 @@ def vae_sampling(args, latent_dim, batch_size = 128, mean = 0.0, stddev = 1.0):
 	
 	return latent_mean + K.exp(latent_log_var/2) * eps
 
-def dnn_sampling(self, args, latent_dim, batch_size = 128, 
+def dnn_sampling(args, latent_dim, batch_size = 128, 
 				mean = 0.0, stddev = 1.0,  name = 'dnn_norm'):
 	
-	laten_mean, latent_log_var = args
+	latent_mean, latent_log_var = args
 	batch_shape = (batch_size, latent_dim)
 	eps = K.random_normal(shape = batch_shape, mean = mean, stddev = stddev)
 
@@ -189,7 +189,7 @@ class VAEPredictor(object):
 		
 		dnn_latent_layer = layers.Lambda(dnn_sampling, name='dnn_latent_layer',
 								arguments = {'latent_dim':self.dnn_latent_dim, 
-											'batch_size':self.dnn_batch_size})
+											'batch_size':self.batch_size})
 
 		self.dnn_latent_layer = dnn_latent_layer(
 							[self.dnn_latent_mean, self.dnn_latent_log_var])
@@ -239,7 +239,7 @@ class VAEPredictor(object):
 		
 		vae_latent_layer = layers.Lambda(vae_sampling, name='vae_latent_layer',
 								arguments = {'latent_dim':self.vae_latent_dim, 
-											 'batch_size':self.vae_batch_size})
+											 'batch_size':self.batch_size})
 
 		self.vae_latent_layer = vae_latent_layer([self.vae_latent_mean, 
 												  self.vae_latent_log_var])
@@ -358,21 +358,23 @@ class VAEPredictor(object):
 		#if(num_gpus >= 2):
 		#	self.model = multi_gpu_model(self.model, gpus=num_gpus)
 
-	def compile(self, optimizer = None, metrics = None):
+	def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
+				  dnn_kl_weight = 1.0, optimizer = None, metrics = None):
+		
 		self.model.compile(  
 				optimizer = optimizer or self.optimizer,
 
 				loss = {'vae_reconstruction': self.vae_loss,
-						'predictor_latent_layer': self.dnn_kl_loss,
+						'dnn_latent_layer': self.dnn_kl_loss,
 						'predictor_latent_mod': self.dnn_rec_loss,
 						'vae_latent_args': self.vae_kl_loss},
 
 				loss_weights = {'vae_reconstruction': vae_weight,
-								'predictor_latent_layer': dnn_kl_weight,
+								'dnn_latent_layer': dnn_kl_weight,
 								'predictor_latent_mod':dnn_weight,
 								'vae_latent_args': vae_kl_weight},
 
-				metrics = metrics or {'predictor_latent_layer': ['acc','mse']})
+				metrics = metrics or {'dnn_latent_layer': ['acc','mse']})
 	
 	# def vae_sampling(self, args):
 	# 	eps = K.random_normal(shape = (self.batch_size, self.vae_latent_dim), 
@@ -630,7 +632,7 @@ class ConVAEPredictor(object):
 			kernel_sizes = [self.vae_hidden_kernel_size]
 			self.vae_kernel_sizes = kernel_sizes*self.num_vae_hidden_layers
 		else:
-			assert(isinstance(self.vae_hidden_kernel_size, ITERABLES)), 
+			assert(isinstance(self.vae_hidden_kernel_size, ITERABLES)), \
 				'`vae_hidden_kernel_size` must be either an int or an iterable'
 
 		if isinstance(self.dnn_strides, int):
@@ -645,7 +647,7 @@ class ConVAEPredictor(object):
 			kernel_sizes = [self.dnn_hidden_kernel_size]
 			self.dnn_kernel_sizes = kernel_sizes*self.num_dnn_hidden_layers
 		else:
-			assert(isinstance(self.dnn_hidden_kernel_size, ITERABLES)), 
+			assert(isinstance(self.dnn_hidden_kernel_size, ITERABLES)), \
 				'`dnn_hidden_kernel_size` must be either an int or an iterable'
 
 		"""FINDME: Why is this dnn_out_dim-1(??)"""
@@ -681,7 +683,7 @@ class ConVAEPredictor(object):
 		
 	# 	dnn_latent_layer = layers.Lambda(sampling, name ='dnn_latent_layer',
 	# 							arguments = {'latent_dim':self.dnn_latent_dim, 
-	# 										'batch_size':self.dnn_batch_size})
+	# 										'batch_size':self.batch_size})
 		
 	# 	self.dnn_latent_layer = dnn_latent_layer(
 	# 						[self.dnn_latent_mean, self.dnn_latent_log_var])
@@ -715,7 +717,7 @@ class ConVAEPredictor(object):
 		
 		dnn_latent_layer = layers.Lambda(dnn_sampling, name='dnn_latent_layer',
 								arguments = {'latent_dim':self.dnn_latent_dim, 
-											'batch_size':self.dnn_batch_size})
+											'batch_size':self.batch_size})
 
 		self.dnn_latent_layer = dnn_latent_layer([self.dnn_latent_mean, 
 												  self.dnn_latent_log_var])
@@ -745,7 +747,7 @@ class ConVAEPredictor(object):
 		
 		vae_latent_layer = layers.Lambda(vae_sampling, name='vae_latent_layer',
 								arguments = {'latent_dim':self.vae_latent_dim, 
-											'batch_size':self.vae_batch_size})
+											'batch_size':self.batch_size})
 
 		self.vae_latent_layer = vae_latent_layer([self.vae_latent_mean, 
 												  self.vae_latent_log_var])
@@ -834,9 +836,8 @@ class ConVAEPredictor(object):
 	def get_model(self, num_gpus = 0, batch_size = None, original_dim = None, 
 				  vae_hidden_dims = None, vae_latent_dim = None, 
 				  dnn_hidden_dims = None, # use_prev_input = False, 
-				  dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
-				  dnn_kl_weight = 1.0, dnn_log_var_prior = 0.0, 
-				  hidden_activation = 'relu', output_activation = 'sigmoid'):
+				  dnn_log_var_prior = 0.0, hidden_activation = 'relu', 
+				  output_activation = 'sigmoid'):
 
 		self.hidden_activation = hidden_activation
 		self.output_activation = output_activation
@@ -907,17 +908,17 @@ class ConVAEPredictor(object):
 				optimizer = self.optimizer,
 
 				loss = {'vae_reconstruction': self.vae_loss,
-						'predictor_latent_layer': self.dnn_kl_loss,
+						'dnn_latent_layer': self.dnn_kl_loss,
 						'predictor_latent_mod': self.dnn_rec_loss,
 						'vae_latent_args': self.vae_kl_loss},
 
 				loss_weights = {'vae_reconstruction': vae_weight,
-								'predictor_latent_layer': dnn_kl_weight,
+								'dnn_latent_layer': dnn_kl_weight,
 								'predictor_latent_mod':dnn_weight,
 								'vae_latent_args': vae_kl_weight},
 
 				 # metrics=['acc', 'mse'])
-				metrics = {'predictor_latent_layer': ['acc', 'mse']})
+				metrics = {'dnn_latent_layer': ['acc', 'mse']})
 	
 	# def vae_sampling(self, args):
 	# 	eps = K.random_normal(shape = (self.batch_size, self.vae_latent_dim), 

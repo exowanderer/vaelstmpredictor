@@ -119,6 +119,8 @@ def train_vae_predictor(clargs, data_instance, test_test = False):
                             dnn_kl_weight = clargs.dnn_kl_weight,
                             vae_kl_weight = clargs.vae_kl_weight)
     
+    vae_predictor.compile()
+    
     clargs.optimizer = 'adam-wn' if was_adam_wn else clargs.optimizer
     
     save_model_in_pieces(vae_predictor.model, clargs)
