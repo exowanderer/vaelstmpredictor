@@ -6,28 +6,55 @@ from functools import partial, update_wrapper
 
 from keras import backend as K
 from keras import layers
-from keras.models import Model
+from keras.models import Model, Sequential
 from keras.losses import binary_crossentropy, categorical_crossentropy
 from keras.losses import mean_squared_error
-#from keras.utils.multi_gpu_utils import multi_gpu_model
 
-# from ..utils.midi_utils import write_sample
+ITERABLES = (list, tuple, np.array)
 
 try:
 	# Python 2 
 	range 
 except: 
 	# Python 3
-   def range(tmp): return iter(range(tmp))
+	def range(tmp): return iter(range(tmp))
 
 '''HERE WHERE I STARTED'''
-def wrapped_partial(func, *args, **kwargs):
-	''' from: http://louistiao.me/posts/
-	adding-__name__-and-__doc__-attributes-to-functoolspartial-objects/
-	'''
-	partial_func = partial(func, *args, **kwargs)
-	update_wrapper(partial_func, func)
-	return partial_func
+def Conv1DTranspose(filters, kernel_size, strides = 1, padding='same', 
+						activation = 'relu', name = None):
+	
+	conv1D = Sequential()
+    conv1D.add(layers.UpSampling1D(size=strides))
+
+    # FINDME maybe strides should be == 1 here? Check size ratios after decoder
+    conv1D.add(layers.Conv1D(filters=filters, kernel_size=kernel_size, 
+        					strides=strides, padding=padding,
+        					activation = activation, name = name))
+   	return conv1D
+
+def vae_sampling(args, latent_dim, batch_size = 128, mean = 0.0, stddev = 1.0):
+	latent_mean, latent_log_var = args
+	batch_shape = (batch_size, latent_dim)
+	eps = K.random_normal(shape = batch_shape, mean = mean, stddev = stddev)
+	
+	return latent_mean + K.exp(latent_log_var/2) * eps
+
+def dnn_sampling(self, args, latent_dim, batch_size = 128, 
+				mean = 0.0, stddev = 1.0,  name = 'dnn_norm'):
+	
+	laten_mean, latent_log_var = args
+	batch_shape = (batch_size, latent_dim)
+	eps = K.random_normal(shape = batch_shape, mean = mean, stddev = stddev)
+
+	gamma_ = K.exp(latent_log_var/2)*eps
+	mean_norm = latent_mean + gamma_
+	
+	# need to add 0's so we can sum it all to 1
+	padding = K.tf.zeros(batch_size, 1)[:,None]
+	mean_norm = layers.concatenate([mean_norm, padding], name=name)
+	sum_exp_dnn_norm = K.sum(K.exp(mean_norm), axis = -1)[:,None]
+	
+	return K.exp(mean_norm)/sum_exp_dnn_norm
 
 def build_hidden_layers(hidden_dims, input_layer, Layer = None, 
 				kernel_sizes = None, strides=None, base_layer_name = '', 
@@ -48,12 +75,14 @@ def build_hidden_layers(hidden_dims, input_layer, Layer = None,
 		assert(len(kernel_sizes) == len(hidden_dims)), \
 			"each Conv layer requires a given kernel_size"
 
-		if 'conv1d' == Layer.lower(): Layer = layers.Conv1D
-		if 'conv2d' == Layer.lower(): Layer = layers.Conv2D
-		if 'conv3d' == Layer.lower(): Layer = layers.Conv3D
-		if 'conv1dT' == Layer.lower(): Layer = layers.Conv1DTranspose
-		if 'conv2dT' == Layer.lower(): Layer = layers.Conv2DTranspose
-		if 'conv3dT' == Layer.lower(): Layer = layers.Conv3DTranspose
+		layer_selection = {'conv1d':layers.Conv1D,
+							'conv2d':layers.Conv2D,
+							'conv3d':layers.Conv3D,
+							'conv1dT':Conv1DTranspose, # manually created above
+							'conv2dT':layers.Conv2DTranspose,
+							'conv3dT':layers.Conv3DTranspose}
+
+		Layer = layer_selection[Layer.lower()]
 
 		return build_hidden_conv_layers(filter_sizes = hidden_dims, 
 										input_layer = input_layer, 
@@ -82,12 +111,21 @@ def build_hidden_dense_layers(hidden_dims, input_layer, base_layer_name,
 	
 	return hidden_layer
 
-def build_hidden_conv_layers(filter_sizes, input_layer, Layer, 
-						kernel_sizes = 3, strides = 2, 
-						base_layer_name = '', activation  = 'relu'):
+def build_hidden_conv_layers(filter_sizes, input_layer, Layer = 'conv1d', 
+							kernel_sizes = 3, strides = 2, 
+							base_layer_name = '', activation  = 'relu'):
 	'''Need to remove all leading zeros for the Decoder 
 		to be properly established'''
 	while 0 in filter_sizes: filter_sizes.remove(0)
+	
+	layer_selection = {'conv1d':layers.Conv1D,
+						'conv2d':layers.Conv2D,
+						'conv3d':layers.Conv3D,
+						'conv1dT':layers.Conv1DTranspose,
+						'conv2dT':layers.Conv2DTranspose,
+						'conv3dT':layers.Conv3DTranspose}
+
+	if isinstnace(Layer,str): Layer = layer_selection[Layer.lower()]
 	
 	# Establish hidden layer structure
 	for k, (filter_size, kernel_size) in enumerate(filter_sizes, kernel_sizes):
@@ -96,10 +134,8 @@ def build_hidden_conv_layers(filter_sizes, input_layer, Layer,
 		'''If this is the 1st hidden layer, then input as input_layer;
 			else, input the previous hidden_layer'''
 		input_now = input_layer if k is 0 else hidden_layer
-
-		hidden_layer = Layer(filter_size, kernel_size, 
-								activation = activation, name = name)
-		hidden_layer = hidden_layer(input_now)
+		hidden_layer = Layer(filter_size, kernel_size, strides=stride,
+						activation = activation, name = name)(input_now)
 	
 	return hidden_layer
 
@@ -108,7 +144,8 @@ class VAEPredictor(object):
 					vae_latent_dim, dnn_out_dim = None, 
 					dnn_latent_dim = None, batch_size = 128, 
 					dnn_log_var_prior = 0.0, optimizer = 'adam-wn', 
-					use_prev_input = False, predictor_type = 'classification'):
+					predictor_type = 'classification'):
+					# use_prev_input = False, 
 		
 		self.predictor_type = predictor_type
 		self.original_dim = original_dim
@@ -120,13 +157,12 @@ class VAEPredictor(object):
 		self.dnn_out_dim = dnn_out_dim
 		
 		"""FINDME: Why is this dnn_out_dim-1(??)"""
-		if dnn_latent_dim is not None:
-			self.dnn_latent_dim = self.dnn_out_dim - 1
+		if dnn_latent_dim is not None: self.dnn_latent_dim = dnn_out_dim - 1
 
 		self.dnn_log_var_prior = dnn_log_var_prior
 		self.optimizer = optimizer
 		self.batch_size = batch_size
-		self.use_prev_input = use_prev_input
+		# self.use_prev_input = use_prev_input
 	
 	def build_predictor(self):
 		if bool(sum(self.dnn_hidden_dims)):
@@ -151,8 +187,10 @@ class VAEPredictor(object):
 		self.dnn_latent_log_var = dnn_latent_log_var(
 													dnn_hidden_layer)
 		
-		dnn_latent_layer = layers.Lambda(self.dnn_sampling, 
-									name = 'predictor_latent_layer')
+		dnn_latent_layer = layers.Lambda(dnn_sampling, name='dnn_latent_layer',
+								arguments = {'latent_dim':self.dnn_latent_dim, 
+											'batch_size':self.dnn_batch_size})
+
 		self.dnn_latent_layer = dnn_latent_layer(
 							[self.dnn_latent_mean, self.dnn_latent_log_var])
 		
@@ -191,21 +229,25 @@ class VAEPredictor(object):
 				vae latent layers is the input_w_pred layer'''
 			vae_enc_hid_layer = self.input_w_pred
 		
-		vae_latent_mean = layers.Dense(self.vae_latent_dim,name='vae_latent_mean')
+		vae_latent_mean = layers.Dense(self.vae_latent_dim,
+										name = 'vae_latent_mean')
 		self.vae_latent_mean = vae_latent_mean(vae_enc_hid_layer)
 		
 		vae_latent_log_var =layers.Dense(self.vae_latent_dim,
-								  name = 'vae_latent_log_var')
+								  		name = 'vae_latent_log_var')
 		self.vae_latent_log_var = vae_latent_log_var(vae_enc_hid_layer)
 		
-		vae_latent_layer = layers.Lambda(self.vae_sampling, name = 'vae_latent_layer')
+		vae_latent_layer = layers.Lambda(vae_sampling, name='vae_latent_layer',
+								arguments = {'latent_dim':self.vae_latent_dim, 
+											 'batch_size':self.vae_batch_size})
+
 		self.vae_latent_layer = vae_latent_layer([self.vae_latent_mean, 
 												  self.vae_latent_log_var])
 
 		self.vae_latent_args = layers.concatenate([self.vae_latent_mean, 
-											self.vae_latent_log_var], 
-											axis = -1, 
-											name = 'vae_latent_args')
+													self.vae_latent_log_var], 
+													axis = -1, 
+													name = 'vae_latent_args')
 	
 	def dnn_kl_loss(self, labels, preds):
 		vs = 1 - self.dnn_log_var_prior + self.dnn_latent_log_var
@@ -226,27 +268,27 @@ class VAEPredictor(object):
 		
 		return rec_loss
 
-	def dnn_sampling(self, args):
-		''' sample from a logit-normal with params dnn_latent_mean 
-				and dnn_latent_log_var
-			(n.b. this is very similar to a logistic-normal distribution)
-		'''
-		batch_shape = (self.batch_size, self.dnn_latent_dim)
-		eps = K.random_normal(shape = batch_shape, mean = 0., stddev = 1.0)
+	# def dnn_sampling(self, args):
+	# 	''' sample from a logit-normal with params dnn_latent_mean 
+	# 			and dnn_latent_log_var
+	# 		(n.b. this is very similar to a logistic-normal distribution)
+	# 	'''
+	# 	batch_shape = (self.batch_size, self.dnn_latent_dim)
+	# 	eps = K.random_normal(shape = batch_shape, mean = 0., stddev = 1.0)
 
-		gamma_ = K.exp(self.dnn_latent_log_var/2)*eps
-		dnn_norm = self.dnn_latent_mean + gamma_
+	# 	gamma_ = K.exp(self.dnn_latent_log_var/2)*eps
+	# 	dnn_norm = self.dnn_latent_mean + gamma_
 		
-		# need to add 0's so we can sum it all to 1
-		padding = K.tf.zeros(self.batch_size, 1)[:,None]
-		dnn_norm = layers.concatenate([dnn_norm, padding], 
-								name='dnn_norm')
-		sum_exp_dnn_norm = K.sum(K.exp(dnn_norm), axis = -1)[:,None]
-		return K.exp(dnn_norm)/sum_exp_dnn_norm
+	# 	# need to add 0's so we can sum it all to 1
+	# 	padding = K.tf.zeros(self.batch_size, 1)[:,None]
+	# 	dnn_norm = layers.concatenate([dnn_norm, padding], 
+	# 							name='dnn_norm')
+	# 	sum_exp_dnn_norm = K.sum(K.exp(dnn_norm), axis = -1)[:,None]
+	# 	return K.exp(dnn_norm)/sum_exp_dnn_norm
 
 	def get_model(self, num_gpus = 0, batch_size = None, original_dim = None, 
 				  vae_hidden_dims = None, vae_latent_dim = None, 
-				  dnn_hidden_dims = None, use_prev_input = False, 
+				  dnn_hidden_dims = None, # use_prev_input = False, 
 				  dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
 				  dnn_kl_weight = 1.0, dnn_log_var_prior = 0.0, 
 				  hidden_activation = 'relu', output_activation = 'sigmoid'):
@@ -266,15 +308,16 @@ class VAEPredictor(object):
 		if dnn_hidden_dims is not None: 
 			self.dnn_hidden_dims = dnn_hidden_dims
 		
-		if use_prev_input is not None: self.use_prev_input = use_prev_input
+		# if use_prev_input is not None: self.use_prev_input = use_prev_input
 
 		batch_shape = (self.batch_size, self.original_dim)
 		# batch_shape = (self.original_dim,)
-		self.input_layer = layers.Input(batch_shape = batch_shape, name='input_layer')
+		self.input_layer = layers.Input(batch_shape = batch_shape, 
+										name = 'input_layer')
 
-		if use_prev_input or self.use_prev_input:
-			self.prev_input_layer = layers.Input(batch_shape = batch_shape, 
-										name = 'previous_input_layer')
+		# if use_prev_input or self.use_prev_input:
+		# 	self.prev_input_layer = layers.Input(batch_shape = batch_shape, 
+		# 								name = 'previous_input_layer')
 		self.build_predictor()
 		
 		self.input_w_pred = layers.concatenate([self.input_layer, 
@@ -284,39 +327,40 @@ class VAEPredictor(object):
 
 		self.build_latent_encoder()
 		
-		if use_prev_input or self.use_prev_input:
-			self.prev_w_vae_latent = layers.concatenate(
-				[self.prev_input_layer, self.vae_latent_layer], 
-				 axis = -1, name = 'prev_inp_w_vae_lat_layer')
-		else:
-			self.prev_w_vae_latent = self.vae_latent_layer
+		# if use_prev_input or self.use_prev_input:
+		# 	self.prev_w_vae_latent = layers.concatenate(
+		# 		[self.prev_input_layer, self.vae_latent_layer], 
+		# 		 axis = -1, name = 'prev_inp_w_vae_lat_layer')
+		# else:
+		# 	self.prev_w_vae_latent = self.vae_latent_layer
 		
 		self.dnn_w_latent = layers.concatenate(
-						[self.dnn_latent_layer, self.prev_w_vae_latent],
+						[self.dnn_latent_layer, self.vae_latent_layer],
 						axis = -1, name = 'dnn_latent_out_w_prev_w_vae_lat')
 		
 		self.build_latent_decoder()
 		
-		if use_prev_input or self.use_prev_input:
-			input_stack = [self.input_layer, self.prev_input_layer]
-			out_stack = [self.vae_reconstruction, self.dnn_latent_layer, 
-						 self.dnn_latent_mod, self.vae_latent_args]
-			enc_stack = [self.vae_latent_mean, self.dnn_latent_mean]
-		else:
-			input_stack = [self.input_layer]
-			out_stack = [self.vae_reconstruction, self.dnn_latent_layer, 
-						 self.dnn_latent_mod, self.vae_latent_args]
-			enc_stack = [self.vae_latent_mean, self.dnn_latent_mean]
+		# if use_prev_input or self.use_prev_input:
+		# 	input_stack = [self.input_layer, self.prev_input_layer]
+		# 	out_stack = [self.vae_reconstruction, self.dnn_latent_layer, 
+		# 				 self.dnn_latent_mod, self.vae_latent_args]
+		# 	enc_stack = [self.vae_latent_mean, self.dnn_latent_mean]
+		# else:
+		input_stack = self.input_layer
+		out_stack = [self.vae_reconstruction, self.dnn_latent_layer, 
+					 self.dnn_latent_mod, self.vae_latent_args]
+		# enc_stack = [self.vae_latent_mean, self.dnn_latent_mean]
 
-		self.model = Model(input_stack, out_stack)
-		self.enc_model = Model(input_stack, enc_stack)
+		self.model = Model(self.input_layer, out_stack)
+		# self.enc_model = Model(input_stack, enc_stack)
 
 		#Make The Model Parallel Using Multiple GPUs
 		#if(num_gpus >= 2):
 		#	self.model = multi_gpu_model(self.model, gpus=num_gpus)
 
+	def compile(self, optimizer = None, metrics = None):
 		self.model.compile(  
-				optimizer = self.optimizer,
+				optimizer = optimizer or self.optimizer,
 
 				loss = {'vae_reconstruction': self.vae_loss,
 						'predictor_latent_layer': self.dnn_kl_loss,
@@ -328,14 +372,13 @@ class VAEPredictor(object):
 								'predictor_latent_mod':dnn_weight,
 								'vae_latent_args': vae_kl_weight},
 
-				 # metrics=['acc', 'mse'])
-				metrics = {'predictor_latent_layer': ['acc', 'mse']})
+				metrics = metrics or {'predictor_latent_layer': ['acc','mse']})
 	
-	def vae_sampling(self, args):
-		eps = K.random_normal(shape = (self.batch_size, self.vae_latent_dim), 
-								mean = 0., stddev = 1.0)
+	# def vae_sampling(self, args):
+	# 	eps = K.random_normal(shape = (self.batch_size, self.vae_latent_dim), 
+	# 							mean = 0., stddev = 1.0)
 		
-		return self.vae_latent_mean + K.exp(self.vae_latent_log_var/2) * eps
+	# 	return self.vae_latent_mean + K.exp(self.vae_latent_log_var/2) * eps
 
 	def vae_loss(self, input_layer, vae_reconstruction):
 		if self.predictor_type is 'binary':
@@ -376,7 +419,8 @@ class VAEPredictor(object):
 	def make_dnn_predictor(self):
 		batch_shape = (self.batch_size, self.original_dim)
 		# batch_shape = (self.original_dim,)
-		input_layer = layers.Input(batch_shape = batch_shape, name = 'input_layer')
+		input_layer = layers.Input(batch_shape = batch_shape, 
+									name = 'input_layer')
 
 		# build label encoder
 		enc_hidden_layer = self.model.get_layer('predictor_hidden_layer')
@@ -425,7 +469,7 @@ class VAEPredictor(object):
 
 		return Model(latent_enc_input, latent_enc_output)
 
-	def make_latent_decoder(self, use_prev_input=False):
+	def make_latent_decoder(self):#, use_prev_input=False):
 
 		input_batch_shape = (self.batch_size, self.original_dim)
 		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
@@ -439,17 +483,17 @@ class VAEPredictor(object):
 		vae_latent_layer = layers.Input(batch_shape = vae_batch_shape, 
 									name = 'vae_latent_layer')
 
-		if use_prev_input or self.use_prev_input:
-			prev_input_layer = layers.Input(batch_shape = input_batch_shape, 
-										name = 'prev_input_layer')
+		# if use_prev_input or self.use_prev_input:
+		# 	prev_input_layer = layers.Input(batch_shape = input_batch_shape, 
+		# 								name = 'prev_input_layer')
 
-		if use_prev_input or self.use_prev_input:
-			prev_vae_stack = [prev_input_layer, vae_latent_layer]
-			prev_w_vae_latent = layers.concatenate(prev_vae_stack, axis = -1)
-		else:
-			prev_w_vae_latent = vae_latent_layer
+		# if use_prev_input or self.use_prev_input:
+		# 	prev_vae_stack = [prev_input_layer, vae_latent_layer]
+		# 	prev_w_vae_latent = layers.concatenate(prev_vae_stack, axis = -1)
+		# else:
+		# 	prev_w_vae_latent = vae_latent_layer
 
-		dnn_w_latent = layers.concatenate([dnn_input_layer,prev_w_vae_latent],
+		dnn_w_latent = layers.concatenate([dnn_input_layer, vae_latent_layer],
 										axis = -1)
 
 		# build physical decoder
@@ -461,12 +505,12 @@ class VAEPredictor(object):
 		else:
 			vae_reconstruction = vae_reconstruction(dnn_w_latent)
 
-		if use_prev_input or self.use_prev_input:
-			dec_input_stack = [dnn_input_layer, 
-								vae_latent_layer, 
-								prev_input_layer]
-		else:
-			dec_input_stack = [dnn_input_layer, vae_latent_layer]
+		# if use_prev_input or self.use_prev_input:
+		# 	dec_input_stack = [dnn_input_layer, 
+		# 						vae_latent_layer, 
+		# 						prev_input_layer]
+		# else:
+		dec_input_stack = [dnn_input_layer, vae_latent_layer]
 
 		return Model(dec_input_stack, vae_reconstruction)
 
@@ -514,65 +558,203 @@ class VAEPredictor(object):
 
 		return np.float32(rando <= dnn_latent_mean)
 
+	def save(self, overwrite = True):
+		joblib_save_loc = '{}/{}_{}_{}_trained_model_output_{}.joblib.save'
+		joblib_save_loc = joblib_save_loc.format(self.model_dir, self.run_name,
+										 self.generationID, self.chromosomeID,
+										 self.time_stamp)
+
+		wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
+		wghts_save_loc = wghts_save_loc.format(self.model_dir, self.run_name,
+										 self.generationID, self.chromosomeID,
+										 self.time_stamp)
+		
+		model_save_loc = '{}/{}_{}_{}_trained_model_full_{}.save'
+		model_save_loc = model_save_loc.format(self.model_dir, self.run_name,
+										 self.generationID, self.chromosomeID,
+										 self.time_stamp)
+		
+		self.neural_net.save_weights(wghts_save_loc, overwrite = overwrite)
+		self.neural_net.save(model_save_loc, overwrite = overwrite)
+
+		try:
+			best_history = {'best_loss':self.best_loss,'history':self.history}
+			joblib.dump(best_history, joblib_save_loc)
+		except Exception as e:
+			print(str(e))
+
 class ConVAEPredictor(object):
-	def __init__(self, original_dim, vae_hidden_dims, dnn_hidden_dims, 
-					vae_latent_dim, dnn_out_dim = None, 
+	def __init__(self, vae_hidden_filter_size, num_vae_hidden_layers, 
+					dnn_hidden_filter_size, num_dnn_hidden_layers, 
+					vae_latent_dim, original_dim = None, dnn_out_dim = None, 
+					vae_hidden_kernel_size = 3, vae_strides = 2, 
+					dnn_hidden_kernel_size = 3, dnn_strides = 2, 
 					dnn_latent_dim = None, batch_size = 128, 
 					dnn_log_var_prior = 0.0, optimizer = 'adam-wn', 
-					use_prev_input = False, predictor_type = 'classification'):
+					predictor_type = 'classification'):
+					# use_prev_input = False, 
+
+		self.vae_hidden_filter_size = int(vae_hidden_filter_size)
+		self.num_vae_hidden_layers = int(num_vae_hidden_layers)
 		
+		self.dnn_hidden_filter_size = int(dnn_hidden_filter_size)
+		self.num_dnn_hidden_layers = int(num_dnn_hidden_layers)
+		
+		self.vae_hidden_kernel_size = vae_hidden_kernel_size
+		self.vae_strides = vae_strides
+		
+		self.dnn_hidden_kernel_size = dnn_hidden_kernel_size
+		self.dnn_strides = dnn_strides
+
 		self.predictor_type = predictor_type
 		self.original_dim = original_dim
 		
-		self.vae_hidden_dims = vae_hidden_dims
-		self.vae_latent_dim = vae_latent_dim
+		# Configure strides for both the encoder and decoder
+		if isinstance(self.vae_strides, int):
+			self.vae_strides = [self.vae_strides]*self.num_vae_hidden_layers
 
-		self.dnn_hidden_dims = dnn_hidden_dims
-		self.dnn_out_dim = dnn_out_dim
+		# Configure VAE Encoder Filter Sizes
+		self.vae_enc_filters_sizes = []
+		for stride in range(self.vae_strides):
+			self.vae_enc_filters_sizes.append(self.vae_hidden_filter_size)
+			self.vae_hidden_filter_size = self.vae_hidden_filter_size*stride
 		
+		# Configure VAE Decoder Filter Sizes
+		self.vae_dec_filters_sizes = []
+		for stride in range(self.vae_strides[::-1]):
+			self.vae_dec_filters_sizes.append(self.vae_hidden_filter_size)
+			self.vae_hidden_filter_size = self.vae_hidden_filter_size//stride
+
+		# Configure kernel sizes for both the encoder and decoder
+		if isinstance(self.vae_hidden_kernel_size, int):
+			kernel_sizes = [self.vae_hidden_kernel_size]
+			self.vae_kernel_sizes = kernel_sizes*self.num_vae_hidden_layers
+		else:
+			assert(isinstance(self.vae_hidden_kernel_size, ITERABLES)), 
+				'`vae_hidden_kernel_size` must be either an int or an iterable'
+
+		if isinstance(self.dnn_strides, int):
+			self.dnn_strides = [self.dnn_strides]*self.num_dnn_hidden_layers
+
+		self.dnn_filters_sizes = []
+		for stride in range(self.dnn_strides):
+			self.dnn_filters_sizes.append(self.dnn_hidden_filter_size)
+			self.dnn_hidden_filter_size = self.dnn_hidden_filter_size*stride
+
+		if isinstance(self.dnn_hidden_kernel_size, int):
+			kernel_sizes = [self.dnn_hidden_kernel_size]
+			self.dnn_kernel_sizes = kernel_sizes*self.num_dnn_hidden_layers
+		else:
+			assert(isinstance(self.dnn_hidden_kernel_size, ITERABLES)), 
+				'`dnn_hidden_kernel_size` must be either an int or an iterable'
+
 		"""FINDME: Why is this dnn_out_dim-1(??)"""
-		if dnn_latent_dim is not None:
-			self.dnn_latent_dim = self.dnn_out_dim - 1
+		if dnn_latent_dim is not None: self.dnn_latent_dim = dnn_out_dim - 1
 
 		self.dnn_log_var_prior = dnn_log_var_prior
 		self.optimizer = optimizer
 		self.batch_size = batch_size
-		self.use_prev_input = use_prev_input
+		# self.use_prev_input = use_prev_input
+	
+	# def build_predictor(self):
+	# 	if bool(sum(self.dnn_hidden_dims)):
+	# 		''' Establish VAE Encoder layer structure '''
+	# 		dnn_hidden_layer = build_hidden_layers(Layer = 'Conv1D',
+	# 								hidden_dims = self.dnn_hidden_dims, 
+	# 								input_layer = self.input_layer, 
+	# 								base_layer_name='predictor_hidden_layer', 
+	# 								activation=self.hidden_activation)
+	# 	else:
+	# 		'''if there are no hidden layers, then the input to the 
+	# 			dnn latent layers is the input_layer'''
+	# 		dnn_hidden_layer = self.input_layer
+		
+	# 	# Process the predictor layer through a latent layer
+	# 	dnn_latent_mean = layers.Dense(self.dnn_latent_dim, 
+	# 									name = 'predictor_latent_mean')
+	# 	self.dnn_latent_mean = dnn_latent_mean(dnn_hidden_layer)
+	# 	dnn_latent_log_var = layers.Dense(self.dnn_latent_dim, 
+	# 								name = 'predictor_latent_log_var')
+		
+	# 	self.dnn_latent_log_var = dnn_latent_log_var(
+	# 												dnn_hidden_layer)
+		
+	# 	dnn_latent_layer = layers.Lambda(sampling, name ='dnn_latent_layer',
+	# 							arguments = {'latent_dim':self.dnn_latent_dim, 
+	# 										'batch_size':self.dnn_batch_size})
+		
+	# 	self.dnn_latent_layer = dnn_latent_layer(
+	# 						[self.dnn_latent_mean, self.dnn_latent_log_var])
+		
+	# 	# Add some wiggle to the dnn predictions 
+	# 	#   to avoid division by zero
+	# 	dnn_latent_mod = layers.Lambda(lambda tmp: tmp+1e-10, 
+	# 							name = 'predictor_latent_mod')
+	# 	self.dnn_latent_mod = dnn_latent_mod(self.dnn_latent_layer)
 	
 	def build_predictor(self):
-		if bool(sum(self.dnn_hidden_dims)):
-			''' Establish VAE Encoder layer structure '''
-			dnn_hidden_layer = build_hidden_layers(Layer = 'Conv1D',
-									hidden_dims = self.dnn_hidden_dims, 
-									input_layer = self.input_layer, 
-									base_layer_name='predictor_hidden_layer', 
-									activation=self.hidden_activation)
+		if bool(sum(self.dnn_filters_sizes)):
+			''' Establish dnn Encoder layer structure '''
+			dnn_enc_hid_layer = build_hidden_conv_layers(
+									filter_sizes = self.dnn_filters_sizes,
+									kernel_sizes = self.dnn_kernel_sizes,
+									input_layer = self.input_w_pred,
+									strides = self.dnn_strides,
+									base_layer_name = 'dnn_enc_hidden_layer',
+									activation  = self.hidden_activation,
+									Layer = self.layer_type)
 		else:
 			'''if there are no hidden layers, then the input to the 
-				dnn latent layers is the input_layer'''
-			dnn_hidden_layer = self.input_layer
+				dnn latent layers is the input_w_pred layer'''
+			dnn_enc_hid_layer = self.input_w_pred
 		
-		# Process the predictor layer through a latent layer
-		dnn_latent_mean = layers.Dense(self.dnn_latent_dim, 
-										name = 'predictor_latent_mean')
-		self.dnn_latent_mean = dnn_latent_mean(dnn_hidden_layer)
-		dnn_latent_log_var = layers.Dense(self.dnn_latent_dim, 
-									name = 'predictor_latent_log_var')
+		self.dnn_latent_mean = layers.Dense(self.dnn_latent_dim,
+									name='dnn_latent_mean')(dnn_enc_hid_layer)
+		self.dnn_latent_log_var =layers.Dense(self.dnn_latent_dim,
+								name = 'dnn_latent_log_var')(dnn_enc_hid_layer)
 		
-		self.dnn_latent_log_var = dnn_latent_log_var(
-													dnn_hidden_layer)
+		dnn_latent_layer = layers.Lambda(dnn_sampling, name='dnn_latent_layer',
+								arguments = {'latent_dim':self.dnn_latent_dim, 
+											'batch_size':self.dnn_batch_size})
+
+		self.dnn_latent_layer = dnn_latent_layer([self.dnn_latent_mean, 
+												  self.dnn_latent_log_var])
+
+	def build_latent_encoder(self):
+		if bool(sum(self.vae_hidden_dims)):
+			''' Establish VAE Encoder layer structure '''
+			vae_enc_hid_layer = build_hidden_conv_layers(
+									filter_sizes = self.vae_enc_filters_sizes,
+									kernel_sizes = self.vae_kernel_sizes,
+									input_layer = self.input_w_pred,
+									strides = self.vae_strides,
+									base_layer_name = 'vae_enc_hidden_layer',
+									activation  = self.hidden_activation,
+									Layer = self.layer_type)
+		else:
+			'''if there are no hidden layers, then the input to the 
+				vae latent layers is the input_w_pred layer'''
+			vae_enc_hid_layer = self.input_w_pred
 		
-		dnn_latent_layer = layers.Lambda(self.dnn_sampling, 
-									name = 'predictor_latent_layer')
-		self.dnn_latent_layer = dnn_latent_layer(
-							[self.dnn_latent_mean, self.dnn_latent_log_var])
+		self.vae_encoder_output_shape = K.int_shape(vae_enc_hid_layer)
+
+		self.vae_latent_mean = layers.Dense(self.vae_latent_dim,
+									name='vae_latent_mean')(vae_enc_hid_layer)
+		self.vae_latent_log_var =layers.Dense(self.vae_latent_dim,
+								name = 'vae_latent_log_var')(vae_enc_hid_layer)
 		
-		# Add some wiggle to the dnn predictions 
-		#   to avoid division by zero
-		dnn_latent_mod = layers.Lambda(lambda tmp: tmp+1e-10, 
-								name = 'predictor_latent_mod')
-		self.dnn_latent_mod = dnn_latent_mod(self.dnn_latent_layer)
-		
+		vae_latent_layer = layers.Lambda(vae_sampling, name='vae_latent_layer',
+								arguments = {'latent_dim':self.vae_latent_dim, 
+											'batch_size':self.vae_batch_size})
+
+		self.vae_latent_layer = vae_latent_layer([self.vae_latent_mean, 
+												  self.vae_latent_log_var])
+
+		self.vae_latent_args = layers.concatenate([self.vae_latent_mean, 
+													self.vae_latent_log_var], 
+													axis = -1, 
+													name = 'vae_latent_args')
+	
 	def build_latent_decoder(self):
 		
 		if len(self.vae_encoder_output_shape) > 2:
@@ -599,7 +781,7 @@ class ConVAEPredictor(object):
 		else:
 			vae_dec_hid_layer = self.dnn_w_latent
 		
-		output_layer = {'conv1d':layers.Conv1DTranspose,
+		output_layer = {'conv1d':Conv1DTranspose,
 						'conv2d':layers.Conv2DTranspose,
 						'conv3d':layers.Conv3DTranspose}
 
@@ -612,55 +794,6 @@ class ConVAEPredictor(object):
 		
 		self.vae_reconstruction = vae_reconstruction(vae_dec_hid_layer)
 
-	def build_latent_encoder(self):
-
-		filters_sizes = []
-		for _ in range(self.num_vae_hidden_layers):
-			filters_sizes.append(self.vae_hidden_filter_size)
-			self.vae_hidden_filter_size = self.vae_hidden_filter_size//2
-		
-		if isinstance(self.vae_hidden_kernel_size, int):
-			kernel_sizes = [self.vae_hidden_kernel_size]
-			kernel_sizes = kernel_sizes*self.num_vae_hidden_layers
-
-		if isinstance(self.strides, int):
-			stides = [self.strides]*self.num_vae_hidden_layers
-
-		if bool(sum(self.vae_hidden_dims)):
-			''' Establish VAE Encoder layer structure '''
-			vae_enc_hid_layer = build_hidden_conv_layers(
-									filter_sizes = filters_sizes,
-									kernel_sizes = kernel_sizes,
-									input_layer = self.input_w_pred,
-									strides = stides,
-									base_layer_name = 'vae_enc_hidden_layer',
-									activation  = self.hidden_activation,
-									Layer = self.layer_type)
-		else:
-			'''if there are no hidden layers, then the input to the 
-				vae latent layers is the input_w_pred layer'''
-			vae_enc_hid_layer = self.input_w_pred
-		
-		self.vae_encoder_output_shape = K.int_shape(vae_enc_hid_layer)
-
-		vae_latent_mean = layers.Dense(self.vae_latent_dim,
-										name='vae_latent_mean')
-		self.vae_latent_mean = vae_latent_mean(vae_enc_hid_layer)
-		
-		vae_latent_log_var =layers.Dense(self.vae_latent_dim,
-								  		name = 'vae_latent_log_var')
-		self.vae_latent_log_var = vae_latent_log_var(vae_enc_hid_layer)
-		
-		vae_latent_layer = layers.Lambda(self.vae_sampling, 
-										name = 'vae_latent_layer')
-		self.vae_latent_layer = vae_latent_layer([self.vae_latent_mean, 
-												  self.vae_latent_log_var])
-
-		self.vae_latent_args = layers.concatenate([self.vae_latent_mean, 
-											self.vae_latent_log_var], 
-											axis = -1, 
-											name = 'vae_latent_args')
-	
 	def dnn_kl_loss(self, labels, preds):
 		vs = 1 - self.dnn_log_var_prior + self.dnn_latent_log_var
 		vs = vs - K.exp(self.dnn_latent_log_var)/K.exp(self.dnn_log_var_prior)
@@ -680,27 +813,27 @@ class ConVAEPredictor(object):
 		
 		return rec_loss
 
-	def dnn_sampling(self, args):
-		''' sample from a logit-normal with params dnn_latent_mean 
-				and dnn_latent_log_var
-			(n.b. this is very similar to a logistic-normal distribution)
-		'''
-		batch_shape = (self.batch_size, self.dnn_latent_dim)
-		eps = K.random_normal(shape = batch_shape, mean = 0., stddev = 1.0)
+	# def dnn_sampling(self, args):
+	# 	''' sample from a logit-normal with params dnn_latent_mean 
+	# 			and dnn_latent_log_var
+	# 		(n.b. this is very similar to a logistic-normal distribution)
+	# 	'''
+	# 	batch_shape = (self.batch_size, self.dnn_latent_dim)
+	# 	eps = K.random_normal(shape = batch_shape, mean = 0., stddev = 1.0)
 
-		gamma_ = K.exp(self.dnn_latent_log_var/2)*eps
-		dnn_norm = self.dnn_latent_mean + gamma_
+	# 	gamma_ = K.exp(self.dnn_latent_log_var/2)*eps
+	# 	dnn_norm = self.dnn_latent_mean + gamma_
 		
-		# need to add 0's so we can sum it all to 1
-		padding = K.tf.zeros(self.batch_size, 1)[:,None]
-		dnn_norm = layers.concatenate([dnn_norm, padding], 
-								name='dnn_norm')
-		sum_exp_dnn_norm = K.sum(K.exp(dnn_norm), axis = -1)[:,None]
-		return K.exp(dnn_norm)/sum_exp_dnn_norm
+	# 	# need to add 0's so we can sum it all to 1
+	# 	padding = K.tf.zeros(self.batch_size, 1)[:,None]
+	# 	dnn_norm = layers.concatenate([dnn_norm, padding], 
+	# 							name='dnn_norm')
+	# 	sum_exp_dnn_norm = K.sum(K.exp(dnn_norm), axis = -1)[:,None]
+	# 	return K.exp(dnn_norm)/sum_exp_dnn_norm
 
 	def get_model(self, num_gpus = 0, batch_size = None, original_dim = None, 
 				  vae_hidden_dims = None, vae_latent_dim = None, 
-				  dnn_hidden_dims = None, use_prev_input = False, 
+				  dnn_hidden_dims = None, # use_prev_input = False, 
 				  dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
 				  dnn_kl_weight = 1.0, dnn_log_var_prior = 0.0, 
 				  hidden_activation = 'relu', output_activation = 'sigmoid'):
@@ -720,15 +853,16 @@ class ConVAEPredictor(object):
 		if dnn_hidden_dims is not None: 
 			self.dnn_hidden_dims = dnn_hidden_dims
 		
-		if use_prev_input is not None: self.use_prev_input = use_prev_input
+		# if use_prev_input is not None: self.use_prev_input = use_prev_input
 
 		batch_shape = (self.batch_size, self.original_dim)
 		# batch_shape = (self.original_dim,)
-		self.input_layer = layers.Input(batch_shape = batch_shape, name='input_layer')
+		self.input_layer = layers.Input(batch_shape = batch_shape, 
+										name = 'input_layer')
 
-		if use_prev_input or self.use_prev_input:
-			self.prev_input_layer = layers.Input(batch_shape = batch_shape, 
-										name = 'previous_input_layer')
+		# if use_prev_input or self.use_prev_input:
+		# 	self.prev_input_layer = layers.Input(batch_shape = batch_shape, 
+		# 								name = 'previous_input_layer')
 		self.build_predictor()
 		
 		self.input_w_pred = layers.concatenate([self.input_layer, 
@@ -738,32 +872,32 @@ class ConVAEPredictor(object):
 
 		self.build_latent_encoder()
 		
-		if use_prev_input or self.use_prev_input:
-			self.prev_w_vae_latent = layers.concatenate(
-				[self.prev_input_layer, self.vae_latent_layer], 
-				 axis = -1, name = 'prev_inp_w_vae_lat_layer')
-		else:
-			self.prev_w_vae_latent = self.vae_latent_layer
+		# if use_prev_input or self.use_prev_input:
+		# 	self.prev_w_vae_latent = layers.concatenate(
+		# 		[self.prev_input_layer, self.vae_latent_layer], 
+		# 		 axis = -1, name = 'prev_inp_w_vae_lat_layer')
+		# else:
+		# 	self.prev_w_vae_latent = self.vae_latent_layer
 		
 		self.dnn_w_latent = layers.concatenate(
-						[self.dnn_latent_layer, self.prev_w_vae_latent],
+						[self.dnn_latent_layer, self.vae_latent_layer],
 						axis = -1, name = 'dnn_latent_out_w_prev_w_vae_lat')
 		
 		self.build_latent_decoder()
 		
-		if use_prev_input or self.use_prev_input:
-			input_stack = [self.input_layer, self.prev_input_layer]
-			out_stack = [self.vae_reconstruction, self.dnn_latent_layer, 
-						 self.dnn_latent_mod, self.vae_latent_args]
-			enc_stack = [self.vae_latent_mean, self.dnn_latent_mean]
-		else:
-			input_stack = [self.input_layer]
-			out_stack = [self.vae_reconstruction, self.dnn_latent_layer, 
-						 self.dnn_latent_mod, self.vae_latent_args]
-			enc_stack = [self.vae_latent_mean, self.dnn_latent_mean]
+		# if use_prev_input or self.use_prev_input:
+		# 	input_stack = [self.input_layer, self.prev_input_layer]
+		# 	out_stack = [self.vae_reconstruction, self.dnn_latent_layer, 
+		# 				 self.dnn_latent_mod, self.vae_latent_args]
+		# 	enc_stack = [self.vae_latent_mean, self.dnn_latent_mean]
+		# else:
+		# input_stack = self.input_layer
+		out_stack = [self.vae_reconstruction, self.dnn_latent_layer, 
+					 self.dnn_latent_mod, self.vae_latent_args]
+		# enc_stack = [self.vae_latent_mean, self.dnn_latent_mean]
 
-		self.model = Model(input_stack, out_stack)
-		self.enc_model = Model(input_stack, enc_stack)
+		self.model = Model(self.input_layer, out_stack)
+		# self.enc_model = Model(self.input_layer, enc_stack)
 
 		#Make The Model Parallel Using Multiple GPUs
 		#if(num_gpus >= 2):
@@ -785,11 +919,11 @@ class ConVAEPredictor(object):
 				 # metrics=['acc', 'mse'])
 				metrics = {'predictor_latent_layer': ['acc', 'mse']})
 	
-	def vae_sampling(self, args):
-		eps = K.random_normal(shape = (self.batch_size, self.vae_latent_dim), 
-								mean = 0., stddev = 1.0)
+	# def vae_sampling(self, args):
+	# 	eps = K.random_normal(shape = (self.batch_size, self.vae_latent_dim), 
+	# 							mean = 0., stddev = 1.0)
 		
-		return self.vae_latent_mean + K.exp(self.vae_latent_log_var/2) * eps
+	# 	return self.vae_latent_mean + K.exp(self.vae_latent_log_var/2) * eps
 
 	def vae_loss(self, input_layer, vae_reconstruction):
 		if self.predictor_type is 'binary':
@@ -830,7 +964,8 @@ class ConVAEPredictor(object):
 	def make_dnn_predictor(self):
 		batch_shape = (self.batch_size, self.original_dim)
 		# batch_shape = (self.original_dim,)
-		input_layer = layers.Input(batch_shape = batch_shape, name = 'input_layer')
+		input_layer = layers.Input(batch_shape = batch_shape, 
+									name = 'input_layer')
 
 		# build label encoder
 		enc_hidden_layer = self.model.get_layer('predictor_hidden_layer')
@@ -879,7 +1014,7 @@ class ConVAEPredictor(object):
 
 		return Model(latent_enc_input, latent_enc_output)
 
-	def make_latent_decoder(self, use_prev_input=False):
+	def make_latent_decoder(self):# , use_prev_input=False
 
 		input_batch_shape = (self.batch_size, self.original_dim)
 		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
@@ -893,17 +1028,17 @@ class ConVAEPredictor(object):
 		vae_latent_layer = layers.Input(batch_shape = vae_batch_shape, 
 									name = 'vae_latent_layer')
 
-		if use_prev_input or self.use_prev_input:
-			prev_input_layer = layers.Input(batch_shape = input_batch_shape, 
-										name = 'prev_input_layer')
+		# if use_prev_input or self.use_prev_input:
+		# 	prev_input_layer = layers.Input(batch_shape = input_batch_shape, 
+		# 								name = 'prev_input_layer')
 
-		if use_prev_input or self.use_prev_input:
-			prev_vae_stack = [prev_input_layer, vae_latent_layer]
-			prev_w_vae_latent = layers.concatenate(prev_vae_stack, axis = -1)
-		else:
-			prev_w_vae_latent = vae_latent_layer
+		# if use_prev_input or self.use_prev_input:
+		# 	prev_vae_stack = [prev_input_layer, vae_latent_layer]
+		# 	prev_w_vae_latent = layers.concatenate(prev_vae_stack, axis = -1)
+		# else:
+		# prev_w_vae_latent = vae_latent_layer
 
-		dnn_w_latent = layers.concatenate([dnn_input_layer,prev_w_vae_latent],
+		dnn_w_latent = layers.concatenate([dnn_input_layer, vae_latent_layer],
 										axis = -1)
 
 		# build physical decoder
@@ -915,12 +1050,12 @@ class ConVAEPredictor(object):
 		else:
 			vae_reconstruction = vae_reconstruction(dnn_w_latent)
 
-		if use_prev_input or self.use_prev_input:
-			dec_input_stack = [dnn_input_layer, 
-								vae_latent_layer, 
-								prev_input_layer]
-		else:
-			dec_input_stack = [dnn_input_layer, vae_latent_layer]
+		# if use_prev_input or self.use_prev_input:
+		# 	dec_input_stack = [dnn_input_layer, 
+		# 						vae_latent_layer, 
+		# 						prev_input_layer]
+		# else:
+		dec_input_stack = [dnn_input_layer, vae_latent_layer]
 
 		return Model(dec_input_stack, vae_reconstruction)
 
@@ -967,3 +1102,28 @@ class ConVAEPredictor(object):
 		rando = np.random.rand(len(dnn_latent_mean.squeeze()))
 
 		return np.float32(rando <= dnn_latent_mean)
+
+	def save(self):
+		joblib_save_loc = '{}/{}_{}_{}_trained_model_output_{}.joblib.save'
+		joblib_save_loc = joblib_save_loc.format(self.model_dir, self.run_name,
+										 self.generationID, self.chromosomeID,
+										 self.time_stamp)
+
+		wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
+		wghts_save_loc = wghts_save_loc.format(self.model_dir, self.run_name,
+										 self.generationID, self.chromosomeID,
+										 self.time_stamp)
+		
+		model_save_loc = '{}/{}_{}_{}_trained_model_full_{}.save'
+		model_save_loc = model_save_loc.format(self.model_dir, self.run_name,
+										 self.generationID, self.chromosomeID,
+										 self.time_stamp)
+		
+		self.neural_net.save_weights(wghts_save_loc, overwrite=True)
+		self.neural_net.save(model_save_loc, overwrite=True)
+
+		try:
+			joblib.dump({'best_loss':self.best_loss,'history':self.history}, 
+						joblib_save_loc)
+		except Exception as e:
+			print(str(e))
