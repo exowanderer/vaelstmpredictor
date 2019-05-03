@@ -430,7 +430,7 @@ class VAEPredictor(object):
 		return Model(input_layer, [dnn_latent_mean, dnn_latent_log_var])
 
 	def make_latent_encoder(self):
-		orig_batch_shape = (self.batch_size,self.original_dim,self.n_features)
+		orig_batch_shape = (self.batch_size,self.original_dim,self.n_channels)
 		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
 		# orig_batch_shape = (self.original_dim,)
 		# predictor_batch_shape = (self.predictor_out_dim,)
@@ -466,7 +466,7 @@ class VAEPredictor(object):
 
 	def make_latent_decoder(self):#, use_prev_input=False):
 
-		input_batch_shape = (self.batch_size,self.original_dim,self.n_features)
+		input_batch_shape = (self.batch_size,self.original_dim,self.n_channels)
 		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
 		vae_batch_shape = (self.batch_size, self.vae_latent_dim)
 		# input_batch_shape = (self.original_dim,)
@@ -581,7 +581,7 @@ class VAEPredictor(object):
 class ConVAEPredictor(object):
 	def __init__(self, vae_hidden_filter_size, num_vae_hidden_layers, 
 					dnn_hidden_filter_size, num_dnn_hidden_layers, 
-					vae_latent_dim, original_dim = None, n_features = 1,
+					vae_latent_dim, original_dim = None, n_channels = 1,
 					dnn_out_dim = None, 
 					vae_hidden_kernel_size = 3, vae_strides = 2, 
 					dnn_hidden_kernel_size = 3, dnn_strides = 2, 
@@ -591,7 +591,7 @@ class ConVAEPredictor(object):
 					# use_prev_input = False, 
 
 		self.layer_type = layer_type
-		self.n_features = int(n_features)
+		self.n_channels = int(n_channels)
 		self.vae_hidden_filter_size = int(vae_hidden_filter_size)
 		self.num_vae_hidden_layers = int(num_vae_hidden_layers)
 		
@@ -976,7 +976,7 @@ class ConVAEPredictor(object):
 		return Model(input_layer, [dnn_latent_mean, dnn_latent_log_var])
 
 	def make_latent_encoder(self):
-		orig_batch_shape = (self.batch_size, self.original_dim,self.n_features)
+		orig_batch_shape = (self.batch_size, self.original_dim,self.n_channels)
 		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
 		# orig_batch_shape = (self.original_dim,)
 		# predictor_batch_shape = (self.predictor_out_dim,)
@@ -1012,7 +1012,7 @@ class ConVAEPredictor(object):
 
 	def make_latent_decoder(self):# , use_prev_input=False
 
-		input_batch_shape = (self.batch_size,self.original_dim,self.n_features)
+		input_batch_shape = (self.batch_size,self.original_dim,self.n_channels)
 		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
 		vae_batch_shape = (self.batch_size, self.vae_latent_dim)
 		# input_batch_shape = (self.original_dim,)
