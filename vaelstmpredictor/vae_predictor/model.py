@@ -303,13 +303,13 @@ class VAEPredictor(object):
 		
 		# if use_prev_input is not None: self.use_prev_input = use_prev_input
 
-		# batch_shape = (self.batch_size, self.original_dim)
-		input_shape = (self.original_dim,)
-		self.input_layer = Input(input_shape = input_shape, 
+		batch_shape = (self.batch_size, self.original_dim)
+		# batch_shape = (self.original_dim,)
+		self.input_layer = Input(batch_shape = batch_shape, 
 										name = 'input_layer')
 
 		# if use_prev_input or self.use_prev_input:
-		# 	self.prev_input_layer = Input(input_shape = input_shape, 
+		# 	self.prev_input_layer = Input(batch_shape = batch_shape, 
 		# 								name = 'previous_input_layer')
 		self.build_predictor()
 		
@@ -412,9 +412,9 @@ class VAEPredictor(object):
 		self.model.load_weights(model_file)
 
 	def make_dnn_predictor(self):
-		# batch_shape = (self.batch_size, self.original_dim)
-		input_shape = (self.original_dim,)
-		input_layer = Input(input_shape = input_shape, 
+		batch_shape = (self.batch_size, self.original_dim)
+		# batch_shape = (self.original_dim,)
+		input_layer = Input(batch_shape = batch_shape, 
 									name = 'input_layer')
 
 		# build label encoder
@@ -430,14 +430,14 @@ class VAEPredictor(object):
 		return Model(input_layer, [dnn_latent_mean, dnn_latent_log_var])
 
 	def make_latent_encoder(self):
-		# orig_batch_shape = (self.batch_size,self.original_dim)
-		# predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
-		orig_input_shape = (self.original_dim,)
-		predictor_input_shape = (self.predictor_out_dim,)
+		orig_batch_shape = (self.batch_size,self.original_dim,self.n_features)
+		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
+		# orig_batch_shape = (self.original_dim,)
+		# predictor_batch_shape = (self.predictor_out_dim,)
 
-		input_layer = Input(input_shape = orig_input_shape, 
+		input_layer = Input(batch_shape = orig_batch_shape, 
 							name = 'input_layer')
-		dnn_input_layer = Input(input_shape = predictor_input_shape, 
+		dnn_input_layer = Input(batch_shape = predictor_batch_shape, 
 							name = 'predictor_input_layer')
 
 		input_w_pred = concatenate([input_layer, dnn_input_layer], 
@@ -466,19 +466,20 @@ class VAEPredictor(object):
 
 	def make_latent_decoder(self):#, use_prev_input=False):
 
-		# input_batch_shape = (self.batch_size,self.original_dim,self.n_features)
-		# predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
-		# vae_batch_shape = (self.batch_size, self.vae_latent_dim)
-		predictor_input_shape = (self.dnn_out_dim,)
-		vae_input_shape = (self.vae_latent_dim,)
+		input_batch_shape = (self.batch_size,self.original_dim,self.n_features)
+		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
+		vae_batch_shape = (self.batch_size, self.vae_latent_dim)
+		# input_batch_shape = (self.original_dim,)
+		# predictor_batch_shape = (self.dnn_out_dim,)
+		# vae_batch_shape = (self.vae_latent_dim,)
 
-		dnn_input_layer = Input(input_shape = predictor_input_shape, 
+		dnn_input_layer = Input(batch_shape = predictor_batch_shape, 
 										name = 'predictor_layer')
-		vae_latent_layer = Input(input_shape = vae_input_shape, 
+		vae_latent_layer = Input(batch_shape = vae_batch_shape, 
 									name = 'vae_latent_layer')
 
 		# if use_prev_input or self.use_prev_input:
-		# 	prev_input_layer = Input(input_shape = input_batch_shape, 
+		# 	prev_input_layer = Input(batch_shape = input_batch_shape, 
 		# 								name = 'prev_input_layer')
 
 		# if use_prev_input or self.use_prev_input:
@@ -846,14 +847,15 @@ class ConVAEPredictor(object):
 			self.dnn_hidden_dims = dnn_hidden_dims
 		
 		# if use_prev_input is not None: self.use_prev_input = use_prev_input
+
+		batch_shape = (self.batch_size, self.original_dim)
 		# np.expand_dims(X, axis=2)
-		# batch_shape = (self.batch_size, self.original_dim)
-		input_shape = (self.original_dim,)
-		self.input_layer = Input(input_shape = input_shape, 
+		# batch_shape = (self.original_dim,)
+		self.input_layer = Input(batch_shape = batch_shape, 
 										name = 'input_layer')
 
 		# if use_prev_input or self.use_prev_input:
-		# 	self.prev_input_layer = Input(input_shape = input_shape, 
+		# 	self.prev_input_layer = Input(batch_shape = batch_shape, 
 		# 								name = 'previous_input_layer')
 		self.build_predictor()
 		
@@ -956,9 +958,9 @@ class ConVAEPredictor(object):
 		self.model.load_weights(model_file)
 
 	def make_dnn_predictor(self):
-		# batch_shape = (self.batch_size, self.original_dim)
-		input_shape = (self.original_dim,)
-		input_layer = Input(input_shape = input_shape, 
+		batch_shape = (self.batch_size, self.original_dim)
+		# batch_shape = (self.original_dim,)
+		input_layer = Input(batch_shape = batch_shape, 
 									name = 'input_layer')
 
 		# build label encoder
@@ -974,14 +976,14 @@ class ConVAEPredictor(object):
 		return Model(input_layer, [dnn_latent_mean, dnn_latent_log_var])
 
 	def make_latent_encoder(self):
-		# orig_batch_shape = (self.batch_size, self.original_dim,self.n_features)
-		# predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
-		orig_input_shape = (self.original_dim,)
-		predictor_input_shape = (self.predictor_out_dim,)
+		orig_batch_shape = (self.batch_size, self.original_dim,self.n_features)
+		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
+		# orig_batch_shape = (self.original_dim,)
+		# predictor_batch_shape = (self.predictor_out_dim,)
 
-		input_layer = Input(v_shape = orig_input_shape, 
+		input_layer = Input(batch_shape = orig_batch_shape, 
 							name = 'input_layer')
-		dnn_input_layer = Input(input_shape = predictor_input_shape, 
+		dnn_input_layer = Input(batch_shape = predictor_batch_shape, 
 							name = 'predictor_input_layer')
 
 		input_w_pred = concatenate([input_layer, dnn_input_layer], 
@@ -1010,20 +1012,20 @@ class ConVAEPredictor(object):
 
 	def make_latent_decoder(self):# , use_prev_input=False
 
-		# input_batch_shape = (self.batch_size,self.original_dim,self.n_features)
-		# predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
-		# vae_batch_shape = (self.batch_size, self.vae_latent_dim)
+		input_batch_shape = (self.batch_size,self.original_dim,self.n_features)
+		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
+		vae_batch_shape = (self.batch_size, self.vae_latent_dim)
 		# input_batch_shape = (self.original_dim,)
-		predictor_input_shape = (self.dnn_out_dim,)
-		vae_input_shape = (self.vae_latent_dim,)
+		# predictor_batch_shape = (self.dnn_out_dim,)
+		# vae_batch_shape = (self.vae_latent_dim,)
 
-		dnn_input_layer = Input(input_shape = predictor_input_shape, 
+		dnn_input_layer = Input(batch_shape = predictor_batch_shape, 
 										name = 'predictor_layer')
-		vae_latent_layer = Input(input_shape = vae_input_shape, 
+		vae_latent_layer = Input(batch_shape = vae_batch_shape, 
 									name = 'vae_latent_layer')
 
 		# if use_prev_input or self.use_prev_input:
-		# 	prev_input_layer = Input(input_shape = input_batch_shape, 
+		# 	prev_input_layer = Input(batch_shape = input_batch_shape, 
 		# 								name = 'prev_input_layer')
 
 		# if use_prev_input or self.use_prev_input:
