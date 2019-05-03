@@ -27,23 +27,34 @@ def Conv1DTranspose(filters, kernel_size, strides = 1, padding='same',
 	conv1D.add(UpSampling1D(size=strides))
 
 	# FINDME maybe strides should be == 1 here? Check size ratios after decoder
-	conv1D.add(Conv1D(filters=filters, kernel_size=kernel_size, 
+	conv1D.add(Conv1D(filters=filters, kernel_size=(kernel_size), 
 							strides=strides, padding=padding,
 							activation = activation, name = name))
 	return conv1D
 
-def vae_sampling(args, latent_dim, batch_size = 128, mean = 0.0, stddev = 1.0):
+def vae_sampling(args, latent_dim, batch_size = 128, 
+					mean = 0.0, stddev = 1.0, channels = None):
 	latent_mean, latent_log_var = args
-	batch_shape = (batch_size, latent_dim)
+	
+	if channels is not None:
+		batch_shape = (batch_size, channels, latent_dim)
+	else:
+		batch_shape = (batch_size, latent_dim)
+
 	eps = K.random_normal(shape = batch_shape, mean = mean, stddev = stddev)
 	
 	return latent_mean + K.exp(latent_log_var/2) * eps
 
-def dnn_sampling(args, latent_dim, batch_size = 128, 
+def dnn_sampling(args, latent_dim, batch_size = 128, channels = None,
 				mean = 0.0, stddev = 1.0,  name = 'dnn_norm'):
 	
 	latent_mean, latent_log_var = args
-	batch_shape = (batch_size, latent_dim)
+	
+	if channels is not None:
+		batch_shape = (batch_size, channels, latent_dim)
+	else:
+		batch_shape = (batch_size, latent_dim)
+	
 	eps = K.random_normal(shape = batch_shape, mean = mean, stddev = stddev)
 
 	gamma_ = K.exp(latent_log_var/2)*eps
@@ -51,7 +62,7 @@ def dnn_sampling(args, latent_dim, batch_size = 128,
 	
 	# need to add 0's so we can sum it all to 1
 	padding = K.tf.zeros(batch_size, 1)[:,None]
-	mean_norm = concatenate([mean_norm, padding], name=name)
+	# mean_norm = concatenate([mean_norm, padding], name=name)
 	sum_exp_dnn_norm = K.sum(K.exp(mean_norm), axis = -1)[:,None]
 	
 	return K.exp(mean_norm)/sum_exp_dnn_norm
@@ -124,9 +135,9 @@ def build_hidden_conv_layers(filter_sizes, input_layer, Layer = 'conv1d',
 		print('filter_size',filter_size) 
 		print('kernel_size',kernel_size) 
 		print('stride', stride)
-		print('Layer', Layer(filter_size, kernel_size, strides=stride,
+		print('Layer', Layer(filter_size, (kernel_size), strides=stride,
 						activation = activation, name = name))
-		hidden_layer = Layer(filter_size, kernel_size, strides=stride,
+		hidden_layer = Layer(filter_size, (kernel_size), strides=stride,
 						activation = activation, name = name)(input_now)
 
 		print('hidden_layer',hidden_layer)
@@ -136,11 +147,12 @@ def build_hidden_conv_layers(filter_sizes, input_layer, Layer = 'conv1d',
 class VAEPredictor(object):
 	def __init__(self, original_dim, vae_hidden_dims, dnn_hidden_dims, 
 					vae_latent_dim, dnn_out_dim = None, layer_type = 'Dense',
-					dnn_latent_dim = None, batch_size = 128, 
+					dnn_latent_dim = None, batch_size = 128, n_channels = None,
 					dnn_log_var_prior = 0.0, optimizer = 'adam-wn', 
 					predictor_type = 'classification'):
 					# use_prev_input = False, 
 		
+		self.n_channels = n_channels
 		self.predictor_type = predictor_type
 		self.layer_type = layer_type
 		self.original_dim = original_dim
@@ -184,7 +196,8 @@ class VAEPredictor(object):
 		
 		dnn_latent_layer = Lambda(dnn_sampling, name='dnn_latent_layer',
 								arguments = {'latent_dim':self.dnn_latent_dim, 
-											'batch_size':self.batch_size})
+											'batch_size':self.batch_size,
+											'channels':self.n_channels})
 
 		self.dnn_latent_layer = dnn_latent_layer(
 							[self.dnn_latent_mean, self.dnn_latent_log_var])
@@ -234,7 +247,8 @@ class VAEPredictor(object):
 		
 		vae_latent_layer = Lambda(vae_sampling, name='vae_latent_layer',
 								arguments = {'latent_dim':self.vae_latent_dim, 
-											 'batch_size':self.batch_size})
+											 'batch_size':self.batch_size,
+											 'channels':self.n_channels})
 
 		self.vae_latent_layer = vae_latent_layer([self.vae_latent_mean, 
 												  self.vae_latent_log_var])
@@ -713,7 +727,8 @@ class ConVAEPredictor(object):
 		
 		dnn_latent_layer = Lambda(dnn_sampling, name='dnn_latent_layer',
 								arguments = {'latent_dim':self.dnn_latent_dim, 
-											'batch_size':self.batch_size})
+											'batch_size':self.batch_size,
+											'channels':self.n_channels})
 
 		self.dnn_latent_layer = dnn_latent_layer([self.dnn_latent_mean, 
 												  self.dnn_latent_log_var])
@@ -743,7 +758,8 @@ class ConVAEPredictor(object):
 		
 		vae_latent_layer = Lambda(vae_sampling, name='vae_latent_layer',
 								arguments = {'latent_dim':self.vae_latent_dim, 
-											'batch_size':self.batch_size})
+											'batch_size':self.batch_size,
+											'channels':self.n_channels})
 
 		self.vae_latent_layer = vae_latent_layer([self.vae_latent_mean, 
 												  self.vae_latent_log_var])
@@ -848,7 +864,7 @@ class ConVAEPredictor(object):
 		
 		# if use_prev_input is not None: self.use_prev_input = use_prev_input
 
-		batch_shape = (self.batch_size, self.original_dim)
+		batch_shape = (self.batch_size, self.original_dim, self.n_channels)
 		# np.expand_dims(X, axis=2)
 		# batch_shape = (self.original_dim,)
 		self.input_layer = Input(batch_shape = batch_shape, 
@@ -958,7 +974,7 @@ class ConVAEPredictor(object):
 		self.model.load_weights(model_file)
 
 	def make_dnn_predictor(self):
-		batch_shape = (self.batch_size, self.original_dim)
+		batch_shape = (self.batch_size, self.original_dim, self.n_channels)
 		# batch_shape = (self.original_dim,)
 		input_layer = Input(batch_shape = batch_shape, 
 									name = 'input_layer')
@@ -1014,7 +1030,7 @@ class ConVAEPredictor(object):
 
 		input_batch_shape = (self.batch_size,self.original_dim,self.n_channels)
 		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
-		vae_batch_shape = (self.batch_size, self.vae_latent_dim)
+		vae_batch_shape = (self.batch_size,self.vae_latent_dim,self.n_channels)
 		# input_batch_shape = (self.original_dim,)
 		# predictor_batch_shape = (self.dnn_out_dim,)
 		# vae_batch_shape = (self.vae_latent_dim,)
