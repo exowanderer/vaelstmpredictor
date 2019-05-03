@@ -122,7 +122,7 @@ class Chromosome(VAEPredictor):
         min_epoch = max(self.clargs.kl_anneal, self.clargs.w_kl_anneal)+1
         callbacks = get_callbacks(self.clargs, patience=self.clargs.patience, 
                     min_epoch = min_epoch, do_log = self.clargs.do_log, 
-                    do_chckpt = self.clargs.do_chckpt)
+                    do_ckpt = self.clargs.do_ckpt)
 
         if self.clargs.kl_anneal > 0: 
             self.vae_kl_weight = K.variable(value=0.1)

@@ -10,71 +10,93 @@ from tqdm import tqdm
 from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
 if __name__ == '__main__':
+
 	parser = argparse.ArgumentParser()
 	parser.add_argument('run_name', type=str, # default='run_',
-				help='tag for current run')
+				help = 'tag for current run')
 	parser.add_argument('--predictor_type', type=str, default="classification",
-				help='select `classification` or `regression`')
+				help = 'select `classification` or `regression`')
+	parser.add_argument('--network_type', type = str, default='Dense',
+				help = 'Type of network to train: Dense or Conv1D')
 	parser.add_argument('--batch_size', type=int, default=128,
-				help='batch size')
+				help = 'batch size')
 	parser.add_argument('--optimizer', type=str, default='adam-wn',
-				help='optimizer name') # 'rmsprop'
+				help = 'optimizer name') # 'rmsprop'
 	parser.add_argument('--num_epochs', type=int, default=200,
-				help='number of epochs')
+				help = 'number of epochs')
 	parser.add_argument('--original_dim', type=int, default=0,
-				help='input dim')
+				help = 'input dim')
 	parser.add_argument('--vae_hidden_dim', type=int, default=128,
-				help='intermediate dim')
+				help = 'intermediate dim')
 	parser.add_argument('--vae_latent_dim', type=int, default=2,
-				help='latent dim')
+				help = 'vae latent dim')
+	parser.add_argument('--num_vae_hidden_layers', type = int, default = 2, 
+				help='Number of VAE hidden layers')
+	parser.add_argument('--vae_hidden_filter_size', type = int, default = 32, 
+				help='Size of filter in VAE hidden size')
+	parser.add_argument('--vae_strides', type = int, default = 2, 
+				help='Size of strides with VAE')
+	parser.add_argument('--vae_hidden_kernel_size', type = int, default = 3, 
+				help='Size of kernels for VAE hidden layers')
+	parser.add_argument('--num_dnn_hidden_layers', type = int, default = 2, 
+				help='Number of DNN hidden layers')
+	parser.add_argument('--dnn_hidden_filter_size', type = int, default = 32, 
+				help='Size of filter in DNN hidden size')
+	parser.add_argument('--dnn_hidden_kernel_size', type = int, default = 3, 
+				help='Size of kernels for DNN hidden layers')
+	parser.add_argument('--dnn_strides', type = int, default = 2, 
+				help='Size of strides with DNN')
 	parser.add_argument('--seq_length', type=int, default=1,
-				help='sequence length (concat)')
+				help = 'sequence length (concat)')
 	parser.add_argument('--dnn_weight', type=float, default=1.0,
-				help='relative weight on classifying key')
+				help = 'relative weight on classifying key')
 	parser.add_argument('--vae_weight', type=float, default=30.53,
-				help='relative weight on classifying key')
+				help = 'relative weight on classifying key')
 	parser.add_argument('--vae_kl_weight', type=float, default=1.39e6,
-				help='relative weight on classifying key')
+				help = 'relative weight on classifying key')
 	parser.add_argument('--dnn_kl_weight', type=float, default=6.35,
-				help='relative weight on classifying key')
+				help = 'relative weight on classifying key')
 	parser.add_argument('--prediction_log_var_prior', type=float, default=0.0,
-				help='w log var prior')
+				help = 'w log var prior')
 	parser.add_argument('--predictor_hidden_dim', type=int, default=128,
-				help='intermediate dims for class/regr predictor')
-	parser.add_argument('--predictor_latent_dim', type=int, default=0,
-				help='predictor dims for class/regr prediction')
+				help = 'intermediate dims for class/regr predictor')
+	parser.add_argument('--dnn_latent_dim', type=int, default=0,
+				help = 'predictor dims for class/regr prediction')
+	parser.add_argument('--dnn_log_var_prior', type=float, default=0.0,
+				help = 'Prion the Log Variances over the DNN')
 	parser.add_argument("--do_log", action="store_true", 
-				help="save log files")
-	parser.add_argument("--do_chckpt", action="store_true",
-				help="save model checkpoints")
+				help = "save log files")
+	parser.add_argument("--do_ckpt", action="store_true",
+				help = "save model checkpoints")
 	parser.add_argument("--predict_next", action="store_true", 
-				help="use state_now to 'autoencode' state_next")
+				help = "use state_now to 'autoencode' state_next")
 	parser.add_argument("--use_prev_input", action="store_true",
-				help="use state_prev to help latent_now decode state_now")
+				help = "use state_prev to help latent_now decode state_now")
 	parser.add_argument('--patience', type=int, default=10,
-				help='# of epochs, for early stopping')
+				help = '# of epochs, for early stopping')
 	parser.add_argument("--kl_anneal", type=int, default=0, 
-				help="number of epochs before kl loss term is 1.0")
+				help = "number of epochs before kl loss term is 1.0")
 	parser.add_argument("--w_kl_anneal", type=int, default=0, 
-				help="number of epochs before w's kl loss term is 1.0")
+				help = "number of epochs before w's kl loss term is 1.0")
 	parser.add_argument('--log_dir', type=str, default='../data/logs',
-				help='basedir for saving log files')
+				help = 'basedir for saving log files')
 	parser.add_argument('--model_dir', type=str, default='../data/models',
-				help='basedir for saving model weights')	
+				help = 'basedir for saving model weights')	
 	parser.add_argument('--train_file', type=str,
 				default='../data/input/JSB Chorales_Cs.pickle',
-				help='file of training data (.pickle)')
+				help = 'file of training data (.pickle)')
 	parser.add_argument('--no_squeeze_x', action="store_true",
-				help='whether to squeeze the x dimension')
+				help = 'whether to squeeze the x dimension')
 	parser.add_argument('--no_squeeze_y', action="store_true",
-				help='whether to squeeze the x dimension')
+				help = 'whether to squeeze the x dimension')
 	parser.add_argument('--step_length', type=int, default=1,
-				help="Length of the step for overlap in song(s)")
-	parser.add_argument('--data_type', type=str, default='piano',
-				help="The type of data to fit ['piano', 'mnist', 'exoplanet']")
+				help = "Length of the step for overlap in song(s)")
+	parser.add_argument('--data_type', type=str, default='mnist',
+				help = "The type of data to fit ['piano', 'mnist', 'exoplanet']")
 	parser.add_argument('--debug', action="store_true",
-				help="if debug; then stop before model.fit")
-	args = parser.parse_args()
+				help = "if debug; then stop before model.fit")
+	
+	clargs = parser.parse_args()
 	
 	"""
 	'''Weights Determined from First Few Run-throughs
@@ -92,74 +114,75 @@ if __name__ == '__main__':
 	vae_kl_weight 1392222.7585206672 # ~1.39e6
 	"""
 	
-	if 'class' in args.predictor_type.lower():
-		args.predictor_type = 'classification'
-	if 'regr' in args.predictor_type.lower():
-		args.predictor_type = 'regression'
+	if 'class' in clargs.predictor_type.lower():
+		clargs.predictor_type = 'classification'
+	if 'regr' in clargs.predictor_type.lower():
+		clargs.predictor_type = 'regression'
 
-	if args.predictor_type is 'regression': args.n_labels = 1
+	if clargs.predictor_type is 'regression': clargs.n_labels = 1
 
 	data_types = ['piano', 'mnist', 'exoplanet']
 	
-	if 'piano' in args.data_type.lower():
+	if 'piano' in clargs.data_type.lower():
 		from vaelstmpredictor.utils.data_utils import PianoData
 
-		args.data_type = 'PianoData'
+		clargs.data_type = 'PianoData'
 
-		return_label_next = args.predict_next or args.use_prev_input
+		return_label_next = clargs.predict_next or clargs.use_prev_input
 
-		P = PianoData(train_file = args.train_file,
-					  batch_size = args.batch_size,
-					  seq_length = args.seq_length,
-					  step_length=args.step_length,
+		P = PianoData(train_file = clargs.train_file,
+					  batch_size = clargs.batch_size,
+					  seq_length = clargs.seq_length,
+					  step_length=clargs.step_length,
 					  return_label_next = return_label_next,
-					  squeeze_x = not args.no_squeeze_x,
-					  squeeze_y = not args.no_squeeze_y)
+					  squeeze_x = not clargs.no_squeeze_x,
+					  squeeze_y = not clargs.no_squeeze_y)
 
 		# Keep default unless modified inside `PianoData` instance
-		args.original_dim = P.original_dim or args.original_dim
+		clargs.original_dim = P.original_dim or clargs.original_dim
 
 		data_instance = P
 
-	elif 'mnist' in args.data_type.lower():
+	elif 'mnist' in clargs.data_type.lower():
 		from vaelstmpredictor.utils.data_utils import MNISTData
 
-		args.data_type = 'MNIST'
-		data_instance = MNISTData(batch_size = args.batch_size)
+		clargs.data_type = 'MNIST'
+		data_instance = MNISTData(batch_size = clargs.batch_size)
 
-	elif 'exoplanet' in args.data_type.lower():
+	elif 'exoplanet' in clargs.data_type.lower():
 		from vaelstmpredictor.utils.data_utils import ExoplanetData
 
-		args.data_type = 'ExoplanetSpectra'
-		data_instance = ExoplanetData(train_file = args.train_file,
-									  batch_size = args.batch_size)
+		clargs.data_type = 'ExoplanetSpectra'
+		data_instance = ExoplanetData(train_file = clargs.train_file,
+									  batch_size = clargs.batch_size)
 	else:
 		raise ValueError("`data_type` must be in list {}".format(data_types))
 
 	n_train, n_features = data_instance.data_train.shape
 	n_test, n_features = data_instance.data_valid.shape
 
-	if args.original_dim is 0: args.original_dim = n_features
+	if clargs.original_dim is 0: clargs.original_dim = n_features
 	
 	time_stmp = int(time())
-	args.run_name = '{}_{}_{}'.format(args.run_name, args.data_type, time_stmp)
+	clargs.run_name = '{}_{}_{}'.format(clargs.run_name, clargs.data_type, time_stmp)
 
-	print('\n\n[INFO] Run Base Name: {}\n'.format(args.run_name))
+	print('\n\n[INFO] Run Base Name: {}\n'.format(clargs.run_name))
 
-	vae_model, best_loss, history = train_vae_predictor(clargs = args, 
-												data_instance = data_instance)
+	vae_model, best_loss, history = train_vae_predictor(clargs = clargs, 
+										data_instance = data_instance,
+										network_type = clargs.network_type)
 
 	print('\n\n[INFO] The Best Loss: {}\n'.format(best_loss))
 	joblib_save_loc = '{}/{}_trained_model_output.joblib.save'.format(
-															args.model_dir,
-															args.run_name)
+															clargs.model_dir,
+															clargs.run_name)
 
 	weights_save_loc = '{}/{}_trained_model_weights.save'.format(
-															args.model_dir,
-															args.run_name)
+															clargs.model_dir,
+															clargs.run_name)
 	
-	model_save_loc = '{}/{}_trained_model_full.save'.format(args.model_dir,
-															args.run_name)
+	model_save_loc = '{}/{}_trained_model_full.save'.format(clargs.model_dir,
+															clargs.run_name)
 	
 	vae_model.model.save_weights(weights_save_loc, overwrite=True)
 	vae_model.model.save(model_save_loc, overwrite=True)

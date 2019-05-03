@@ -144,12 +144,12 @@ class ModelCheckpointAfterEpoch(Callback):
                 self.model.save(filepath, overwrite=True)
 
 def get_callbacks(args, patience = 10, min_epoch = 0, 
-                        do_log = False, do_chckpt = False):
+                        do_log = False, do_ckpt = False):
     
     callbacks = []
 
     # prepare to save model checkpoints
-    if do_chckpt:
+    if do_ckpt:
         chkpt_filename = os.path.join(args.model_dir, args.run_name + '.h5')
         
         callbacks.append(ModelCheckpointAfterEpoch(chkpt_filename, 

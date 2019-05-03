@@ -75,7 +75,7 @@ if __name__ == '__main__':
 				help='w log var prior')
 	parser.add_argument("--do_log", action="store_true", 
 				help="save log files")
-	parser.add_argument("--do_chckpt", action="store_true",
+	parser.add_argument("--do_ckpt", action="store_true",
 				help="save model checkpoints")
 	parser.add_argument('--patience', type=int, default=10,
 				help='# of epochs, for early stopping')
