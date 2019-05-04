@@ -12,7 +12,7 @@ from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument('run_name', type=str, # default='run_',
+	parser.add_argument('--run_name', type=str, default='deleteme',
 				help = 'tag for current run')
 	parser.add_argument('--predictor_type', type=str, default="classification",
 				help = 'select `classification` or `regression`')
@@ -22,7 +22,7 @@ if __name__ == '__main__':
 				help = 'batch size')
 	parser.add_argument('--optimizer', type=str, default='adam-wn',
 				help = 'optimizer name') # 'rmsprop'
-	parser.add_argument('--num_epochs', type=int, default=200,
+	parser.add_argument('--num_epochs', type=int, default=2,
 				help = 'number of epochs')
 	parser.add_argument('--original_dim', type=int, default=0,
 				help = 'input dim')
