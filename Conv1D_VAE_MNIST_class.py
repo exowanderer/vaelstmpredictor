@@ -209,7 +209,7 @@ class ConvVAE(object):
 		one = 1 # required to make a `point-wise` convolution
 		x = Conv1DTranspose(filters =one, kernel_size =self.final_kernel_size, 
 							padding = 'same', activation = 'sigmoid',
-							strides = one, name = 'dec_conv1D_pw0')(x)
+							name = 'dec_conv1D_pw0')(x) # strides = one, 
 		
 		# Instantiates the decoder model, which turns "decoder_input" into 
 		#	the decoded image
