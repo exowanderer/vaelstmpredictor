@@ -68,13 +68,11 @@ def build_hidden_conv_layers(filter_sizes, kernel_sizes, input_layer, strides,
 
 def Conv1DTranspose(filters, kernel_size, strides = 1, padding='same', 
 						activation = 'relu', name = None):
-	
 	conv1D = Sequential()
 	conv1D.add(UpSampling1D(size=strides))
 
-	# FINDME maybe strides should be == 1 here? Check size ratios after decoder
 	conv1D.add(Conv1D(filters=filters, kernel_size=kernel_size, 
-							strides=strides, padding=padding,
+							padding=padding,# strides=strides, 
 							activation = activation, name = name))
 	return conv1D
 
@@ -180,50 +178,57 @@ class ConvVAE(object):
 		# Input where you'll feed z
 		z_shape = K.int_shape(self.z)[1:]
 		decoder_input = layers.Input(shape = z_shape, name = 'dec_input')
+		print('\n\n[DEBUG] Debugging Decoder Sizes')
+		print('[DEBUG] z_shape: {}'.format(z_shape))
+		print('[DEBUG] decoder_input: {}'.format(K.int_shape(decoder_input)))
 
+		print('[DEBUG] shape_before_flattening: {}'.format(
+										self.shape_before_flattening))		
 		# Upsamples the input
 		x = layers.Dense(np.prod(self.shape_before_flattening[1:]),
 							activation = 'relu',
 							name = 'dec_dense_0')(decoder_input)
-
+		print('[DEBUG] x after dense: {}'.format(K.int_shape(x)))
 		# Reshapes z into a feature map of the same shape as the feature map
 		#	just before the last Flatten layer in the encoder model
 		x = layers.Reshape(self.shape_before_flattening[1:])(x)
-
+		print('[DEBUG] x after reshape: {}'.format(K.int_shape(x)))
 		''' Uses a Conv1DTranspose layer and a Conv1D layer to decode z into
 				a feature map that is the same size as the original image input
 		'''
-		cntfilt = 0
-		
 		zipper = zip(self.decoder_filters, 
 					self.decoder_kernel_sizes,
 					self.decoder_strides)
 
 		for kb, (cfilter, ksize, stride) in enumerate(zipper):
-			name = base_name.format(cntfilt)
+			name = base_name.format(kb)
+			print('[DEBUG] stride:{}'.format(stride))
 			x = Conv1DTranspose(filters = cfilter, 
 								kernel_size = ksize,
 								strides = stride,
 								padding = padding, 
 								activation = activation,
 								name = name)(x)
-			
-			cntfilt += 1
+			print('[DEBUG] x after Conv{}: {}'.format(kb, K.int_shape(x)))
 
 		# Use a point-wise convolution on the top of the conv-stack
 		#	this is the image generation stage: sigmoid == images from 0-1
 		one = 1 # required to make a `point-wise` convolution
 
 		# Needed to double-UpSampling because there is only 1 decoder layer
-		x = UpSampling1D(size=strides)(x)
-		x = UpSampling1D(size=strides)(x) 
+		# x = UpSampling1D(size=strides)(x)
+		# print('[DEBUG] x after upsampling{}: {}'.format(0, K.int_shape(x)))
+		# x = UpSampling1D(size=strides)(x) 
+		# print('[DEBUG] x after upsampling{}: {}'.format(1, K.int_shape(x)))
 		x = Conv1DTranspose(filters =one, kernel_size =self.final_kernel_size, 
 							padding = 'same', activation = 'sigmoid',
-							strides = strides, name = 'dec_conv1D_pw0')(x)
-		
+							strides = one, name = 'dec_conv1D_pw0')(x)
+		print('[DEBUG] x after final conv1dT: {}'.format(K.int_shape(x)))
 		# Instantiates the decoder model, which turns "decoder_input" into 
 		#	the decoded image
 		self.decoder_model = Model(decoder_input, x, name='decoder_model')
+		model_shape = K.int_shape(self.decoder_model(decoder_input))
+		print('[DEBUG] decoder_model: {}'.format(model_shape))
 
 	def build_model(self):
 		if self.verbose: print('[INFO] Building Model')
