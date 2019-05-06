@@ -62,13 +62,13 @@ if __name__ == '__main__':
 		help='Size of Dense layer on top of decoder')
 	parser.add_argument('--seq_length', type=int, default=1,
 				help = 'sequence length (concat)')
-	parser.add_argument('--dnn_weight', type=float, default=1.0 # 5716223,
+	parser.add_argument('--dnn_weight', type=float, default=1.0, # 5716223
 				help = 'relative weight on classifying key')
-	parser.add_argument('--vae_weight', type=float, default=1.0 # 1.002,
+	parser.add_argument('--vae_weight', type=float, default=1.0, # 1.002,
 				help = 'relative weight on classifying key')
-	parser.add_argument('--vae_kl_weight', type=float, default=1.0 # 1.0,
+	parser.add_argument('--vae_kl_weight', type=float, default=1.0, # 1.0,
 				help = 'relative weight on classifying key')
-	parser.add_argument('--dnn_kl_weight', type=float, default=1.0 # 476,
+	parser.add_argument('--dnn_kl_weight', type=float, default=1.0, # 476,
 				help = 'relative weight on classifying key')
 	parser.add_argument('--dnn_latent_dim', type=int, default=9,
 				help = 'predictor dims for class/regr prediction')
