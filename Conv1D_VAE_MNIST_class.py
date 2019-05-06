@@ -138,25 +138,20 @@ class ConvVAE(object):
 		
 		x = self.input_img
 		cntfilt = 0
-		zipper = zip(self.encoder_filters, self.encoder_kernel_sizes)
-		for kb, (block, ksizes) in enumerate(zipper):
-			for kf, (cfilter, ksize) in enumerate(zip(block, ksizes)):
-				# Use a double stride on the last layer of block
-				# Use a single stride on the last layer of the last block
+		zipper = zip(self.encoder_filters, 
+					self.encoder_kernel_sizes,
+					self.encoder_strides)
 
-				strides_ = 1
-				if kf+1 == len(block) and kb+1 < len(self.encoder_filters):
-					strides_ = strides
-
-				name = base_name.format(cntfilt)
-				
-				x = layers.Conv1D(filters = cfilter, 
-									kernel_size = ksize, 
-									padding = padding,
-									activation = activation, 
-									name = name,
-									strides = strides_)(x)
-				cntfilt += 1
+		for kb, (cfilter, ksize, stride) in enumerate(zipper):
+			name = base_name.format(cntfilt)
+			
+			x = layers.Conv1D(filters = cfilter, 
+								kernel_size = ksize,
+								strides = stride, 
+								padding = padding,
+								activation = activation, 
+								name = name)(x)
+			cntfilt += 1
 
 		self.shape_before_flattening = K.int_shape(x)
 		x = layers.Flatten()(x)
@@ -199,31 +194,28 @@ class ConvVAE(object):
 				a feature map that is the same size as the original image input
 		'''
 		cntfilt = 0
-		n_encoder_blocks = len(self.decoder_filters)
-		zipper = zip(self.decoder_filters, self.decoder_kernel_sizes)
-		for kb, (block, ksizes) in enumerate(zipper):
-			for kf, (cfilter, ksize) in enumerate(zip(block, ksizes)):
-				# Use a double stride on the last layer of block
-				strides_ = 1
-				
-				if kf+1 == len(block) and kb+1 == n_encoder_blocks:
-					strides_ = strides
-				
-				name = base_name.format(cntfilt)
-				x = Conv1DTranspose(filters = cfilter, 
-									kernel_size = ksize,
-									padding = padding, 
-									activation = activation,
-									strides = strides_,
-									name = name)(x)
-				
-				cntfilt += 1
+		
+		zipper = zip(self.decoder_filters, 
+					self.decoder_kernel_sizes,
+					self.decoder_strides)
+
+		for kb, (cfilter, ksize, stride) in enumerate(zipper):
+			name = base_name.format(cntfilt)
+			x = Conv1DTranspose(filters = cfilter, 
+								kernel_size = ksize,
+								strides = stride,
+								padding = padding, 
+								activation = activation,
+								name = name)(x)
+			
+			cntfilt += 1
 
 		# Use a point-wise convolution on the top of the conv-stack
 		#	this is the image generation stage: sigmoid == images from 0-1
 		one = 1 # required to make a `point-wise` convolution
 
 		# Needed to double-UpSampling because there is only 1 decoder layer
+		x = UpSampling1D(size=strides)(x)
 		x = UpSampling1D(size=strides)(x) 
 		x = Conv1DTranspose(filters =one, kernel_size =self.final_kernel_size, 
 							padding = 'same', activation = 'sigmoid',
@@ -351,28 +343,24 @@ if __name__ == '__main__':
 	parser.add_argument('--verbose', action='store_true', 
 		help='Toggle whether to print more statements.')
 	parser.add_argument('--encoder_filter_size', type=int, default=16,
-		help='Number of filters in the first encoder block')
-	parser.add_argument('--encoder_kernel_size', type=int, default=16,
+		help='Number of filters in the encoder')
+	parser.add_argument('--encoder_kernel_size', type=int, default=3,
 		help='Kernel size across the encoder')
 	parser.add_argument('--encoder_stride', type=int, default=2,
 		help='Stride size across the encoder')
-	parser.add_argument('--num_encoder_blocks', type=int, default=2,
-		help='Number of blocks in the encoder')
 	parser.add_argument('--num_encoder_layers', type=int, default=2,
-		help='Number of layers per block in the encoder')
+		help='Number of layers in the encoder')
 	parser.add_argument('--encoder_top_size', type=int, default=16,
 		help='Size of Dense layer on top of encoder')
-	parser.add_argument('--decoder_filter_size', type=int, default=16,
-		help='Number of filters in the first decoder block')
-	parser.add_argument('--decoder_kernel_size', type=int, default=16,
+	parser.add_argument('--decoder_filter_size', type=int, default=32,
+		help='Number of filters in the decoder')
+	parser.add_argument('--decoder_kernel_size', type=int, default=3,
 		help='Kernel size across the decoder')
 	parser.add_argument('--decoder_stride', type=int, default=2,
 		help='Stride size across the decoder')
-	parser.add_argument('--num_decoder_blocks', type=int, default=1,
-		help='Number of blocks in the decoder')
-	parser.add_argument('--num_decoder_layers', type=int, default=1,
-		help='Number of layers per block in the decoder')
-	parser.add_argument('--decoder_top_size', type=int, default=16,
+	parser.add_argument('--num_decoder_layers', type=int, default=2,
+		help='Number of layers in the decoder')
+	parser.add_argument('--decoder_bottom_size', type=int, default=16,
 		help='Size of Dense layer on top of decoder')
 	parser.add_argument('--plot_model', action="store_true", 
 		help='Toggle whether to plot the model using keras.utils.plot_model')
@@ -388,59 +376,33 @@ if __name__ == '__main__':
 	verbose = parser.verbose
 	run_all = parser.run_all
 
-	''' Configure Encoder '''
-	enc_base_filter_size = parser.encoder_filter_size
-	n_encoder_blocks = parser.num_encoder_blocks
+	''' Configure encoder '''
 	n_encoder_layers = parser.num_encoder_layers
-
-	two = 2
-	for k in range(n_encoder_blocks):
-		if k == 0:
-			filter_size = enc_base_filter_size
-			encoder_filters = [[filter_size, two*filter_size]]
-		else:
-			encoder_filters.append([filter_size]*n_encoder_layers)
-
-		filter_size = two*filter_size
-
-	encoder_kernel_sizes = [[parser.encoder_kernel_size]*n_encoder_layers]
-	encoder_kernel_sizes = encoder_kernel_sizes*n_encoder_blocks
-	encoder_kernel_sizes = [[parser.encoder_kernel_size]*n_encoder_layers]
 	
-	encoder_top_size = parser.encoder_top_size
+	encoder_filters = np.array([parser.encoder_filter_size]*n_encoder_layers)
+	encoder_filters = encoder_filters*(2**np.arange(n_encoder_layers))
+	
+	encoder_kernel_sizes = [parser.encoder_kernel_size]*n_encoder_layers
+	encoder_strides = [parser.encoder_stride]*n_encoder_layers
 
 	''' Configure Decoder '''
-	# Explicitly define constants to maintain readability
-	#	Minimized arbitrary and (later) confusing decisions
-	one = 1
-	two = 2
-
-	n_decoder_blocks = parser.num_decoder_blocks
 	n_decoder_layers = parser.num_decoder_layers
 	
-	dec_base_filter_size = parser.decoder_filter_size
-	for k in range(n_decoder_blocks):
-		if k == 0:
-			filter_size = dec_base_filter_size
-			decoder_filters = [[filter_size]*n_decoder_layers]
-		else:
-			decoder_filters.append([filter_size]*n_decoder_layers)
+	decoder_filters = np.array([parser.decoder_filter_size]*n_decoder_layers)
+	decoder_filters = decoder_filters//(2**np.arange(n_decoder_layers))
 
-		filter_size = two*filter_size
-
-	decoder_kernel_sizes = [[parser.decoder_kernel_size]*n_decoder_layers]
-	decoder_kernel_sizes = decoder_kernel_sizes*n_decoder_blocks
-	final_kernel_size = parser.decoder_kernel_size
+	decoder_kernel_sizes = [parser.decoder_kernel_size]*n_decoder_layers
+	decoder_strides = [parser.decoder_stride]*n_decoder_layers
 
 	vae = ConvVAE(encoder_filters = encoder_filters, 
 			encoder_kernel_sizes = encoder_kernel_sizes,
 			decoder_filters = decoder_filters, 
 			decoder_kernel_sizes = decoder_kernel_sizes,
-			encoder_strides=parser.encoder_stride,
-			decoder_strides=parser.decoder_stride,
+			encoder_strides=encoder_strides,
+			decoder_strides=decoder_strides,
 			latent_dim = latent_dim, 
-			encoder_top_size = encoder_top_size,
-			final_kernel_size = final_kernel_size,
+			encoder_top_size = parser.encoder_top_size,
+			final_kernel_size = parser.decoder_kernel_size,
 			data_shape = data_shape, 
 			batch_size = batch_size,
 			verbose = verbose, 
