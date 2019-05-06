@@ -20,7 +20,7 @@ if __name__ == '__main__':
 				help = 'Type of network to train: Dense or Conv1D')
 	parser.add_argument('--batch_size', type=int, default=128,
 				help = 'batch size')
-	parser.add_argument('--optimizer', type=str, default='adam-wn',
+	parser.add_argument('--optimizer', type=str, default='adam',
 				help = 'optimizer name') # 'rmsprop'
 	parser.add_argument('--num_epochs', type=int, default=2,
 				help = 'number of epochs')

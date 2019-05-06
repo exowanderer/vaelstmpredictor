@@ -180,8 +180,7 @@ class ConvVAE(object):
 		# Instantiates the decoder model, which turns "decoder_input" into 
 		#	the decoded image
 		self.decoder_model = Model(decoder_input, x, name='decoder_model')
-		model_shape = K.int_shape(self.decoder_model(decoder_input))
-
+	
 	def build_model(self):
 		if self.verbose: print('[INFO] Building Model')
 		self.input_data = layers.Input(shape = self.data_shape)
