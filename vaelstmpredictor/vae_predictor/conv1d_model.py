@@ -286,14 +286,15 @@ class ConvVAEPredictor(object):
 		reshaped_dnn_w_latent = Reshape(shape_dnn_w_latent)(self.dnn_w_latent)
 
 		# Upsamples the input
-		shouldbe_last_conv_shape = (128, 196, 1)
-		x = Dense(np.prod(shouldbe_last_conv_shape[1:]),
+		divisor = np.prod(self.encoder_strides)
+		shouldbe_last_conv_shape = (self.data_shape[0]//divisor, self.channels) # MNIST ONLY!
+		x = Dense(np.prod(shouldbe_last_conv_shape),
 							activation = 'relu', name = 'dec_dense_0')
 		x = x(reshaped_dnn_w_latent)
 		
 		# Reshapes z into a feature map of the same shape as the feature map
 		#	just before the last Flatten layer in the encoder model
-		x = Reshape(shouldbe_last_conv_shape[1:])(x)
+		x = Reshape(shouldbe_last_conv_shape)(x)
 		
 		''' Uses a Conv1DTranspose layer and a Conv1D layer to decode z into
 				a feature map that is the same size as the original image input

@@ -60,18 +60,15 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 	"""
 	DI = data_instance
 
-	if clargs.verbose:
-		print()
-		print('[INFO] DI.data_train.shape', DI.data_train.shape)
-		print('[INFO] DI.data_test.shape', DI.data_test.shape)
-		print('[INFO] DI.data_valid.shape', DI.data_valid.shape)
-		print('[INFO] DI.labels_train.shape', DI.labels_train.shape)
-		print()
-	
 	clargs.n_labels = len(np.unique(DI.train_labels))
-	predictor_train = to_categorical(DI.train_labels, clargs.n_labels)
-	predictor_validation = to_categorical(DI.valid_labels, clargs.n_labels)
 
+	if clargs.predictor_type is 'classification':
+		predictor_train = to_categorical(DI.train_labels, clargs.n_labels)
+		predictor_validation = to_categorical(DI.valid_labels, clargs.n_labels)
+	else:
+		predictor_train = DI.train_labels
+		predictor_validation = DI.valid_labels
+	
 	callbacks = get_callbacks(clargs, patience=clargs.patience, 
 					min_epoch = max(clargs.kl_anneal, clargs.w_kl_anneal)+1, 
 					do_log = clargs.do_log, do_ckpt = clargs.do_ckpt)
@@ -186,6 +183,14 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 		predictor_train = np.expand_dims(predictor_train, axis=2)
 		predictor_validation = np.expand_dims(predictor_validation, axis=2)
 	
+	if clargs.verbose:
+		print()
+		print('[INFO] DI.data_train.shape', DI.data_train.shape)
+		print('[INFO] DI.data_test.shape', DI.data_test.shape)
+		print('[INFO] DI.data_valid.shape', DI.data_valid.shape)
+		print('[INFO] DI.labels_train.shape', DI.labels_train.shape)
+		print()
+
 	vae_train = DI.data_train
 	vae_features_val = DI.data_valid
 	
