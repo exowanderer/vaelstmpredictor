@@ -10,40 +10,6 @@ import numpy as np
 
 import keras
 
-def build_hidden_layers(hidden_dims, input_layer, kernel_sizes = None, 
-                base_layer_name = '', activation = 'relu', 
-                Layer = None, strides=None):
-    '''Need to remove all leading zeros for the Decoder 
-    to be properly established'''
-    if Layer is Dense or kernel_sizes is None:
-        return build_hidden_dense_layers(hidden_dims, input_layer, 
-                            base_layer_name, activation, Layer = Dense)
-    if (Layer is Conv1D or Layer is Conv1D) and kernel_sizes is not None:
-        assert(len(kernel_sizes) == len(hidden_dims)), \
-            "each Conv layer requires a given kernel_size"
-        return build_hidden_conv_layers(filter_sizes, kernel_sizes, strides, 
-                input_layer, base_layer_name, activation, Layer = Layer)
-
-def build_hidden_dense_layers(hidden_dims, input_layer, 
-                        base_layer_name, activation, Layer = Dense):
-    '''Need to remove all leading zeros for the Decoder 
-    to be properly established'''
-
-    hidden_dims = list(hidden_dims)
-    while 0 in hidden_dims: hidden_dims.remove(0)
-    
-    # Establish hidden layer structure
-    for k, layer_size in enumerate(hidden_dims):
-        name = '{}{}'.format(base_layer_name, k)
-        '''If this is the 1st hidden layer, then input as input_w_pred;
-            else, input the previous hidden_layer'''
-        input_now = input_layer if k is 0 else hidden_layer
-
-        hidden_layer = Layer(layer_size, activation = activation, name = name)
-        hidden_layer = hidden_layer(input_now)
-    
-    return hidden_layer
-
 def build_hidden_conv_layers(filter_sizes, kernel_sizes, input_layer, strides,
                         base_layer_name, activation, Layer = Conv1D):
     '''Need to remove all leading zeros for the Decoder 
@@ -129,19 +95,19 @@ class ConvVAE(object):
 			if plot_model: self.plot_model(save_name = parser.plot_name)
 
 			self.train()
+;
+	def build_encoder(self, padding='same', activation='relu', 
+						base_name = 'enc_conv1d_{}'):
 
-	def build_encoder(self, strides=2, padding='same', 
-						activation='relu', base_name = 'enc_conv1d_{}'):
 		if self.verbose: print('[INFO] Building Encoder')
 		
 		x = self.input_img
-		cntfilt = 0
 		zipper = zip(self.encoder_filters, 
 					self.encoder_kernel_sizes,
 					self.encoder_strides)
 
 		for kb, (cfilter, ksize, stride) in enumerate(zipper):
-			name = base_name.format(cntfilt)
+			name = base_name.format(kb)
 			
 			x = layers.Conv1D(filters = cfilter, 
 								kernel_size = ksize,
@@ -149,7 +115,6 @@ class ConvVAE(object):
 								padding = padding,
 								activation = activation, 
 								name = name)(x)
-			cntfilt += 1
 
 		self.shape_before_flattening = K.int_shape(x)
 		x = layers.Flatten()(x)
@@ -171,10 +136,11 @@ class ConvVAE(object):
 								mean=mean, stddev=stddev)
 		return z_mean + K.exp(z_log_var) * epsilon
 
-	def build_decoder(self, strides=2, padding='same', 
-					activation='relu', base_name = 'dec_conv1dT_{}'):
+	def build_decoder(self, padding='same', activation='relu', 
+						base_name = 'dec_conv1dT_{}'):
 
 		if self.verbose: print('[INFO] Building Decoder')
+		
 		# Input where you'll feed z
 		z_shape = K.int_shape(self.z)[1:]
 		decoder_input = layers.Input(shape = z_shape, name = 'dec_input')
@@ -239,10 +205,8 @@ class ConvVAE(object):
 		self.reconstructed_img = CustomVariationalLayer(
 									name = 'CustomVariationalLayer')
 		
-		self.reconstructed_img = self.reconstructed_img([self.input_img, 
-														self.z_decoded,
-														self.z_mean, 
-														self.z_log_var])
+		self.reconstructed_img = self.reconstructed_img(
+			[self.input_img, self.z_decoded, self.z_mean, self.z_log_var])
 
 		# Instantiates the autoencoder model, which maps an input image 
 		#	to its reconstruction

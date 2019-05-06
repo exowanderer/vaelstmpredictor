@@ -173,16 +173,20 @@ if __name__ == '__main__':
 										network_type = clargs.network_type)
 
 	print('\n\n[INFO] The Best Loss: {}\n'.format(best_loss))
-	joblib_save_loc = '{}/{}_trained_model_output.joblib.save'.format(
-															clargs.model_dir,
-															clargs.run_name)
-
-	weights_save_loc = '{}/{}_trained_model_weights.save'.format(
-															clargs.model_dir,
-															clargs.run_name)
+	joblib_save_loc = '{}/{}_{}_trained_model_output.joblib.save'.format(
+														clargs.model_dir,
+														clargs.run_name,
+														clargs.network_type)
 	
-	model_save_loc = '{}/{}_trained_model_full.save'.format(clargs.model_dir,
-															clargs.run_name)
+	weights_save_loc = '{}/{}_{}_trained_model_weights.save'.format(
+														clargs.model_dir,
+														clargs.run_name,
+														clargs.network_type)
+	
+	model_save_loc = '{}/{}_{}_trained_model_full.save'.format(
+														clargs.model_dir,
+														clargs.run_name,
+														clargs.network_type)
 	
 	vae_model.model.save_weights(weights_save_loc, overwrite=True)
 	vae_model.model.save(model_save_loc, overwrite=True)
