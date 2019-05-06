@@ -266,7 +266,7 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--prediction_log_var_prior {}'.format(
 											clargs.prediction_log_var_prior))
 	# command.append('--do_log {}'.format(int(clargs.do_log)))
-	# command.append('--do_chckpt {}'.format(int(clargs.do_chckpt)))
+	# command.append('--do_ckpt {}'.format(int(clargs.do_ckpt)))
 	command.append('--patience {}'.format(clargs.patience))
 	command.append('--kl_anneal {}'.format(clargs.kl_anneal))
 	command.append('--w_kl_anneal {}'.format(clargs.w_kl_anneal))

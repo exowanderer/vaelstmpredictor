@@ -18,7 +18,7 @@ def make_sql_output(clargs, chromosome):
 	output['run_name'] = clargs.run_name
 	output['batch_size'] = clargs.batch_size
 	output['cross_prob'] = clargs.cross_prob
-	output['do_chckpt'] = clargs.do_chckpt
+	output['do_ckpt'] = clargs.do_ckpt
 	output['do_log'] = clargs.do_log
 	output['hostname'] = clargs.hostname
 	output['iterations'] = clargs.num_generations
@@ -140,7 +140,7 @@ if __name__ == '__main__':
 				help='w log var prior')
 	# parser.add_argument("--do_log", action="store_true", 
 	# 			help="save log files")
-	# parser.add_argument("--do_chckpt", action="store_true",
+	# parser.add_argument("--do_ckpt", action="store_true",
 	# 			help="save model checkpoints")
 	parser.add_argument('--patience', type=int, default=10,
 				help='# of epochs, for early stopping')
@@ -184,7 +184,7 @@ if __name__ == '__main__':
 	clargs = parser.parse_args()
 	
 	clargs.do_log = True
-	clargs.do_chckpt = True
+	clargs.do_ckpt = True
 	clargs.verbose = True
 	clargs.cross_prob = 0.7
 	clargs.mutate_prob = 0.01
