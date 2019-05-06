@@ -98,13 +98,14 @@ class CustomVariationalLayer(keras.layers.Layer):
 		# you don't use this output; but the layer must return something
 		return input_img 
 
-class VAE(object):
+class ConvVAE(object):
 	def __init__(self, encoder_filters, encoder_kernel_sizes,
 						decoder_filters, decoder_kernel_sizes, 
 						encoder_strides=2, decoder_strides=2, 
 						latent_dim = 2, encoder_top_size = 16,
 						final_kernel_size = 3, data_shape = (784,1), 
-						batch_size = 16, run_all = False, verbose = False):
+						batch_size = 16, run_all = False, 
+						verbose = False, plot_model = False):
 
 		self.data_shape = data_shape
 		self.batch_size = batch_size
@@ -126,6 +127,9 @@ class VAE(object):
 			self.load_data()
 			self.build_model()
 			self.compile()
+			
+			if plot_model: self.plot_model(save_name = parser.plot_name)
+
 			self.train()
 
 	def build_encoder(self, strides=2, padding='same', 
@@ -294,9 +298,8 @@ class VAE(object):
 				batch_size = self.batch_size,
 				validation_data = (self.x_test, None))
 
-	def plot_model(self, save_name = 'Conv1D_VAE_Model_Diagram.png'):
- 		plot_model(self.vae, to_file=save_name)
- 	
+	def plot_model(self, save_name): plot_model(self.vae, to_file=save_name)
+
 	def plot_latent_representations(self, n_digits = 15, digit_size = 28, 
 									figsize = (10,10), cmap = 'Greys_r'):
 		if self.verbose: print('[INFO] Plotting Latent Space Representations')
@@ -373,6 +376,9 @@ if __name__ == '__main__':
 		help='Size of Dense layer on top of decoder')
 	parser.add_argument('--plot_model', action="store_true", 
 		help='Toggle whether to plot the model using keras.utils.plot_model')
+	parser.add_argument('--plot_name', type=str, 
+		default='Conv1D_VAE_Model_Diagram.png',
+		help='Image file name to save model diagram')
 	
 	parser = parser.parse_args()
 
@@ -426,7 +432,7 @@ if __name__ == '__main__':
 	decoder_kernel_sizes = decoder_kernel_sizes*n_decoder_blocks
 	final_kernel_size = parser.decoder_kernel_size
 
-	vae = VAE(encoder_filters = encoder_filters, 
+	vae = ConvVAE(encoder_filters = encoder_filters, 
 			encoder_kernel_sizes = encoder_kernel_sizes,
 			decoder_filters = decoder_filters, 
 			decoder_kernel_sizes = decoder_kernel_sizes,
@@ -438,13 +444,10 @@ if __name__ == '__main__':
 			data_shape = data_shape, 
 			batch_size = batch_size,
 			verbose = verbose, 
-			run_all = run_all)
+			run_all = run_all, 
+			plot_model = parser.plot_model)
 
 	if not run_all:
 		vae.load_data()
 		vae.build_model()
 		vae.compile()
-		# vae.train()
-
-	if parser.plot_model:
- 		vae.plot_model(save_name = 'Conv1D_VAE_Model_Diagram.png')
