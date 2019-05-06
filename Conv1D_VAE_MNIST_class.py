@@ -4,6 +4,7 @@ from keras import backend as K
 from keras.datasets import mnist
 from keras.models import Model, Sequential
 from keras.layers import Dense, Conv1D, UpSampling1D
+from keras.utils import plot_model
 
 import numpy as np
 
@@ -293,6 +294,9 @@ class VAE(object):
 				batch_size = self.batch_size,
 				validation_data = (self.x_test, None))
 
+	def plot_model(self, save_name = 'Conv1D_VAE_Model_Diagram.png'):
+ 		plot_model(self.vae, to_file=save_name)
+ 	
 	def plot_latent_representations(self, n_digits = 15, digit_size = 28, 
 									figsize = (10,10), cmap = 'Greys_r'):
 		if self.verbose: print('[INFO] Plotting Latent Space Representations')
@@ -367,6 +371,8 @@ if __name__ == '__main__':
 		help='Number of layers per block in the decoder')
 	parser.add_argument('--decoder_top_size', type=int, default=16,
 		help='Size of Dense layer on top of decoder')
+	parser.add_argument('--plot_model', action="store_true", 
+		help='Toggle whether to plot the model using keras.utils.plot_model')
 	
 	parser = parser.parse_args()
 
@@ -439,3 +445,6 @@ if __name__ == '__main__':
 		vae.build_model()
 		vae.compile()
 		# vae.train()
+
+	if parser.plot_model:
+ 		vae.plot_model(save_name = 'Conv1D_VAE_Model_Diagram.png')
