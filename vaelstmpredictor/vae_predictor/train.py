@@ -12,7 +12,8 @@ from ..utils.model_utils import get_callbacks, save_model_in_pieces
 from ..utils.model_utils import init_adam_wn, AnnealLossWeight
 from ..utils.weightnorm import data_based_init
 
-from .model import VAEPredictor#, ConVAEPredictor
+from .dense_model import VAEPredictor
+from .conv1d_model import ConvVAEPredictor
 
 def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 	"""Training control operations to create VAEPredictor instance, 
@@ -137,7 +138,13 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 
 	clargs.optimizer = 'adam-wn' if was_adam_wn else clargs.optimizer
 	
-	save_model_in_pieces(vae_predictor.model, clargs)
+	if 'dense' in clargs.network_type.lower():
+		vae_model = vae_predictor.dense_model
+
+	if 'conv1d' in clargs.network_type.lower():
+		vae_model = vae_predictor.conv1d_model
+
+	save_model_in_pieces(vae_model, clargs)
 	
 	if clargs.use_prev_input:
 		vae_train = [DI.labels_train, DI.data_train]
@@ -146,7 +153,7 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 		vae_train = DI.data_train
 		vae_features_val = DI.data_valid
 	
-	data_based_init(vae_predictor.model, DI.data_train[:clargs.batch_size])
+	data_based_init(vae_model, DI.data_train[:clargs.batch_size])
 
 	vae_labels_val = [DI.labels_valid, predictor_validation, 
 						predictor_validation,DI.labels_valid]
@@ -155,9 +162,9 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 	
 	if clargs.debug: return 0,0,0
 	
-	vae_predictor.model.summary()
+	vae_model.summary()
 
-	history = vae_predictor.model.fit(vae_train, train_labels,
+	history = vae_model.fit(vae_train, train_labels,
 								shuffle = True,
 								epochs = clargs.num_epochs,
 								batch_size = clargs.batch_size,

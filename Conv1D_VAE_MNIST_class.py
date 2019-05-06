@@ -55,12 +55,12 @@ class CustomVariationalLayer(keras.layers.Layer):
 
 	def call(self, inputs):
 		# We have to implement custom layers by writing a call method
-		input_img, z_decoded, z_mean, z_log_var = inputs
-		loss = self.vae_loss(input_img, z_decoded, z_mean, z_log_var)
+		input_data, z_decoded, z_mean, z_log_var = inputs
+		loss = self.vae_loss(input_data, z_decoded, z_mean, z_log_var)
 		self.add_loss(loss, inputs = inputs)
 
 		# you don't use this output; but the layer must return something
-		return input_img 
+		return input_data 
 
 class ConvVAE(object):
 	def __init__(self, encoder_filters, encoder_kernel_sizes,
@@ -101,7 +101,7 @@ class ConvVAE(object):
 
 		if self.verbose: print('[INFO] Building Encoder')
 		
-		x = self.input_img
+		x = self.input_data
 		zipper = zip(self.encoder_filters, 
 					self.encoder_kernel_sizes,
 					self.encoder_strides)
@@ -184,7 +184,7 @@ class ConvVAE(object):
 
 	def build_model(self):
 		if self.verbose: print('[INFO] Building Model')
-		self.input_img = layers.Input(shape = self.data_shape)
+		self.input_data = layers.Input(shape = self.data_shape)
 
 		# Encodes the input into a mean and variance parameter
 		self.build_encoder()
@@ -206,11 +206,11 @@ class ConvVAE(object):
 									name = 'CustomVariationalLayer')
 		
 		self.reconstructed_img = self.reconstructed_img(
-			[self.input_img, self.z_decoded, self.z_mean, self.z_log_var])
+			[self.input_data, self.z_decoded, self.z_mean, self.z_log_var])
 
 		# Instantiates the autoencoder model, which maps an input image 
 		#	to its reconstruction
-		self.vae = Model(self.input_img, self.reconstructed_img)
+		self.vae = Model(self.input_data, self.reconstructed_img)
 
 	def load_data(self, divisor = 255.):
 		if self.verbose: print('[INFO] Loading Data')
