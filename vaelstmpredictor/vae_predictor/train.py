@@ -12,7 +12,7 @@ from ..utils.model_utils import get_callbacks, save_model_in_pieces
 from ..utils.model_utils import init_adam_wn, AnnealLossWeight
 from ..utils.weightnorm import data_based_init
 
-from .model import VAEPredictor, ConVAEPredictor
+from .model import VAEPredictor#, ConVAEPredictor
 
 def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 	"""Training control operations to create VAEPredictor instance, 
@@ -102,24 +102,24 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 								dnn_out_dim = clargs.n_labels, 
 								dnn_latent_dim = clargs.n_labels-1, 
 								optimizer = 'adam')
-	elif network_type.lower() == 'conv1d':
-		vae_predictor = ConVAEPredictor(
-					vae_hidden_filter_size = clargs.vae_hidden_filter_size, 
-					num_vae_hidden_layers = clargs.num_vae_hidden_layers, 
-					dnn_hidden_filter_size = clargs.dnn_hidden_filter_size, 
-					num_dnn_hidden_layers = clargs.num_dnn_hidden_layers, 
-					vae_latent_dim = clargs.vae_latent_dim, 
-					original_dim = clargs.original_dim, 
-					dnn_out_dim = clargs.n_labels, 
-					vae_hidden_kernel_size = clargs.vae_hidden_kernel_size, 
-					vae_strides = clargs.vae_strides, 
-					dnn_hidden_kernel_size = clargs.dnn_hidden_kernel_size, 
-					dnn_strides = clargs.dnn_strides, 
-					dnn_latent_dim = clargs.dnn_latent_dim, 
-					batch_size = clargs.batch_size, 
-					dnn_log_var_prior = clargs.dnn_log_var_prior, 
-					optimizer = clargs.optimizer, 
-					predictor_type = clargs.predictor_type)
+	# elif network_type.lower() == 'conv1d':
+	# 	vae_predictor = ConVAEPredictor(
+	# 				vae_hidden_filter_size = clargs.vae_hidden_filter_size, 
+	# 				num_vae_hidden_layers = clargs.num_vae_hidden_layers, 
+	# 				dnn_hidden_filter_size = clargs.dnn_hidden_filter_size, 
+	# 				num_dnn_hidden_layers = clargs.num_dnn_hidden_layers, 
+	# 				vae_latent_dim = clargs.vae_latent_dim, 
+	# 				original_dim = clargs.original_dim, 
+	# 				dnn_out_dim = clargs.n_labels, 
+	# 				vae_hidden_kernel_size = clargs.vae_hidden_kernel_size, 
+	# 				vae_strides = clargs.vae_strides, 
+	# 				dnn_hidden_kernel_size = clargs.dnn_hidden_kernel_size, 
+	# 				dnn_strides = clargs.dnn_strides, 
+	# 				dnn_latent_dim = clargs.dnn_latent_dim-1, 
+	# 				batch_size = clargs.batch_size, 
+	# 				dnn_log_var_prior = clargs.dnn_log_var_prior, 
+	# 				optimizer = clargs.optimizer, 
+	# 				predictor_type = clargs.predictor_type)
 	else:
 		ValueError('network_type must (currently) be either Dense or Conv1D')
 	# vae_predictor = VAEPredictor(predictor_type = clargs.predictor_type,

@@ -60,7 +60,7 @@ if __name__ == '__main__':
 				help = 'w log var prior')
 	parser.add_argument('--predictor_hidden_dim', type=int, default=128,
 				help = 'intermediate dims for class/regr predictor')
-	parser.add_argument('--dnn_latent_dim', type=int, default=0,
+	parser.add_argument('--dnn_latent_dim', type=int, default=9,
 				help = 'predictor dims for class/regr prediction')
 	parser.add_argument('--dnn_log_var_prior', type=float, default=0.0,
 				help = 'Prion the Log Variances over the DNN')
