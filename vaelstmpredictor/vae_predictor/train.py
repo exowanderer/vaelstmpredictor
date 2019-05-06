@@ -60,29 +60,18 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 	"""
 	DI = data_instance
 
-	if 'Conv1D'.lower() in clargs.network_type.lower():
-		DI.data_train = np.expand_dims(DI.data_train, axis=2)
-		DI.data_test = np.expand_dims(DI.data_test, axis=2)
-		DI.data_valid = np.expand_dims(DI.data_valid, axis=2)
-	
 	if clargs.verbose:
 		print()
 		print('[INFO] DI.data_train.shape', DI.data_train.shape)
 		print('[INFO] DI.data_test.shape', DI.data_test.shape)
 		print('[INFO] DI.data_valid.shape', DI.data_valid.shape)
+		print('[INFO] DI.labels_train.shape', DI.labels_train.shape)
 		print()
 	
 	clargs.n_labels = len(np.unique(DI.train_labels))
 	predictor_train = to_categorical(DI.train_labels, clargs.n_labels)
 	predictor_validation = to_categorical(DI.valid_labels, clargs.n_labels)
 
-	# if test_test: 
-	#	 predictor_test = to_categorical(DI.test_labels, clargs.n_labels)
-
-	# assert(not (clargs.predict_next and clargs.use_prev_input)), \
-	# 		"Can't use --predict_next if using --use_prev_input"
-
-	# clargs.run_name = clargs.run_name + str(int(time()))
 	callbacks = get_callbacks(clargs, patience=clargs.patience, 
 					min_epoch = max(clargs.kl_anneal, clargs.w_kl_anneal)+1, 
 					do_log = clargs.do_log, do_ckpt = clargs.do_ckpt)
@@ -186,15 +175,25 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 	# 	vae_train = [DI.labels_train, DI.data_train]
 	# 	vae_features_val = [DI.labels_valid, DI.data_valid]
 	# else:
+	data_based_init(vae_predictor.model, DI.data_train[:clargs.batch_size])
+
+	if 'Conv1D'.lower() in clargs.network_type.lower():
+		DI.data_train = np.expand_dims(DI.data_train, axis=2)
+		DI.data_test = np.expand_dims(DI.data_test, axis=2)
+		DI.data_valid = np.expand_dims(DI.data_valid, axis=2)
+		DI.labels_train = np.expand_dims(DI.labels_train, axis=2)
+		DI.labels_valid = np.expand_dims(DI.labels_valid, axis=2)
+		predictor_train = np.expand_dims(predictor_train, axis=2)
+		predictor_validation = np.expand_dims(predictor_validation, axis=2)
+	
 	vae_train = DI.data_train
 	vae_features_val = DI.data_valid
 	
-	data_based_init(vae_predictor.model, DI.data_train[:clargs.batch_size])
-
 	vae_labels_val = [DI.labels_valid, predictor_validation, 
 						predictor_validation,DI.labels_valid]
 	validation_data = (vae_features_val, vae_labels_val)
-	train_labels = [DI.labels_train, predictor_train, predictor_train, DI.labels_train]
+	train_labels = [DI.labels_train, predictor_train, 
+					predictor_train, DI.labels_train]
 	
 	if clargs.debug: return 0,0,0
 	
