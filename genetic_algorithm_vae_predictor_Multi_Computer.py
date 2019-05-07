@@ -45,7 +45,7 @@ def create_blank_dataframe(generationID, population_size):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('run_name', type=str, default='ga_test',
+	parser.add_argument('--run_name', type=str, default='deleteme',
 				help='tag for current run')
 	parser.add_argument('--predictor_type', type=str, default="classification",
 				help='select `classification` or `regression`')
