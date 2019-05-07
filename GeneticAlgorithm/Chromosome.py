@@ -17,7 +17,7 @@ from vaelstmpredictor.utils.model_utils import save_model_in_pieces
 from vaelstmpredictor.utils.model_utils import AnnealLossWeight
 from vaelstmpredictor.utils.data_utils import MNISTData
 from vaelstmpredictor.utils.weightnorm import data_based_init
-from vaelstmpredictor.vae_predictor.model import VAEPredictor
+from vaelstmpredictor.vae_predictor.dense_model import VAEPredictor
 from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
 class Chromosome(VAEPredictor):
