@@ -134,7 +134,7 @@ class VAEPredictor(object):
 	def __init__(self, original_dim, vae_hidden_dims, dnn_hidden_dims, 
 					vae_latent_dim, dnn_out_dim = None, 
 					dnn_latent_dim = None, batch_size = 128, 
-					dnn_log_var_prior = 0.0, optimizer = 'adam-wn', 
+					dnn_log_var_prior = 0.0, optimizer = 'adam', 
 					use_prev_input = False, predictor_type = 'classification'):
 		
 		self.predictor_type = predictor_type
