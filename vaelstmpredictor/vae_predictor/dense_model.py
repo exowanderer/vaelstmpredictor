@@ -20,7 +20,9 @@ except:
 	# Python 3
    def range(tmp): return iter(range(tmp))
 
-'''HERE WHERE I STARTED'''
+def debug_message(message): print('[DEBUG] {}'.format(message))
+def info_message(message): print('[INFO] {}'.format(message))
+
 def vae_sampling(args, latent_dim, batch_size = 128, 
 					mean = 0.0, stddev = 1.0, channels = None):
 	latent_mean, latent_log_var = args
@@ -255,25 +257,7 @@ class VAEPredictor(object):
 			rec_loss = categorical_crossentropy(labels, preds)
 		
 		return rec_loss
-	"""
-	def dnn_sampling(self, args):
-		''' sample from a logit-normal with params dnn_latent_mean 
-				and dnn_latent_log_var
-			(n.b. this is very similar to a logistic-normal distribution)
-		'''
-		batch_shape = (self.batch_size, self.dnn_latent_dim)
-		eps = K.random_normal(shape = batch_shape, mean = 0., stddev = 1.0)
-
-		gamma_ = K.exp(self.dnn_latent_log_var/2)*eps
-		dnn_norm = self.dnn_latent_mean + gamma_
-		
-		# need to add 0's so we can sum it all to 1
-		padding = K.tf.zeros(self.batch_size, 1)[:,None]
-		dnn_norm = concatenate([dnn_norm, padding], 
-								name='dnn_norm')
-		sum_exp_dnn_norm = K.sum(K.exp(dnn_norm), axis = -1)[:,None]
-		return K.exp(dnn_norm)/sum_exp_dnn_norm
-	"""
+	
 	def build_model(self, batch_size = None, original_dim = None, 
 				  vae_hidden_dims = None, vae_latent_dim = None, 
 				  dnn_hidden_dims = None, use_prev_input = False, 
@@ -298,7 +282,7 @@ class VAEPredictor(object):
 		if use_prev_input is not None: self.use_prev_input = use_prev_input
 
 		batch_shape = (self.batch_size, self.original_dim)
-		# batch_shape = (self.original_dim,)
+		
 		self.input_layer = Input(batch_shape = batch_shape, name='input_layer')
 
 		if use_prev_input or self.use_prev_input:
@@ -339,14 +323,12 @@ class VAEPredictor(object):
 
 
 		self.model = Model(input_stack, out_stack)
-		self.enc_model = Model(input_stack, enc_stack)
-
-		#Make The Model Parallel Using Multiple GPUs
-		#if(num_gpus >= 2):
-		#	self.model = multi_gpu_model(self.model, gpus=num_gpus)
 
 	def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
 				  dnn_kl_weight = 1.0, optimizer = None, metrics = None):
+		
+		debug_message('INSIDE DENSE_MODEL COMPILE')
+
 		# monitor in addition to normal output
 		metrics_ = {'dnn_prediction': ['acc', 'mse'],
 					'dnn_latent_layer': ['acc', 'mse'],
@@ -368,13 +350,6 @@ class VAEPredictor(object):
 				metrics = metrics or metrics_
 				)
 	
-	"""
-	def vae_sampling(self, args):
-		eps = K.random_normal(shape = (self.batch_size, self.vae_latent_dim), 
-								mean = 0., stddev = 1.0)
-		
-		return self.vae_latent_mean + K.exp(self.vae_latent_log_var/2) * eps
-	"""
 	def vae_loss(self, input_layer, vae_reconstruction):
 		
 		if self.predictor_type is 'binary':
@@ -434,9 +409,7 @@ class VAEPredictor(object):
 	def make_latent_encoder(self):
 		orig_batch_shape = (self.batch_size, self.original_dim)
 		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
-		# orig_batch_shape = (self.original_dim,)
-		# predictor_batch_shape = (self.predictor_out_dim,)
-
+		
 		input_layer = Input(batch_shape = orig_batch_shape, 
 							name = 'input_layer')
 		dnn_input_layer = Input(batch_shape = predictor_batch_shape, 
@@ -471,10 +444,7 @@ class VAEPredictor(object):
 		input_batch_shape = (self.batch_size, self.original_dim)
 		predictor_batch_shape = (self.batch_size, self.dnn_out_dim)
 		vae_batch_shape = (self.batch_size, self.vae_latent_dim)
-		# input_batch_shape = (self.original_dim,)
-		# predictor_batch_shape = (self.dnn_out_dim,)
-		# vae_batch_shape = (self.vae_latent_dim,)
-
+		
 		dnn_input_layer = Input(batch_shape = predictor_batch_shape, 
 										name = 'dnn_layer')
 		vae_latent_layer = Input(batch_shape = vae_batch_shape, 
@@ -554,3 +524,4 @@ class VAEPredictor(object):
 		rando = np.random.rand(len(dnn_latent_mean.squeeze()))
 
 		return np.float32(rando <= dnn_latent_mean)
+
