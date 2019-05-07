@@ -11,7 +11,7 @@ def update_all_git():
 				 ['172.16.50.163', 'vaelstmpredictor/'],
 				 # ['172.16.50.182', 'vaelstmpredictor/'],
 				 ['172.16.50.218', 'vaelstmpredictor/'],
-				 [']172.16.50.159', 'vaelstmpredictor/'],
+				 ['172.16.50.159', 'vaelstmpredictor/'],
 				 ['172.16.50.235', 'vaelstmpredictor/'],
 				 ['172.16.50.157', 'vaelstmpredictor/'],
 				 ['172.16.50.237',  'vaelstmpredictor/']]
