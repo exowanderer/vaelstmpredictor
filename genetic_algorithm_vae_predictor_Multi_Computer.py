@@ -28,7 +28,7 @@ from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 from GeneticAlgorithm import *
 
 def debug_message(message): print('[DEBUG] {}'.format(message))
-def info_message(message): info_message('{}'.format(message))
+def info_message(message): print('[INFO] {}'.format(message))
 
 def create_blank_dataframe(generationID, population_size):
 	generation = pd.DataFrame()

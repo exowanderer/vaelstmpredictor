@@ -4,7 +4,7 @@ from multiprocessing import Queue, Process
 from os import environ
 
 def debug_message(message): print('[DEBUG] {}'.format(message))
-def info_message(message): info_message('{}'.format(message))
+def info_message(message): print('[INFO] {}'.format(message))
 
 def update_all_git():
 	machines = [['172.16.50.187',  'vaelstmpredictor/'],

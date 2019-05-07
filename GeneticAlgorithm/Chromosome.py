@@ -21,7 +21,7 @@ from vaelstmpredictor.vae_predictor.dense_model import VAEPredictor
 from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
 def debug_message(message): print('[DEBUG] {}'.format(message))
-def info_message(message): info_message('{}'.format(message))
+def info_message(message): print('[INFO] {}'.format(message))
 
 class Chromosome(VAEPredictor):
     # params = ["size_vae_hidden1", "size_vae_hidden2", "size_vae_hidden3", 
