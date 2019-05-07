@@ -20,6 +20,9 @@ from vaelstmpredictor.utils.weightnorm import data_based_init
 from vaelstmpredictor.vae_predictor.dense_model import VAEPredictor
 from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
+def debug_message(message): print('[DEBUG] {}'.format(message))
+def info_message(message): info_message('{}'.format(message))
+
 class Chromosome(VAEPredictor):
     # params = ["size_vae_hidden1", "size_vae_hidden2", "size_vae_hidden3", 
     #             "size_vae_hidden4", "size_vae_hidden5", 
@@ -72,6 +75,7 @@ class Chromosome(VAEPredictor):
         self.dnn_latent_dim = clargs.n_labels-1
         
         self.build_model()
+        self.model.compile()
         self.neural_net = self.model
         self.fitness = 0
         self.isTrained = False

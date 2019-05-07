@@ -27,6 +27,9 @@ from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
 from GeneticAlgorithm import *
 
+def debug_message(message): print('[DEBUG] {}'.format(message))
+def info_message(message): info_message('{}'.format(message))
+
 def create_blank_dataframe(generationID, population_size):
 	generation = pd.DataFrame()
 	generation['generationID'] = np.ones(population_size, dtype = int)
@@ -164,7 +167,7 @@ if __name__ == '__main__':
 	new_best_fitness = max(fitnesses)
 	
 	if clargs.verbose:
-		print('[INFO] For Generation: {}, the best fitness was {}'.format(
+		info_message('For Generation: {}, the best fitness was {}'.format(
 				generationID, new_best_fitness))
 
 	best_fitness.append(new_best_fitness)
@@ -203,7 +206,7 @@ if __name__ == '__main__':
 			
 			child.isTrained = mutation_happened*crossover_happened
 			
-			print('[INFO] Adding Chromosome: {}'.format(child))
+			info_message('Adding Chromosome: {}'.format(child))
 			new_generation.iloc[chromosomeID] = child
 
 		# Re-sort by chromosomeID
@@ -227,7 +230,7 @@ if __name__ == '__main__':
 		new_best_fitness = max(fitnesses)
 
 		if clargs.verbose:
-			print('[INFO] For Generation: {}, the best fitness was {}'.format(
+			info_message('For Generation: {}, the best fitness was {}'.format(
 					generationID, new_best_fitness))
 
 		best_fitness.append(new_best_fitness)
@@ -244,6 +247,6 @@ if __name__ == '__main__':
 						num_generations, num_epochs, cross_prob,mutate_prob)
 	evtree_save_name = os.path.join(clargs.model_dir, evtree_save_name)
 
-	print('[INFO] Saving evolutionary tree to {}'.format(evtree_save_name))
+	info_message('Saving evolutionary tree to {}'.format(evtree_save_name))
 	joblib.dump(evolutionary_tree, evtree_save_name)
 	"""

@@ -31,6 +31,9 @@ from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
 from .Chromosome import Chromosome
 
+def debug_message(message): print('[DEBUG] {}'.format(message))
+def info_message(message): print('[INFO] {}'.format(message))
+
 def configure_multi_hidden_layers(num_hidden, input_size, 
 								  min_hidden1, max_hidden,
 								  start_small = True, init_large = True):
@@ -186,18 +189,18 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 					"key_filename": key_filename},
 				{"host": "172.16.50.163", "username": "acc", 
 					"key_filename": key_filename},
-				# {"host": "172.16.50.182", "username": "acc", 
-				# 	"key_filename": key_filename},
-				# {"host": "172.16.50.218", "username": "acc", 
-				# 	"key_filename": key_filename},
-				# {"host": "172.16.50.159", "username": "acc", 
-				# 	"key_filename": key_filename},
-				# {"host": "172.16.50.235", "username": "acc", 
-				# 	"key_filename": key_filename},
-				# {"host": "172.16.50.157", "username": "acc", 
-				# 	"key_filename": key_filename},
-				# {"host": "172.16.50.237", "username": "acc", 
-				# 	"key_filename": key_filename}
+				{"host": "172.16.50.182", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.218", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.159", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.235", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.157", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.237", "username": "acc", 
+					"key_filename": key_filename}
 				]
 	
 	queue = mp.Queue()
@@ -213,7 +216,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				print("\n\nCreating Process for Chromosome "\
 						"{} on GenerationID {}".format(chromosome.chromosomeID,
 							chromosome.generationID), end=" on machine ")
-				
+
 				# Find a Chromosome that is not trained yet
 				alldone = False
 				
