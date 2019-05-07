@@ -186,18 +186,18 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 					"key_filename": key_filename},
 				{"host": "172.16.50.163", "username": "acc", 
 					"key_filename": key_filename},
-				{"host": "172.16.50.182", "username": "acc", 
-					"key_filename": key_filename},
-				{"host": "172.16.50.218", "username": "acc", 
-					"key_filename": key_filename},
-				{"host": "172.16.50.159", "username": "acc", 
-					"key_filename": key_filename},
-				{"host": "172.16.50.235", "username": "acc", 
-					"key_filename": key_filename},
-				{"host": "172.16.50.157", "username": "acc", 
-					"key_filename": key_filename},
-				{"host": "172.16.50.237", "username": "acc", 
-					"key_filename": key_filename}
+				# {"host": "172.16.50.182", "username": "acc", 
+				# 	"key_filename": key_filename},
+				# {"host": "172.16.50.218", "username": "acc", 
+				# 	"key_filename": key_filename},
+				# {"host": "172.16.50.159", "username": "acc", 
+				# 	"key_filename": key_filename},
+				# {"host": "172.16.50.235", "username": "acc", 
+				# 	"key_filename": key_filename},
+				# {"host": "172.16.50.157", "username": "acc", 
+				# 	"key_filename": key_filename},
+				# {"host": "172.16.50.237", "username": "acc", 
+				# 	"key_filename": key_filename}
 				]
 	
 	queue = mp.Queue()
