@@ -210,8 +210,10 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 		alldone = True
 		for k, chromosome in generation.iterrows():
 			if not chromosome.isTrained:
-				print("Creating Process for Chromosome {}".format(
-							chromosome.chromosomeID), end=" on machine ")
+				print("\n\nCreating Process for Chromosome "\
+						"{} on GenerationID {}".format(chromosome.chromosomeID,
+							chromosome.generationID), end=" on machine ")
+				
 				# Find a Chromosome that is not trained yet
 				alldone = False
 				
@@ -224,7 +226,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				process.start()
 				
 				chromosome.isTrained = 1
-				generation.iloc[k] = chromosome # finally, we figured this out!
+				generation.iloc[chromosome.chromosomeID] = chromosome
 
 	for k, chromosome in generation.iterrows():
 		assert(chromosome.isTrained), 'while loop should not have closed!'
