@@ -328,6 +328,12 @@ class VAEPredictor(object):
 
 		# def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
 		# 			  dnn_kl_weight = 1.0, optimizer = None, metrics = None):
+		# dnn_weight = 1.0
+		# vae_weight = 1.0
+		# vae_kl_weight = 1.0
+		# dnn_kl_weight = 1.0
+		# optimizer = None
+		# metrics = None
 		
 		debug_message('INSIDE DENSE_MODEL COMPILE')
 

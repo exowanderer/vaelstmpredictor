@@ -69,7 +69,7 @@ class Chromosome(VAEPredictor):
         self.dnn_latent_dim = clargs.n_labels-1
         
         self.build_model()
-        self.model.compile(optimizer=self.optimizer)
+        # self.model.compile(optimizer=self.optimizer)
         self.neural_net = self.model
         self.fitness = 0
         self.isTrained = False
