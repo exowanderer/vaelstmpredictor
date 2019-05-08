@@ -18,18 +18,13 @@ from vaelstmpredictor.utils.model_utils import AnnealLossWeight
 from vaelstmpredictor.utils.data_utils import MNISTData
 from vaelstmpredictor.utils.weightnorm import data_based_init
 from vaelstmpredictor.vae_predictor.dense_model import VAEPredictor
-from vaelstmpredictor.vae_predictor.train import train_vae_predictor
+# from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
 def debug_message(message): print('[DEBUG] {}'.format(message))
 def info_message(message): print('[INFO] {}'.format(message))
 
 class Chromosome(VAEPredictor):
-    # params = ["size_vae_hidden1", "size_vae_hidden2", "size_vae_hidden3", 
-    #             "size_vae_hidden4", "size_vae_hidden5", 
-    #           "vae_latent_dim", 
-    #           "size_dnn_hidden1", "size_dnn_hidden2", "size_dnn_hidden3", 
-    #             "size_dnn_hidden4", "size_dnn_hidden5"]
-
+    
     def __init__(self, clargs, data_instance, vae_latent_dim, 
                 vae_hidden_dims, dnn_hidden_dims, 
                 generationID = 0, chromosomeID = 0, 
@@ -71,7 +66,6 @@ class Chromosome(VAEPredictor):
         self.batch_size = clargs.batch_size
         self.use_prev_input = False
         self.dnn_out_dim = clargs.n_labels
-
         self.dnn_latent_dim = clargs.n_labels-1
         
         self.build_model()

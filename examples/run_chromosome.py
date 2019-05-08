@@ -8,7 +8,7 @@ import os
 import requests
 import socket
 
-from GeneticAlgorithm import *
+from vaelstmpredictor.GeneticAlgorithm import *
 
 from time import time, sleep
 from vaelstmpredictor.utils.data_utils import MNISTData
@@ -150,11 +150,11 @@ if __name__ == '__main__':
 				help="number of epochs before w's kl loss term is 1.0")
 	parser.add_argument('--dnn_log_var_prior', type=float, default=0.0,
 				help='Prior on the log variance for the DNN predictor')
-	parser.add_argument('--log_dir', type=str, default='data/logs',
+	parser.add_argument('--log_dir', type=str, default='../data/logs',
 				help='basedir for saving log files')
-	parser.add_argument('--model_dir', type=str, default='data/models',
+	parser.add_argument('--model_dir', type=str, default='../data/models',
 				help='basedir for saving model weights')
-	parser.add_argument('--table_dir', type=str, default='data/tables',
+	parser.add_argument('--table_dir', type=str, default='../data/tables',
 				help='basedir for storing the table of params and fitnesses.')
 	parser.add_argument('--train_file', type=str, default='MNIST',
 				help='file of training data (.pickle)')

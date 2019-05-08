@@ -157,12 +157,15 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 	else:
 		ValueError('network_type must (currently) be either Dense or Conv1D')
 	
-	vae_predictor.build_model()
+	vae_predictor.build_model(dnn_weight = clargs.dnn_weight,
+							vae_weight = clargs.vae_weight,
+							dnn_kl_weight = clargs.dnn_kl_weight,
+							vae_kl_weight = clargs.vae_kl_weight)
 	
-	vae_predictor.compile(dnn_weight = clargs.dnn_weight,
-						vae_weight = clargs.vae_weight,
-						dnn_kl_weight = clargs.dnn_kl_weight,
-						vae_kl_weight = clargs.vae_kl_weight)
+	# vae_predictor.compile(dnn_weight = clargs.dnn_weight,
+	# 					vae_weight = clargs.vae_weight,
+	# 					dnn_kl_weight = clargs.dnn_kl_weight,
+	# 					vae_kl_weight = clargs.vae_kl_weight)
 
 	# clargs.optimizer = 'adam-wn' if was_adam_wn else clargs.optimizer
 	

@@ -259,11 +259,13 @@ class VAEPredictor(object):
 		return rec_loss
 	
 	def build_model(self, batch_size = None, original_dim = None, 
-				  vae_hidden_dims = None, vae_latent_dim = None, 
-				  dnn_hidden_dims = None, use_prev_input = False, 
-				  dnn_log_var_prior = 0.0, hidden_activation = 'relu', 
-				  output_activation = 'sigmoid'):
-
+					vae_hidden_dims = None, vae_latent_dim = None, 
+					dnn_hidden_dims = None, use_prev_input = False, 
+					dnn_log_var_prior = 0.0, hidden_activation = 'relu', 
+					output_activation = 'sigmoid',
+					dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
+					dnn_kl_weight = 1.0, optimizer = None, metrics = None):
+		
 		self.hidden_activation = hidden_activation
 		self.output_activation = output_activation
 		
@@ -324,8 +326,8 @@ class VAEPredictor(object):
 
 		self.model = Model(input_stack, out_stack)
 
-	def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
-				  dnn_kl_weight = 1.0, optimizer = None, metrics = None):
+		# def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
+		# 			  dnn_kl_weight = 1.0, optimizer = None, metrics = None):
 		
 		debug_message('INSIDE DENSE_MODEL COMPILE')
 

@@ -6,7 +6,7 @@ import numpy as np
 import os
 from time import time
 
-from GeneticAlgorithm import *
+from vaelstmpredictor.GeneticAlgorithm import *
 
 def train_generation(generation, clargs):
     for chrom in generation:
