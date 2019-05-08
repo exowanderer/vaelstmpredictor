@@ -13,6 +13,10 @@ from vaelstmpredictor.GeneticAlgorithm import *
 from time import time, sleep
 from vaelstmpredictor.utils.data_utils import MNISTData
 
+def debug_message(message): print('[DEBUG] {}'.format(message))
+def warning_message(message): print('[WARNING] {}'.format(message))
+def info_message(message): print('[INFO] {}'.format(message))
+
 def make_sql_output(clargs, chromosome):
 	output = {}
 	output['run_name'] = clargs.run_name
@@ -56,19 +60,46 @@ def make_sql_output(clargs, chromosome):
 
 def sftp_send(local_file, remote_file, hostname, port, key_filename, 
 				verbose = False):
+	
 	transport = Transport((clargs.hostname, clargs.port))
 	pk = ECDSAKey.from_private_key(open(key_filename))
 	transport.connect(username = 'acc', pkey=pk)
 
 	if chromosome.verbose: 
-		print('[INFO] SFTPing Model Weights from {} to {} on {}'.format(
-										local_wghts, remote_wghts, hostname))
-
+		info_message('SFTPing Model Weights from {} to {} on {}'.format(
+										local_file, remote_file, hostname))
+	
 	sftp = SFTPClient.from_transport(transport)
-	sftp.put(local_wghts, remote_wghts)
+	sftp.put(local_file, remote_file)
 
 	sftp.close()
 	transport.close()
+
+def ssh_command(command, clargs, print_output = False):
+
+	private_key = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
+	
+	ssh = SSHClient()
+	ssh.set_missing_host_key_policy(AutoAddPolicy())
+	ssh.connect(clargs.hostname, key_filename=private_key)
+	stdin, stdout, stderr = ssh.exec_command(command)
+	
+	if print_output:
+		try:
+			stdout.channel.recv_exit_status()
+			for line in stdout.readlines(): print(line)
+		except Exception as e:
+			print('error on stdout.readlines(): {}'.format(str(e)))
+
+		try:
+			stderr.channel.recv_exit_status()
+			for line in stderr.readlines(): print(line)
+		except Exception as e:
+			print('error on stderr.readlines(): {}'.format(str(e)))
+
+	ssh.close()
+	
+	return stdin, stdout, stderr
 
 def ssh_out_table_entry(clargs, chromosome):
 	table_dir = clargs.table_dir
@@ -77,44 +108,56 @@ def ssh_out_table_entry(clargs, chromosome):
 									clargs.run_name, 
 									clargs.time_stamp)
 
+	remote_table_name = table_name.replace('../','')
+
+	check_table_exists = 'ls {}'.format(remote_table_name)
+	stdin, stdout, stderr = ssh_command(check_table_exists, clargs)
+	
+	stdout.channel.recv_exit_status()
+	if(len(stdout.readlines()) == 0):
+		# Check if the file exists, with proper header
+		touch_command = 'touch {}'.format(remote_table_name)
+		
+		header = []
+		header.append('generationID'.format(clargs.generationID))
+		header.append('chromosomeID'.format(clargs.chromosomeID))
+		header.append('fitness'.format(chromosome.fitness))
+		header.extend(list(clargs.__dict__.keys()))
+		header = ','.join(header)
+
+		create_header = "echo {} >> {}".format(header, remote_table_name)
+
+		info_message('Creating {} with header {}'.format(
+									remote_table_name, create_header))
+
+		stdin, stdout, stderr = ssh_command(create_header, clargs)
+	elif verbose: 
+			print('[INFO] File {} exists on {}'.format(
+								remote_table_name, machine['host']))
+
 	entry = []
-	entry.append('generationID:{}'.format(clargs.generationID))
-	entry.append('chromosomeID:{}'.format(clargs.chromosomeID))
-	entry.append('fitness:{}'.format(chromosome.fitness))
+	entry.append('{}'.format(clargs.generationID))
+	entry.append('{}'.format(clargs.chromosomeID))
+	entry.append('{}'.format(chromosome.fitness))
+	
 	for key,val in clargs.__dict__.items():
 		if key not in ['generationID', 'chromosomeID']:
-			entry.append('{}:{}'.format(key,val))
+			entry.append('{}'.format(val))
 
 	entry = ','.join(entry)
 
-	private_key = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
-	command = 'echo "{}" >> vaelstmpredictor/{}'.format(entry, table_name)
+	command = ['echo "{}"'.format(entry)]
+	command.append('>> vaelstmpredictor/{}'.format(remote_table_name))
+	command = ' '.join(command)
 	
 	if chromosome.verbose:
 		print('\n\n')
-		print('[INFO] Remotely entry storing ON {}'.format(clargs.hostname))
+		info_message('Remotely entry storing ON {}'.format(clargs.hostname))
 		print('\n\n{}'.format(entry))
-		print('\n\nAT vaelstmpredictor/{} '.format(table_name))
+		print('\n\nAT vaelstmpredictor/{} '.format(remote_table_name))
 		print('\n\nWITH \n\n{}'.format(command))
-	
-	ssh = SSHClient()
-	ssh.set_missing_host_key_policy(AutoAddPolicy())
-	ssh.connect(clargs.hostname, key_filename=private_key)
-	stdin, stdout, stderr = ssh.exec_command(command)
 
-	try:
-		stdout.channel.recv_exit_status()
-		for line in stdout.readlines(): print(line)
-	except Exception as e:
-		print('error on stdout.readlines(): {}'.format(str(e)))
-
-	try:
-		stderr.channel.recv_exit_status()
-		for line in stderr.readlines(): print(line)
-	except Exception as e:
-		print('error on stderr.readlines(): {}'.format(str(e)))
-
-	ssh.close()
+	stdin, stdout, stderr = ssh_command(command, clargs, print_output = False)
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -158,8 +201,6 @@ if __name__ == '__main__':
 				help='basedir for storing the table of params and fitnesses.')
 	parser.add_argument('--train_file', type=str, default='MNIST',
 				help='file of training data (.pickle)')
-	# parser.add_argument('--verbose', action='store_true',
-	# 			help='print more [INFO] and [DEBUG] statements')
 	parser.add_argument('--time_stamp', type=int, default=0,
 				help='Keeps track of runs and re-runs')
 	parser.add_argument('--hostname', type=str, default='127.0.0.1',
@@ -238,11 +279,12 @@ if __name__ == '__main__':
 	
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
 
-	
 	local_wghts = chromosome.wghts_save_loc
-	remote_wghts = 'vaelstmpredictor/{}'.format(chromosome.wghts_save_loc)
-	sftp_send(local_file=local_wghts, 
-				remote_file=remote_wghts,
+	remote_wghts = 'vaelstmpredictor/{}'.format(local_wghts)
+	remote_wghts = remote_wghts.replace('../','')
+	
+	sftp_send(local_file = local_wghts, 
+				remote_file = remote_wghts,
 				hostname = clargs.hostname, 
 				port = clargs.port, 
 				key_filename = key_filename, 
@@ -258,7 +300,7 @@ if __name__ == '__main__':
 	
 	putURL = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/AddChrom'
 	
-	print('[INFO] Storing to SQL db at {}'.format(putURL))
+	info_message('Storing to SQL db at {}'.format(putURL))
 	
 	put_sql_dict = make_sql_output(clargs, chromosome)
 
@@ -272,21 +314,45 @@ if __name__ == '__main__':
 	joblib.dump(put_sql_dict, output_table_name)
 
 	local_output_table = output_table_name
-	remote_output_table = 'vaelstmpredictor/'.format(output_table_name)
-	
-	sftp_send(local_file=local_output_table, 
-				remote_file=remote_output_table,
+	remote_output_table = 'vaelstmpredictor/{}'.format(output_table_name)
+	remote_output_table = remote_output_table.replace('../','')
+
+	sftp_send(local_file = local_output_table, 
+				remote_file = remote_output_table,
 				hostname = clargs.hostname, 
 				port = clargs.port, 
 				key_filename = key_filename, 
 				verbose = clargs.verbose)
 	
-	# try:
+	# DEBUG: For some reason the RESTful API does not like these 3 pieces
+	remove_question_marks = True
+	if remove_question_marks:
+		del put_sql_dict['do_log']
+		del put_sql_dict['make_plots']
+		del put_sql_dict['verbose']
+	
 	req = requests.get(url = putURL, params = put_sql_dict)
 	
-	if req.json() == 1:
-		print('[INFO] Remote SQL Entry Added Successfully')
-	else:
-		print('[WARNING] !! The World Has Ended !!')
-	# except Exception as e:
-	# 	print('[WARNING] Remote SQL Entry Failed:\n{}'.format(str(e)))
+	try:
+		if req.json() == 1:
+			info_message('Remote SQL Entry Added Successfully')
+		else:
+			warning_message('!! The World Has Ended !!')
+	except json.decoder.JSONDecodeError as error: warning_message(error)
+
+'''
+problems: do_log, make_plots, verbose
+Works: https://laudeepgenerativegenetics.pythonanywhere.com/AddChrom?run_name=0&batch_size=0&cross_prob=0&do_ckpt=0&hostname=0&iterations=0&kl_anneal=0&log_dir=0&model_dir=0&mutate_prob=0&num_epochs=0&optimizer=0&patience=0&population_size=0&prediction_log_var_prior=0&predictor_type=0&table_dir=0&time_stamp=0&train_file=0&dnn_log_var_prior=0&dnn_kl_weight=0&dnn_weight=0&vae_kl_weight=0&vae_weight=0&w_kl_anneal=0&num_dnn_layers=0&num_vae_layers=0&size_dnn_hidden=0&size_vae_hidden=0&size_vae_latent=0&generationID=-1&chromosomeID=-1&fitness=-42
+'''
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		

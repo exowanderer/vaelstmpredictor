@@ -64,8 +64,24 @@ if __name__ == '__main__':
 				 help='Maximum number of VAE neurons per layer')
 	parser.add_argument('--max_dnn_latent', type=int, default=512, 
 				 help='Maximum number of DNN neurons per layer')
+	parser.add_argument('--max_vae_hidden', type=int, default=512, 
+				 help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--max_dnn_hidden', type=int, default=512, 
+				 help='Maximum number of VAE neurons per layer')
 	parser.add_argument('--max_dnn_hidden_layers', type=int, default=5,
 				 help='Maximum number of DNN hidden layers')
+	parser.add_argument('--min_vae_hidden_layers', type=int, default=1, 
+				 help='minimum number of VAE hidden layers')
+	parser.add_argument('--min_vae_latent', type=int, default=2, 
+				 help='minimum number of VAE neurons per layer')
+	parser.add_argument('--min_dnn_latent', type=int, default=2, 
+				 help='minimum number of DNN neurons per layer')
+	parser.add_argument('--min_vae_hidden', type=int, default=2, 
+				 help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--min_dnn_hidden', type=int, default=2, 
+				 help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--min_dnn_hidden_layers', type=int, default=1,
+				 help='minimum number of DNN hidden layers')	
 	parser.add_argument('--dnn_weight', type=float, default=1.0,
 				help='relative weight on prediction loss')
 	parser.add_argument('--vae_weight', type=float, default=30.53,
@@ -151,10 +167,18 @@ if __name__ == '__main__':
 
 	clargs.n_labels = len(np.unique(data_instance.train_labels))
 
-	generation = generate_random_chromosomes(population_size = population_size)
-											 # clargs = clargs, 
-											 # data_instance = data_instance, 
-											 # TrainFunction = train_generation
+	generation = generate_random_chromosomes(population_size = population_size,
+						min_vae_hidden_layers = clargs.min_vae_hidden_layers,
+						min_dnn_hidden_layers = clargs.min_dnn_hidden_layers,
+						max_vae_hidden_layers = clargs.max_vae_hidden_layers,
+						max_dnn_hidden_layers = clargs.max_dnn_hidden_layers,
+						min_vae_hidden = clargs.min_vae_hidden,
+						max_vae_hidden = clargs.max_vae_hidden,
+						min_dnn_hidden = clargs.min_dnn_hidden,
+						max_dnn_hidden = clargs.max_dnn_hidden,
+						min_vae_latent = clargs.min_vae_latent,
+						max_vae_latent = clargs.max_vae_latent,
+						verbose = clargs.verbose)
 
 	generationID = 0
 	generation = train_generation(generation, clargs)

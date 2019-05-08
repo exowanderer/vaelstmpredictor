@@ -111,8 +111,8 @@ def query_local_csv(clargs, chromosome):
 	return -1
 
 def generate_random_chromosomes(population_size,# clargs, data_instance, 
-						min_vae_hidden_layers = 1, min_dnn_hidden_layers = 1, 
-						max_vae_hidden_layers = 5, max_dnn_hidden_layers = 5, 
+						min_vae_hidden_layers = 1, max_vae_hidden_layers = 5, 
+						min_dnn_hidden_layers = 1, max_dnn_hidden_layers = 5, 
 						min_vae_hidden = 2, max_vae_hidden = 1024, 
 						min_dnn_hidden = 2, max_dnn_hidden = 1024, 
 						min_vae_latent = 2, max_vae_latent = 1024, 
@@ -141,7 +141,16 @@ def generate_random_chromosomes(population_size,# clargs, data_instance,
 
 	# generationID = 0
 	# generation_0 = []
-
+	debug_message({'min_vae_hidden_layers':min_vae_hidden_layers, 
+					'max_vae_hidden_layers':max_vae_hidden_layers, 
+					'min_dnn_hidden_layers':min_dnn_hidden_layers, 
+					'max_dnn_hidden_layers':max_dnn_hidden_layers,
+					'min_vae_latent':min_vae_latent, 
+					'max_vae_latent':max_vae_latent,
+					'min_vae_hidden':min_vae_hidden, 
+					'max_vae_hidden':max_vae_hidden,
+					'min_dnn_hidden':min_dnn_hidden, 
+					'max_dnn_hidden':max_dnn_hidden})
 	vae_nLayers_choices = range(min_vae_hidden_layers, max_vae_hidden_layers)
 	dnn_nLayers_choices = range(min_dnn_hidden_layers, max_dnn_hidden_layers)
 	vae_latent_choices = range(min_vae_latent, max_vae_latent)
@@ -334,9 +343,9 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 
 def upload_zip_file(zip_filename, machine, verbose = False):
 	if verbose: 
-			print('[INFO] File {} does not exists on {}'.format(
+		print('[INFO] File {} does not exists on {}'.format(
 									zip_filename, machine['host']))
-		
+	
 	#Upload Files to Machine
 	print("Uploading file to machine")
 	
