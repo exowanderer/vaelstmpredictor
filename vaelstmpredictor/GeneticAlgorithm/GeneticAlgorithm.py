@@ -10,6 +10,7 @@ import numpy as np
 import os
 import pandas as pd
 import requests
+import subprocess
 
 from contextlib import redirect_stdout
 from glob import glob
@@ -19,7 +20,7 @@ from numpy import array, arange, vstack, reshape, loadtxt, zeros, random
 
 import warnings
 with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
+	warnings.simplefilter("ignore")
 	from paramiko import SSHClient, SFTPClient, Transport
 	from paramiko import AutoAddPolicy, ECDSAKey
 	from paramiko.ssh_exception import NoValidConnectionsError
@@ -203,10 +204,21 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				# Wait for queue to have a value, 
 				#	which is the ID of the machine that is done.
 				machine = queue.get()
+				sp_stdout_ = subprocess.STDOUT
+				with open(os.devnull, 'wb') as devnull:
+					callnow = ("ping -c 1 " + machine['host']).split(' ')
+					while subprocess.check_call(callnow, stdout=devnull, 
+													stderr=sp_stdout_) != 0:
+						
+						print('Cannot reach host {}'.format(machine['host']))
 
-				while os.system("ping -c 1 " + machine['host']) != 0:
-					bad_machines.append(machine)
-					machine = queue.get()
+						bad_machines.append(machine)
+						assert(len(bad_machines) < queue.qsize()),\
+							'Queue is empty while `bad_machines` is full'
+
+						machine = queue.get()
+						
+						callnow = ("ping -c 1 " + machine['host']).split(' ')
 
 				print('{}'.format(machine['host']))
 
