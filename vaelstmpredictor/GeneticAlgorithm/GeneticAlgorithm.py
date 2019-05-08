@@ -17,6 +17,7 @@ from keras import backend as K
 from keras.utils import to_categorical
 from numpy import array, arange, vstack, reshape, loadtxt, zeros, random
 from paramiko import SSHClient, SFTPClient, Transport, AutoAddPolicy, ECDSAKey
+from paramiko.ssh_exception import NoValidConnectionsError
 from sklearn.externals import joblib
 from time import time
 from tqdm import tqdm
@@ -32,6 +33,7 @@ from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 from .Chromosome import Chromosome
 
 def debug_message(message): print('[DEBUG] {}'.format(message))
+def warning_message(message): print('[WARNING] {}'.format(message))
 def info_message(message): print('[INFO] {}'.format(message))
 
 def configure_multi_hidden_layers(num_hidden, input_size, 
@@ -110,47 +112,14 @@ def query_local_csv(clargs, chromosome):
 
 	return -1
 
-def generate_random_chromosomes(population_size,# clargs, data_instance, 
+def generate_random_chromosomes(population_size,
 						min_vae_hidden_layers = 1, max_vae_hidden_layers = 5, 
 						min_dnn_hidden_layers = 1, max_dnn_hidden_layers = 5, 
 						min_vae_hidden = 2, max_vae_hidden = 1024, 
 						min_dnn_hidden = 2, max_dnn_hidden = 1024, 
 						min_vae_latent = 2, max_vae_latent = 1024, 
-						# vae_weight = 1.0, vae_kl_weight = 1.0, 
-						# dnn_weight = 1.0, dnn_kl_weight = 1.0, 
-						# input_size = None, TrainFunction = None,
 						verbose=False):
-	# start_small = False, init_large = False, # In kwargs
-	# start_small = start_small or clargs.start_small 
-	# init_large = init_large or clargs.init_large
-	# max_vae_hidden_layers = max_vae_hidden_layers \
-	#							 or clargs.max_vae_hidden_layers 
-	# max_dnn_hidden_layers = max_dnn_hidden_layers \
-	#							 or clargs.max_dnn_hidden_layers 
-	# min_vae_hidden = min_vae_hidden or clargs.min_vae_hidden 
-	# min_vae_latent = min_vae_latent or clargs.min_vae_latent 
-	# min_dnn_hidden = min_dnn_hidden or clargs.min_dnn_hidden 
-	# max_vae_hidden = max_vae_hidden or clargs.max_vae_hidden 
-	# max_vae_latent = max_vae_latent or clargs.max_vae_latent 
-	# max_dnn_hidden = max_dnn_hidden or clargs.max_dnn_hidden 
-	# vae_kl_weight = vae_kl_weight or clargs.vae_kl_weight 
-	# input_size  = input_size or clargs.original_dim 
-	# dnn_weight = dnn_weight or clargs.dnn_weight 
-	# dnn_kl_weight = dnn_kl_weight or clargs.dnn_kl_weight 
-	# verbose = verbose or clargs.verbose
-
-	# generationID = 0
-	# generation_0 = []
-	debug_message({'min_vae_hidden_layers':min_vae_hidden_layers, 
-					'max_vae_hidden_layers':max_vae_hidden_layers, 
-					'min_dnn_hidden_layers':min_dnn_hidden_layers, 
-					'max_dnn_hidden_layers':max_dnn_hidden_layers,
-					'min_vae_latent':min_vae_latent, 
-					'max_vae_latent':max_vae_latent,
-					'min_vae_hidden':min_vae_hidden, 
-					'max_vae_hidden':max_vae_hidden,
-					'min_dnn_hidden':min_dnn_hidden, 
-					'max_dnn_hidden':max_dnn_hidden})
+	
 	vae_nLayers_choices = range(min_vae_hidden_layers, max_vae_hidden_layers)
 	dnn_nLayers_choices = range(min_dnn_hidden_layers, max_dnn_hidden_layers)
 	vae_latent_choices = range(min_vae_latent, max_vae_latent)
@@ -174,14 +143,6 @@ def generate_random_chromosomes(population_size,# clargs, data_instance,
 	generation['fitness'] = np.zeros(population_size, dtype = int) - 1
 
 	return generation
-	# if(TrainFunction is None):
-
-	#	 for chromosome in generation_0:
-	#		 chromosome.train()
-	# else:
-	#	 TrainFunction(generation_0, clargs)
-		
-	# return generation_0
 
 def train_generation(generation, clargs, private_key='id_ecdsa'):
 	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
@@ -213,13 +174,15 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				]
 	
 	queue = mp.Queue()
-	
+	bad_machines = []
+
 	#Create Processes
 	for machine in machines: queue.put(machine)
 	
-	alldone = False
-	while not alldone:
-		alldone = True
+	while True:
+		# Run until entire Generation is listed as isTrained == True
+		if all(generation.isTrained.values): break
+
 		for k, chromosome in generation.iterrows():
 			if not chromosome.isTrained:
 				print("\n\nCreating Process for Chromosome "\
@@ -232,13 +195,23 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				# Wait for queue to have a value, 
 				#	which is the ID of the machine that is done.
 				machine = queue.get()
+
+				while os.system("ping -c 1 " + machine['host']) != 0:
+					bad_machines.append(machine)
+					machine = queue.get()
+
 				print('{}'.format(machine['host']))
+
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
 				
 				chromosome.isTrained = 1
 				generation.iloc[chromosome.chromosomeID] = chromosome
+
+				for bad_machine in bad_machines:
+					# This lets us check if it is "good" again
+					queue.put(bad_machine)
 
 	for k, chromosome in generation.iterrows():
 		assert(chromosome.isTrained), 'while loop should not have closed!'
@@ -304,16 +277,19 @@ def generate_ssh_command(clargs, chromosome):
 	return " ".join(command)
 
 def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
-				gituser = 'exowanderer', 
-				branchname = 'MultiComputerGeneticAlgorithm',
+				gituser = 'exowanderer', branchname = 'conv1d_model',
 				port = 22, verbose = True, private_key='id_ecdsa'):
 	
 	key_filename = environ['HOME'] + '/.ssh/{}'.format(private_key)
+	try:
+		ssh = SSHClient()
+		ssh.set_missing_host_key_policy(AutoAddPolicy())
+		ssh.connect(hostname, key_filename = key_filename)
+	except NoValidConnectionsError as error:
+		warning_message(error)
+		ssh.close()
+		return
 	
-	ssh = SSHClient()
-	ssh.set_missing_host_key_policy(AutoAddPolicy())
-	ssh.connect(hostname, key_filename = key_filename)
-
 	command = []
 	command.append('git clone https://github.com/{}/{}'.format(gituser,gitdir))
 	command.append('cd {}'.format(gitdir))
@@ -322,35 +298,32 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 	command.append('git pull')
 	command = '; '.join(command)
 
-	print('[INFO] Executing {} on {}'.format(command, hostname))
-
-	stdin, stdout, stderr = ssh.exec_command(command)
-	
+	info_message('Executing {} on {}'.format(command, hostname))
 	try:
-		stdout.channel.recv_exit_status()
-		for line in stdout.readlines(): print(line)
-	except Exception as e:
-		print('error on stdout.readlines(): {}'.format(str(e)))
+		stdin, stdout, stderr = ssh.exec_command(command)
+	except NoValidConnectionsError as error:
+		warning_message(error)
+		ssh.close()
+		return
 
-	try:
-		stderr.channel.recv_exit_status()
-		for line in stderr.readlines(): print(line)
-	except Exception as e:
-		print('error on stderr.readlines(): {}'.format(str(e)))
+	# info_message('Printing `stdout`')
+	# print_ssh_output(stdout)
+	# info_message('Printing `stderr`')
+	# print_ssh_output(stderr)
 	
-	print("Command Executed Successfully")
 	ssh.close()
+	info_message('SSH Closed')
+	print("Command Executed Successfully")
 
 def upload_zip_file(zip_filename, machine, verbose = False):
-	if verbose: 
-		print('[INFO] File {} does not exists on {}'.format(
+	if verbose: info_message('File {} does not exists on {}'.format(
 									zip_filename, machine['host']))
 	
 	#Upload Files to Machine
-	print("Uploading file to machine")
+	info_message('Uploading file to machine')
 	
 	if verbose: 
-		print('[INFO] Transfering {} to {}'.format(
+		info_message('Transfering {} to {}'.format(
 							zip_filename, machine['host']))
 
 	transport = Transport((machine["host"], port))
@@ -378,6 +351,17 @@ def upload_zip_file(zip_filename, machine, verbose = False):
 	transport.close()
 	print("File uploaded")
 
+# def print_ssh_output(ssh_output):
+# 	debug_message(ssh_output)
+# 	# try:
+# 	debug_message('** 1 print_ssh_output(ssh_output) **')
+# 	ssh_output.channel.recv_exit_status()
+# 	debug_message('** 2 print_ssh_output(ssh_output) **')
+# 	for line in ssh_output.readlines(): print(line)
+# 	debug_message('** 3 print_ssh_output(ssh_output) **')
+# 	# except Exception as error:
+# 	# 	print('Error on ssh_output.readlines(): {}'.format(error))
+
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
 					git_dir = 'vaelstmpredictor',
@@ -386,24 +370,28 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	if not os.path.exists(logdir): os.mkdir(logdir)
 
 	if verbose: 
-		print('[INFO] Checking if file {} exists on {}'.format(
+		info_message('Checking if file {} exists on {}'.format(
 										git_dir, machine['host']))
 	
 	# chromosomeID = chromosome.chromosomeID
 	# sys.stdout = open('{}/output{}.txt'.format(logdir, chromosomeID),'w')
 	# sys.stderr = open('{}/error{}.txt'.format(logdir, chromosomeID), 'w')
 	
-	ssh = SSHClient()
-	ssh.set_missing_host_key_policy(AutoAddPolicy())
-	ssh.connect(machine["host"], key_filename=machine['key_filename'])
+	try:
+		ssh = SSHClient()
+		ssh.set_missing_host_key_policy(AutoAddPolicy())
+		ssh.connect(machine["host"], key_filename=machine['key_filename'])
+	except NoValidConnectionsError as error:
+		warning_message(error)
+		ssh.close()
+		return
 
 	stdin, stdout, stderr = ssh.exec_command('ls | grep {}'.format(git_dir))
 	
 	if(len(stdout.readlines()) == 0):
 		git_clone()
 	elif verbose: 
-			print('[INFO] File {} exists on {}'.format(
-								git_dir, machine['host']))
+		info_message('File {} exists on {}'.format(git_dir, machine['host']))
 
 	command = generate_ssh_command(clargs, chromosome)
 	
@@ -411,25 +399,22 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
 	
-	try:
-		stdout.channel.recv_exit_status()
-		for line in stdout.readlines(): print(line)
-	except Exception as e:
-		print('error on stdout.readlines(): {}'.format(str(e)))
-
-	try:
-		stderr.channel.recv_exit_status()
-		for line in stderr.readlines(): print(line)
-	except Exception as e:
-		print('error on stderr.readlines(): {}'.format(str(e)))
-	
+	# info_message('Printing `stdout`')
+	# print_ssh_output(stdout)
+	# info_message('Printing `stderr`')
+	# print_ssh_output(stderr)
+	debug_message('Queue Size:{} on {}'.format(queue.qsize(), machine['host']))
 	queue.put(machine)
 
-	table_dir = clargs.table_dir
-	table_name = '{}/{}_fitness_table_{}.csv'
-	table_name = table_name.format(clargs.table_dir, 
-									clargs.run_name, 
-									clargs.time_stamp)
+	ssh.close()
+	
+	info_message('SSH Closed')
+
+	# table_dir = clargs.table_dir
+	# table_name = '{}/{}_fitness_table_{}.csv'
+	# table_name = table_name.format(clargs.table_dir, 
+	# 								clargs.run_name, 
+	# 								clargs.time_stamp)
 	"""
 	if os.path.exists(table_name):
 		with open(table_name, 'r') as f_in:
@@ -444,9 +429,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 
 	chromosome.isTrained = True
 	"""
-	ssh.close()
-	
-	print("Command Executed Successfully")
+	info_message("Command Executed Successfully")
 
 def select_parents(generation):
 	total_fitness = sum(chrom.fitness for k, chrom in generation.iterrows())
@@ -504,7 +487,7 @@ def reconfigure_vae_params(params, static_params_):
 
 def cross_over(parent1, parent2, prob, param_choices, verbose=False):
 	if verbose: 
-		print('[INFO] Crossing over with probability: {}'.format(prob))
+		info_message('Crossing over with probability: {}'.format(prob))
 
 	if random.random() >= prob:
 		crossover_happened = True
@@ -586,7 +569,7 @@ def mutate(child, prob, param_choices, forced_evolve = False,
 
 def save_generation_to_tree(generation, verbose = False):
 	generation_dict = {}
-	if verbose: print('[INFO] Current Generation: ' )
+	if verbose: info_message('Current Generation: ' )
 
 	for ID, member in generation.iterrow():
 		if ID not in generation_dict.keys(): generation_dict[ID] = {}
