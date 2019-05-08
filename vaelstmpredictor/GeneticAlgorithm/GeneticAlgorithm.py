@@ -24,6 +24,8 @@ with warnings.catch_warnings():
 	from paramiko import AutoAddPolicy, ECDSAKey
 	from paramiko.ssh_exception import NoValidConnectionsError
 
+warnings.filterwarnings(action='ignore',module='.*paramiko.*')
+
 from sklearn.externals import joblib
 from time import time
 from tqdm import tqdm

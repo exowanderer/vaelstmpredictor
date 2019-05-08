@@ -1,5 +1,13 @@
 from functools import partial
-from paramiko import SSHClient, AutoAddPolicy
+
+import warnings
+
+with warnings.catch_warnings():
+	warnings.simplefilter('ignore')
+	from paramiko import SSHClient, AutoAddPolicy
+
+warnings.filterwarnings(action='ignore',module='.*paramiko.*')
+
 from multiprocessing import Queue, Process
 from os import environ
 
