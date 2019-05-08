@@ -33,7 +33,7 @@ def update_one_git(hostname, username = "acc", basedir = 'vaelstmpredictor/',
 	ssh = SSHClient()
 	ssh.set_missing_host_key_policy(AutoAddPolicy())
 	ssh.connect(hostname, key_filename = key_filename)
-
+	
 	command = []
 	command.append('cd {}'.format(basedir))
 	command.append('git branch')
