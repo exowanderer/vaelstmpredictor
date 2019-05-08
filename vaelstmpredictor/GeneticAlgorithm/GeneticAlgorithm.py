@@ -16,8 +16,14 @@ from glob import glob
 from keras import backend as K
 from keras.utils import to_categorical
 from numpy import array, arange, vstack, reshape, loadtxt, zeros, random
-from paramiko import SSHClient, SFTPClient, Transport, AutoAddPolicy, ECDSAKey
-from paramiko.ssh_exception import NoValidConnectionsError
+
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+	from paramiko import SSHClient, SFTPClient, Transport
+	from paramiko import AutoAddPolicy, ECDSAKey
+	from paramiko.ssh_exception import NoValidConnectionsError
+
 from sklearn.externals import joblib
 from time import time
 from tqdm import tqdm
