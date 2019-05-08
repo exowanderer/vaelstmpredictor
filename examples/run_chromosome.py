@@ -170,15 +170,15 @@ if __name__ == '__main__':
 				help='Chromosome Generation ID')
 	parser.add_argument('--chromosomeID', type=int, default=-1,
 				help='Chromosome Chromosome ID')
-	parser.add_argument('--num_vae_layers', type=int, default=0,
+	parser.add_argument('--num_vae_layers', type=int, default=1,
 				help='Depth of the VAE')
-	parser.add_argument('--num_dnn_layers', type=int, default=0,
+	parser.add_argument('--num_dnn_layers', type=int, default=1,
 				help='Depth of the DNN')
-	parser.add_argument('--size_vae_latent', type=int, default=0,
+	parser.add_argument('--size_vae_latent', type=int, default=16,
 				help='Size of the VAE Latent Layer')
-	parser.add_argument('--size_vae_hidden', type=int, default=0,
+	parser.add_argument('--size_vae_hidden', type=int, default=16,
 				help='Size of the VAE Hidden Layer')
-	parser.add_argument('--size_dnn_hidden', type=int, default=0,
+	parser.add_argument('--size_dnn_hidden', type=int, default=16,
 				help='Size of the DNN Hidden Layer')
 
 	clargs = parser.parse_args()
