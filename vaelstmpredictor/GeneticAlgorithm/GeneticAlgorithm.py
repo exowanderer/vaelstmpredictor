@@ -68,36 +68,33 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 
 	return hidden_dims
 
-def query_sql_database(clargs, chromosome):
-	getFitness = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/GetFitness'
+def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
+	getFitness = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
+	getFitness = getFitness + 'GetFitness'
 
-	table_dir = clargs.table_dir
-	table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
-	table_name = table_name.format(clargs.table_dir, 
-						clargs.run_name, chromosome.generationID, 
-						chromosome.chromosomeID, clargs.time_stamp)
+	if clargs is not None:
+		table_dir = clargs.table_dir
+		table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
+		table_name = table_name.format(clargs.table_dir, 
+							clargs.run_name, chromosome.generationID, 
+							chromosome.chromosomeID, clargs.time_stamp)
 
-	json_ID = {'generationID':int(chromosome.generationID),
-			   'chromosomeID':int(chromosome.chromosomeID)}
+	json_ID = {'generationID':generationID, 'chromosomeID':chromosomeID}
 	
 	sql_json = requests.get(getFitness, params=json_ID).json()
 	
 	if not isinstance(sql_json, dict):
-		print('SQL Request Failed: sql_json = {} with {}'.format(
-												sql_json, json_ID))
+		if verbose: 
+			print('SQL Request Failed: sql_json = {} with {}'.format(sql_json, 
+																	json_ID))
 		return -1
 
-	with open(table_name, 'a') as f_out:
-		json.dump(sql_json, f_out)
+	# Only triggered if `sql_json` is a `dict`
+	if clargs is not None:
+		with open(table_name, 'a') as f_out: 
+			json.dump(sql_json, f_out)
 	
-	return sql_json['fitness']
-	# 	chromosome.fitness = sql_json['fitness']
-	# else:
-	# 	print('SQL Request Failed: sql_json = {} with {}'.format(
-	# 											sql_json, json_ID))
-	# 	chromosome.fitness = sql_json or 0
-	# 
-	# return chromosome.fitness
+	return sql_json
 
 def query_local_csv(clargs, chromosome):
 	
@@ -125,7 +122,7 @@ def create_blank_dataframe(generationID, population_size):
 	generation = pd.DataFrame()
 	generation['generationID'] = np.ones(population_size, dtype = int)
 	generation['chromosomeID'] = np.arange(population_size, dtype = int)
-	generation['isTrained'] = np.zeros(population_size, dtype = bool)
+	generation['isTrained'] = np.zeros(population_size, dtype = int)
 	generation['num_vae_layers'] = np.zeros(population_size, dtype = int)
 	generation['num_dnn_layers'] = np.zeros(population_size, dtype = int)
 	generation['size_vae_latent'] = np.zeros(population_size, dtype = int)
@@ -136,7 +133,7 @@ def create_blank_dataframe(generationID, population_size):
 	generation['generationID'] = generation['generationID'] * generationID
 	generation['generationID'] = np.int64(generation['generationID'])
 	
-	dtypes = ['int64', 'int64', 'bool', 'int64', 'int64', 
+	dtypes = ['int64', 'int64', 'int64', 'int64', 'int64', 
 			  'int64', 'int64', 'int64', 'float64']
 	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
 	generation = generation.astype(dtypes)
@@ -160,7 +157,7 @@ def generate_random_chromosomes(population_size,
 	generation = pd.DataFrame()
 	generation['generationID'] = np.zeros(population_size, dtype = int)
 	generation['chromosomeID'] = np.arange(population_size, dtype = int)
-	generation['isTrained'] = np.zeros(population_size, dtype = bool)
+	generation['isTrained'] = np.zeros(population_size, dtype = int)
 	generation['num_vae_layers'] = np.random.choice(vae_nLayers_choices,
 														size = population_size)
 	generation['num_dnn_layers'] = np.random.choice(dnn_nLayers_choices,
@@ -173,7 +170,7 @@ def generate_random_chromosomes(population_size,
 														size = population_size)
 	generation['fitness'] = np.zeros(population_size, dtype = int) - 1
 
-	dtypes = ['int64', 'int64', 'bool', 'int64', 'int64', 
+	dtypes = ['int64', 'int64', 'int64', 'int64', 'int64', 
 			  'int64', 'int64', 'int64', 'float64']
 	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
 	generation = generation.astype(dtypes)
@@ -193,8 +190,8 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 					# "key_filename": key_filename},
 				{"host": "172.16.50.177", "username": "acc", 
 					"key_filename": key_filename},
-				{"host": "172.16.50.163", "username": "acc", 
-					"key_filename": key_filename},
+				# {"host": "172.16.50.163", "username": "acc", 
+				# 	"key_filename": key_filename},
 				# {"host": "172.16.50.182", "username": "acc", 
 				# 	"key_filename": key_filename},# not operation today
 				{"host": "172.16.50.218", "username": "acc", 
@@ -209,7 +206,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 					"key_filename": key_filename}
 				]
 	
-	dtypes = ['int64', 'int64', 'bool', 'int64', 'int64', 
+	dtypes = ['int64', 'int64', 'int64', 'int64', 'int64', 
 			  'int64', 'int64', 'int64', 'float64']
 	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
 	generation = generation.astype(dtypes)
@@ -222,10 +219,10 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 	
 	while True:
 		# Run until entire Generation is listed as isTrained == True
-		if all(generation.isTrained.values): break
+		if all(generation.isTrained.values == 2): break
 
 		for k, chromosome in generation.iterrows():
-			if not chromosome.isTrained:
+			if chromosome.isTrained == 0:
 				print("\n\nCreating Process for Chromosome "\
 						"{} on GenerationID {}".format(chromosome.chromosomeID,
 							chromosome.generationID), end=" on machine ")
@@ -267,8 +264,19 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
-				chromosome.isTrained = 1
 
+				chromosome.isTrained = 1
+			
+			sql_json = query_sql_database(chromosome.generationID, 
+										  chromosome.chromosomeID, 
+										  verbose = False)
+
+			if sql_json is not -1:
+				assert(sql_json['fitness'] > 0), \
+					"[ERROR] If ID exists in SQL, why is fitness == -1?"
+
+				chromosome.isTrained = 2
+				for key, val in sql_json.keys(): chromosome[key] = val
 				generation.iloc[chromosome.chromosomeID] = chromosome
 
 				for bad_machine in bad_machines:

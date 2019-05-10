@@ -201,7 +201,6 @@ if __name__ == '__main__':
 	# while gen_num < num_generations:
 	for _ in range(num_generations-1):
 		start_while = time()
-
 		# Create new generation
 		generationID += 1
 		
