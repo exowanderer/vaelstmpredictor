@@ -182,7 +182,7 @@ def generate_random_chromosomes(population_size,
 
 	return generation
 
-def get_machine(queue):
+def get_machine(queue, bad_machines):
 	machine = queue.get()
 	sp_stdout_ = subprocess.STDOUT
 	with open(os.devnull, 'wb') as devnull:
@@ -220,8 +220,8 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 	
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	
-	machines = [{"host": "192.168.0.1", "username": "not_it", 
-				  "key_filename": key_filename},
+	machines = [# {"host": "192.168.0.1", "username": "not_it", 
+				#   "key_filename": key_filename},
 				{"host": "172.16.50.181", "username": "acc", 
 					"key_filename": key_filename},
 				# {"host": "172.16.50.176", "username": "acc", 
@@ -269,13 +269,13 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				# Wait for queue to have a value, 
 				#	which is the ID of the machine that is done.
 				
-				machine = get_machine(queue)
+				machine = get_machine(queue, bad_machines)
 				print('{}'.format(machine['host']))
 
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
-				generation.set_value(chromosome.Index, 'isTrained', 1)
+				generation.at[chromosome.Index, 'isTrained'] = 1
 
 			if chromosome.isTrained != 2:
 				sql_json = query_sql_database(chromosome.generationID, 
@@ -286,10 +286,11 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 					assert(sql_json['fitness'] > 0), \
 						"[ERROR] If ID exists in SQL, why is fitness == -1?"
 
-					generation.set_value(chromosome.Index, 'isTrained', 2)
+					generation.at[chromosome.Index, 'isTrained'] = 2
+					generation.at[chromosome.Index, 'isTrained'] = 2
 					
 					for key, val in sql_json.keys(): 
-						generation.set_value(chromosome.Index, key, val)
+						generation.at[chromosome.Index, key] = val
 
 					# generation.iloc[chromosome.chromosomeID] = chromosome
 
@@ -321,7 +322,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 			print('\n\n')
 
 			for col in generation.columns:
-				generation.set_value(chromosomeID, col, chromosome[colname])
+				generation.at[chromosomeID, col] = chromosome[colname]
 	
 	# After all is done: return what you received
 	return generation
