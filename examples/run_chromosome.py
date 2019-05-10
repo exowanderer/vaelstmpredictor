@@ -13,6 +13,15 @@ from vaelstmpredictor.GeneticAlgorithm import *
 from time import time, sleep
 from vaelstmpredictor.utils.data_utils import MNISTData
 
+import warnings
+with warnings.catch_warnings():
+	warnings.simplefilter("ignore")
+	from paramiko import SSHClient, SFTPClient, Transport
+	from paramiko import AutoAddPolicy, ECDSAKey
+	from paramiko.ssh_exception import NoValidConnectionsError
+
+warnings.filterwarnings(action='ignore',module='.*paramiko.*')
+
 def debug_message(message): print('[DEBUG] {}'.format(message))
 def warning_message(message): print('[WARNING] {}'.format(message))
 def info_message(message): print('[INFO] {}'.format(message))

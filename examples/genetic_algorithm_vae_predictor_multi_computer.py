@@ -28,7 +28,9 @@ from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 from vaelstmpredictor.GeneticAlgorithm import *
 
 def debug_message(message): print('[DEBUG] {}'.format(message))
-def info_message(message): print('[INFO] {}'.format(message))
+def info_message(message): 
+	# print('[INFO] {}'.format(message))
+	pass
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -111,21 +113,21 @@ if __name__ == '__main__':
 				help='make plots of growth in the best_loss over generations')
 	parser.add_argument('--port', type=int, default=22,
 				help='IP port over which to ssh')
-
+	debug_message(1)
 	clargs = parser.parse_args()
-
+	debug_message(2)
 	for key,val in clargs.__dict__.items(): 
 		if 'dir' in key: 
 			if not os.path.exists(val): 
 				os.mkdir(val)
-
+	debug_message(3)
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
 	hostname = s.getsockname()[0]
 	s.close()
-
+	debug_message(4)
 	clargs.hostname = hostname
-
+	debug_message(5)
 	run_name = clargs.run_name
 	num_epochs = clargs.num_epochs
 	cross_prob = clargs.cross_prob
@@ -134,23 +136,23 @@ if __name__ == '__main__':
 	num_generations = clargs.num_generations
 	verbose = clargs.verbose
 	make_plots = clargs.make_plots
-
+	debug_message(6)
 	clargs.data_type = 'MNIST'
 	data_instance = MNISTData(batch_size = clargs.batch_size)
-
+	debug_message(7)
 	n_train, n_features = data_instance.data_train.shape
 	n_test, n_features = data_instance.data_valid.shape
-
+	debug_message(8)
 	clargs.original_dim = n_features
-
+	debug_message(9)
 	clargs.time_stamp = int(time())
 	clargs.run_name = '{}_{}_{}'.format(clargs.run_name, 
 								clargs.data_type, clargs.time_stamp)
-
+	debug_message(10)
 	if verbose: print('\n\n[INFO] Run Base Name: {}\n'.format(clargs.run_name))
-
+	debug_message(11)
 	clargs.n_labels = len(np.unique(data_instance.train_labels))
-
+	debug_message(12)
 	generation = generate_random_chromosomes(population_size = population_size,
 						min_vae_hidden_layers = clargs.min_vae_hidden_layers,
 						min_dnn_hidden_layers = clargs.min_dnn_hidden_layers,
@@ -163,89 +165,89 @@ if __name__ == '__main__':
 						min_vae_latent = clargs.min_vae_latent,
 						max_vae_latent = clargs.max_vae_latent,
 						verbose = clargs.verbose)
-
+	debug_message(13)
 	# generation = convert_dtypes(generation)
-
+	debug_message(14)
 	generationID = 0
 	generation = train_generation(generation, clargs)
-
+	debug_message(15)
 	# generation = convert_dtypes(generation)
-
+	debug_message(16)
 	best_fitness = []
 	fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
-
+	debug_message(17)
 	new_best_fitness = max(fitnesses)
-	
+	debug_message(18)
 	if clargs.verbose:
 		info_message('For Generation: {}, the best fitness was {}'.format(
 				generationID, new_best_fitness))
-
+	debug_message(19)
 	best_fitness.append(new_best_fitness)
-
+	debug_message(20)
 	if make_plots:
 		fig = plt.gcf()
 		fig.show()
-
+	debug_message(21)
 	param_choices = {'num_vae_layers': (1,1), 
 					 'num_dnn_layers': (1,1), 
 					 'size_vae_latent': (10,1), 
 					 'size_vae_hidden': (50,1), 
 					 'size_dnn_hidden': (50,1)}
-
+	debug_message(22)
 	start = time()
 	# while gen_num < num_generations:
-	for _ in range(num_generations-1):
+	for generationID in range(1,num_generations):
 		start_while = time()
 		# Create new generation
-		generationID += 1
-		
+		debug_message(generationID,23)
 		new_generation = create_blank_dataframe(generationID, population_size)
 		# new_generation = convert_dtypes(new_generation)
-
+		debug_message(generationID,24)
 		for chromosomeID in tqdm(range(population_size)):
 			parent1, parent2 = select_parents(generation)
-			
+			debug_message(generationID,chromosomeID,25)
 			child, crossover_happened = cross_over(parent1, parent2, 
 											cross_prob, param_choices.keys(), 
 											verbose=verbose)
-
+			debug_message(generationID,chromosomeID,26)
 			child.generationID = int(generationID)
 			child.chromosomeID = int(chromosomeID)
 			child.fitness = -1.0
-			
+			debug_message(generationID,chromosomeID,27)
 			child, mutation_happened = mutate(child, mutate_prob, 
 											param_choices, verbose=verbose)
-			
+			debug_message(generationID,chromosomeID,28)
 			new_generation.set_value(child.Index, 'isTrained', 2)
 			child.isTrained = mutation_happened*crossover_happened
-			
+			debug_message(generationID,chromosomeID,29)
 			info_message('Adding Chromosome:\n{}'.format(child))
 			new_generation.iloc[chromosomeID] = child
-
+		debug_message(generationID,28)
 		# Re-sort by chromosomeID
 		new_generation = new_generation.sort_values('chromosomeID')
 		new_generation.index = np.arange(population_size)
-
+		debug_message(generationID,29)
 		assert((new_generation['generationID'].values == generationID)).all(),\
 			"The GenerationID did not update: should be {}; but is {}".format(
 				generationID, generation['generationID'].values)
-
+		debug_message(generationID,30)
 		generation = train_generation(new_generation, clargs)
-		
-		print('Time for Generation{}: {} minutes'.format(generationID, 
+		debug_message(generationID,31)
+		info_message('Time for Generation{}: {} minutes'.format(generationID, 
 											(time() - start_while)//60))
-
+		debug_message(generationID,32)
 		fitnesses = [chrom.fitness for _, chrom in generation.iterrows()]
-
+		debug_message(generationID,33)
 		new_best_fitness = max(fitnesses)
-
+		debug_message(generationID,34)
 		if clargs.verbose:
 			info_message('For Generation: {}, the best fitness was {}'.format(
 					generationID, new_best_fitness))
-
+		debug_message(generationID,35)
 		best_fitness.append(new_best_fitness)
-		
+		debug_message(generationID,36)
 		if make_plots:
 			plt.plot(best_fitness, color="c")
 			plt.xlim([0, num_generations])
 			fig.canvas.draw()
+		debug_message(generationID,37)

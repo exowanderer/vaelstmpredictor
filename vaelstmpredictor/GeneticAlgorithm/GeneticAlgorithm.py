@@ -76,8 +76,8 @@ def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
 		table_dir = clargs.table_dir
 		table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
 		table_name = table_name.format(clargs.table_dir, 
-							clargs.run_name, chromosome.generationID, 
-							chromosome.chromosomeID, clargs.time_stamp)
+						clargs.run_name, generationID, 
+						chromosomeID, clargs.time_stamp)
 
 	json_ID = {'generationID':generationID, 'chromosomeID':chromosomeID}
 	
@@ -230,8 +230,8 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 					"key_filename": key_filename},
 				# {"host": "172.16.50.163", "username": "acc", 
 				# 	"key_filename": key_filename},
-				# {"host": "172.16.50.182", "username": "acc", 
-				# 	"key_filename": key_filename},# not operation today
+				{"host": "172.16.50.182", "username": "acc", 
+					"key_filename": key_filename},# not operation today
 				{"host": "172.16.50.218", "username": "acc", 
 					"key_filename": key_filename},
 				{"host": "172.16.50.159", "username": "acc", 
@@ -289,7 +289,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 					generation.at[chromosome.Index, 'isTrained'] = 2
 					generation.at[chromosome.Index, 'isTrained'] = 2
 					
-					for key, val in sql_json.keys(): 
+					for key, val in sql_json.items(): 
 						generation.at[chromosome.Index, key] = val
 
 					# generation.iloc[chromosome.chromosomeID] = chromosome
@@ -303,7 +303,8 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 		chromosomeID = chromosome.chromosomeID
 		generationID = chromosome.generationID
 
-		sql_json = query_sql_database(clargs)
+		sql_json = query_sql_database(generationID, chromosomeID, 
+										clargs=clargs, verbose=True)
 		
 		if sql_json['fitness'] is -1:
 			sql_json = query_local_csv(generationID, chromosomeID, 
@@ -311,8 +312,8 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 		
 		if chromosome.fitness != -1:
 			print('\n\n[INFO]')
-			print('GenerationID:{}'.format(chromosome.generationID))
-			print('ChromosomeID:{}'.format(chromosome.chromosomeID))
+			print('GenerationID:{}'.format(generationID))
+			print('ChromosomeID:{}'.format(chromosomeID))
 			print('Fitness:{}'.format(chromosome.fitness))
 			print('Num VAE Layers:{}'.format(chromosome.num_vae_layers))
 			print('Num DNN Layers:{}'.format(chromosome.num_dnn_layers))
@@ -321,8 +322,11 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 			print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
 			print('\n\n')
 
-			for col in generation.columns:
-				generation.at[chromosomeID, col] = chromosome[colname]
+			for colname in generation.columns:
+				debug_message('train_generation+generation.iat[{}, {}]:{}'.format(
+								chromosomeID, colname, 
+								generation.iat[chromosomeID, colname]))
+				generation.iat[chromosomeID, colname] = chromosome[colname]
 	
 	# After all is done: return what you received
 	return generation
@@ -443,27 +447,29 @@ def upload_zip_file(zip_filename, machine, verbose = False):
 	transport.close()
 	print("File uploaded")
 
-'''
+
 def print_ssh_output(ssh_output):
 	
 	# try:
-	
 	ssh_output.channel.recv_exit_status()
 	
 	for line in ssh_output.readlines(): print(line)
 	
 	# except Exception as error:
 	# 	print('Error on ssh_output.readlines(): {}'.format(error))
-'''
 
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
 					git_dir = 'vaelstmpredictor',
 					verbose = True):
-
+	
+	debug_message('train_chromosome'.upper())
+	debug_message('Starting train_chromosome')
 	if not os.path.exists(logdir): os.mkdir(logdir)
+	debug_message('Created logdir in :{}'.format(logdir))
 
-	if verbose: info_message('Checking if file {} exists on {}'.format(
+	if verbose: 
+		info_message('Checking if file {} exists on {}'.format(
 										git_dir, machine['host']))
 	
 	# chromosomeID = chromosome.chromosomeID
@@ -478,6 +484,8 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		warning_message(error)
 		ssh.close()
 		return
+	
+	debug_message('connected to ssh')
 
 	stdin, stdout, stderr = ssh.exec_command('ls | grep {}'.format(git_dir))
 	
@@ -488,16 +496,19 @@ def train_chromosome(chromosome, machine, queue, clargs,
 
 	command = generate_ssh_command(clargs, chromosome)
 	
-	print("\n\nExecuting command:\n\t{}".format(command))
+	# print("\n\nExecuting command:\n\t{}".format(command))
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
+	# debug_message('\nCOMPLETED :{}'.format(command))
 	
-	# info_message('Printing `stdout`')
-	# print_ssh_output(stdout)
-	# info_message('Printing `stderr`')
-	# print_ssh_output(stderr)
+	info_message('Printing `stdout`')
+	print_ssh_output(stdout)
+	info_message('Printing `stderr`')
+	print_ssh_output(stderr)
 	
 	queue.put(machine)
+
+	debug_message('PUT Machine back in QUEUE')
 
 	ssh.close()
 	
