@@ -216,10 +216,11 @@ def get_machine(queue, bad_machines):
 	return machine
 
 def train_generation(generation, clargs, private_key='id_ecdsa'):
+	debug_message(('tg',1))
 	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
-	
+	debug_message(('tg',2))
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
-	
+	debug_message(('tg',3))
 	machines = [# {"host": "192.168.0.1", "username": "not_it", 
 				#   "key_filename": key_filename},
 				{"host": "172.16.50.181", "username": "acc", 
@@ -243,73 +244,73 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				{"host": "172.16.50.237", "username": "acc", 
 					"key_filename": key_filename}
 				]
-	
-	# generation = convert_dtypes(generation)
-
+	debug_message(('tg',5))
 	generation.generationID = np.int64(generation.generationID)
 	generation.chromosomeID = np.int64(generation.chromosomeID)
-
+	debug_message(('tg',6))
 	queue = mp.Queue()
 	bad_machines = []
-
+	debug_message(('tg',7))
 	#Create Processes
 	for machine in machines: queue.put(machine)
-	
+	debug_message(('tg',8))
 	while True:
 		# Run until entire Generation is listed as isTrained == True
 		if all(generation.isTrained.values == 2): break
-
+		debug_message(('tg+while',9))
 		for chromosome in generation.itertuples():
+			debug_message(('tg+while+for',10))
 			if chromosome.isTrained == 0:
 				print("\n\nCreating Process for Chromosome "\
 						"{} on GenerationID {}".format(chromosome.chromosomeID,
 							chromosome.generationID), end=" on machine ")
-
+				debug_message(('tg+while+for',11))
 				# Find a Chromosome that is not trained yet
 				# Wait for queue to have a value, 
 				#	which is the ID of the machine that is done.
-				
+				debug_message(('tg+while+for',12))
 				machine = get_machine(queue, bad_machines)
 				print('{}'.format(machine['host']))
-
+				debug_message(('tg+while+for',13))
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
-				generation.at[chromosome.Index, 'isTrained'] = 1
-
+				generation.set_value(chromosome.Index, 'isTrained', 1)
+				debug_message(('tg+while+for',14))
 			if chromosome.isTrained != 2:
+				debug_message(('tg+while+for',15))
 				sql_json = query_sql_database(chromosome.generationID, 
 											  chromosome.chromosomeID, 
 											  verbose = False)
-
+				debug_message(('tg+while+for',16))
 				if sql_json is not -1:
 					assert(sql_json['fitness'] > 0), \
 						"[ERROR] If ID exists in SQL, why is fitness == -1?"
-
-					generation.at[chromosome.Index, 'isTrained'] = 2
-					generation.at[chromosome.Index, 'isTrained'] = 2
-					
+					debug_message(('tg+while+for',17))
+					generation.set_value(chromosome.Index, 'isTrained', 2)
+					debug_message(('tg+while+for',18))
 					for key, val in sql_json.items(): 
-						generation.at[chromosome.Index, key] = val
-
-					# generation.iloc[chromosome.chromosomeID] = chromosome
-
+						generation.set_value(chromosome.Index, key, val)
+					debug_message(('tg+while+for',19))
+			debug_message(('tg+while+for',20))
 			for bad_machine in bad_machines:
 				# This lets us check if it is "good" again
 				queue.put(bad_machine)
+			debug_message(('tg+while+for',21))
 
 	for chromosome in generation.itertuples():
+		debug_message(('tg+while+for',22))
 		assert(chromosome.isTrained), 'while loop should not have closed!'
 		chromosomeID = chromosome.chromosomeID
 		generationID = chromosome.generationID
-
+		debug_message(('tg+while+for',23))
 		sql_json = query_sql_database(generationID, chromosomeID, 
 										clargs=clargs, verbose=True)
-		
+		debug_message(('tg+while+for',24))
 		if sql_json['fitness'] is -1:
 			sql_json = query_local_csv(generationID, chromosomeID, 
 										clargs = clargs)
-		
+		debug_message(('tg+while+for',25))
 		if chromosome.fitness != -1:
 			print('\n\n[INFO]')
 			print('GenerationID:{}'.format(generationID))
@@ -321,14 +322,12 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 			print('Size VAE Hidden:{}'.format(chromosome.size_vae_hidden))
 			print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
 			print('\n\n')
-
-			for colname in generation.columns:
-				debug_message('train_generation+generation.iat[{}, {}]:{}'.format(
-								chromosomeID, colname, 
-								generation.iat[chromosomeID, colname]))
-				generation.iat[chromosomeID, colname] = chromosome[colname]
-	
+			debug_message(('tg+while+for',26))
+			for icol,col in enumerate(generation.columns):
+				generation.set_value(chromosomeID, col, chromosome[icol])
+		debug_message(('tg+while+for',27))
 	# After all is done: return what you received
+	debug_message(('tg+while+for',28))
 	return generation
 
 def generate_ssh_command(clargs, chromosome):
