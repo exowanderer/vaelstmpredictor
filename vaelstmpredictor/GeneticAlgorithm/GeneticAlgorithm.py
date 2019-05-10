@@ -133,10 +133,10 @@ def create_blank_dataframe(generationID, population_size):
 	generation['generationID'] = generation['generationID'] * generationID
 	generation['generationID'] = np.int64(generation['generationID'])
 	
-	generation = convert_dtypes(generation)
+	# generation = convert_dtypes(generation)
 
 	return generation
-
+'''
 def convert_dtypes(df, dtypes = ['int64', 'int64', 'int64', 'int64', 'int64', 
 			  					 'int64', 'int64', 'int64', 'float64']):
 	
@@ -147,7 +147,7 @@ def convert_dtypes(df, dtypes = ['int64', 'int64', 'int64', 'int64', 'int64',
 		df[colname] = df[colname].astype(dtype)
 
 	return df
-
+'''
 def generate_random_chromosomes(population_size,
 						min_vae_hidden_layers = 1, max_vae_hidden_layers = 5, 
 						min_dnn_hidden_layers = 1, max_dnn_hidden_layers = 5, 
@@ -178,9 +178,42 @@ def generate_random_chromosomes(population_size,
 														size = population_size)
 	generation['fitness'] = np.zeros(population_size, dtype = int) - 1
 
-	generation = convert_dtypes(generation)
+	# generation = convert_dtypes(generation)
 
 	return generation
+
+def get_machine(queue):
+	machine = queue.get()
+	sp_stdout_ = subprocess.STDOUT
+	with open(os.devnull, 'wb') as devnull:
+		callnow = "ping -c 1 {}".format(machine['host'])
+		callnow = callnow.split(' ')
+		
+		try:
+			check_ping = subprocess.check_call(callnow, 
+						stdout=devnull, stderr=sp_stdout_)
+		except Exception as error:
+			check_ping = -1
+
+		while check_ping != 0:
+			print('Cannot reach host {}'.format(machine['host']))
+
+			bad_machines.append(machine)
+			assert(len(bad_machines) < queue.qsize()),\
+				'Queue is empty while `bad_machines` is full'
+
+			machine = queue.get()
+
+			callnow = ("ping -c 1 " + machine['host']).split(' ')
+
+			try:
+				check_ping = subprocess.check_call(callnow, 
+							stdout=devnull, stderr=sp_stdout_)
+			except Exception as error:
+				print(error)
+				check_ping = -1
+
+	return machine
 
 def train_generation(generation, clargs, private_key='id_ecdsa'):
 	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
@@ -211,7 +244,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 					"key_filename": key_filename}
 				]
 	
-	generation = convert_dtypes(generation)
+	# generation = convert_dtypes(generation)
 
 	generation.generationID = np.int64(generation.generationID)
 	generation.chromosomeID = np.int64(generation.chromosomeID)
@@ -227,8 +260,6 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 		if all(generation.isTrained.values == 2): break
 
 		for chromosome in generation.itertuples():
-			# chromosome = chromosome.astype('int64')
-			
 			if chromosome.isTrained == 0:
 				print("\n\nCreating Process for Chromosome "\
 						"{} on GenerationID {}".format(chromosome.chromosomeID,
@@ -238,41 +269,13 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				# Wait for queue to have a value, 
 				#	which is the ID of the machine that is done.
 				
-				machine = queue.get()
-				sp_stdout_ = subprocess.STDOUT
-				with open(os.devnull, 'wb') as devnull:
-					callnow = ("ping -c 1 " + machine['host']).split(' ')
-					try:
-						check_ping = subprocess.check_call(callnow, 
-									stdout=devnull, stderr=sp_stdout_)
-					except Exception as error:
-						check_ping = -1
-
-					while check_ping != 0:
-						
-						print('Cannot reach host {}'.format(machine['host']))
-
-						bad_machines.append(machine)
-						assert(len(bad_machines) < queue.qsize()),\
-							'Queue is empty while `bad_machines` is full'
-
-						machine = queue.get()
-
-						callnow = ("ping -c 1 " + machine['host']).split(' ')
-						try:
-							check_ping = subprocess.check_call(callnow, 
-										stdout=devnull, stderr=sp_stdout_)
-						except Exception as error:
-							print(error)
-							check_ping = -1
-
+				machine = get_machine(queue)
 				print('{}'.format(machine['host']))
 
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
-
-				chromosome.isTrained = 1
+				generation.set_value(chromosome.Index, 'isTrained', 1)
 
 			if chromosome.isTrained != 2:
 				sql_json = query_sql_database(chromosome.generationID, 
@@ -283,21 +286,28 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 					assert(sql_json['fitness'] > 0), \
 						"[ERROR] If ID exists in SQL, why is fitness == -1?"
 
-					chromosome.isTrained = 2
-					for key, val in sql_json.keys(): chromosome[key] = val
-					generation.iloc[chromosome.chromosomeID] = chromosome
+					generation.set_value(chromosome.Index, 'isTrained', 2)
+					
+					for key, val in sql_json.keys(): 
+						generation.set_value(chromosome.Index, key, val)
+
+					# generation.iloc[chromosome.chromosomeID] = chromosome
 
 			for bad_machine in bad_machines:
 				# This lets us check if it is "good" again
 				queue.put(bad_machine)
 
-	for k, chromosome in generation.itertuples():
+	for chromosome in generation.itertuples():
 		assert(chromosome.isTrained), 'while loop should not have closed!'
-		chromosome.fitness = query_sql_database(clargs, chromosome)
-		
-		if chromosome.fitness is -1:
-			chromosome.fitness = query_local_csv(clargs, chromosome)
+		chromosomeID = chromosome.chromosomeID
+		generationID = chromosome.generationID
 
+		sql_json = query_sql_database(clargs)
+		
+		if sql_json['fitness'] is -1:
+			sql_json = query_local_csv(generationID, chromosomeID, 
+										clargs = clargs)
+		
 		if chromosome.fitness != -1:
 			print('\n\n[INFO]')
 			print('GenerationID:{}'.format(chromosome.generationID))
@@ -308,10 +318,10 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 			print('Size VAE Latent:{}'.format(chromosome.size_vae_latent))
 			print('Size VAE Hidden:{}'.format(chromosome.size_vae_hidden))
 			print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
-			print('Fitniess:{}'.format(chromosome.fitness))
 			print('\n\n')
 
-			generation.iloc[k] = chromosome
+			for col in generation.columns:
+				generation.set_value(chromosomeID, col, chromosome[colname])
 	
 	# After all is done: return what you received
 	return generation

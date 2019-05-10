@@ -164,15 +164,15 @@ if __name__ == '__main__':
 						max_vae_latent = clargs.max_vae_latent,
 						verbose = clargs.verbose)
 
-	generation = convert_dtypes(generation)
+	# generation = convert_dtypes(generation)
 
 	generationID = 0
 	generation = train_generation(generation, clargs)
 
-	generation = convert_dtypes(generation)
+	# generation = convert_dtypes(generation)
 
 	best_fitness = []
-	fitnesses = [chromosome.fitness for chromosome in generation.itertuples()]
+	fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
 
 	new_best_fitness = max(fitnesses)
 	
@@ -200,7 +200,7 @@ if __name__ == '__main__':
 		generationID += 1
 		
 		new_generation = create_blank_dataframe(generationID, population_size)
-		new_generation = convert_dtypes(new_generation)
+		# new_generation = convert_dtypes(new_generation)
 
 		for chromosomeID in tqdm(range(population_size)):
 			parent1, parent2 = select_parents(generation)
@@ -208,6 +208,7 @@ if __name__ == '__main__':
 			child, crossover_happened = cross_over(parent1, parent2, 
 											cross_prob, param_choices.keys(), 
 											verbose=verbose)
+
 			child.generationID = int(generationID)
 			child.chromosomeID = int(chromosomeID)
 			child.fitness = -1.0
@@ -215,6 +216,7 @@ if __name__ == '__main__':
 			child, mutation_happened = mutate(child, mutate_prob, 
 											param_choices, verbose=verbose)
 			
+			new_generation.set_value(child.Index, 'isTrained', 2)
 			child.isTrained = mutation_happened*crossover_happened
 			
 			info_message('Adding Chromosome:\n{}'.format(child))
@@ -233,8 +235,8 @@ if __name__ == '__main__':
 		print('Time for Generation{}: {} minutes'.format(generationID, 
 											(time() - start_while)//60))
 
-		fitnesses = [chrom.fitness for chrom in generation.itertuples()]
-		
+		fitnesses = [chrom.fitness for _, chrom in generation.iterrows()]
+
 		new_best_fitness = max(fitnesses)
 
 		if clargs.verbose:
