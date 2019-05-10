@@ -65,8 +65,9 @@ def update_one_git(hostname, username = "acc", basedir = 'vaelstmpredictor/',
 	except Exception as e:
 		print('error on stderr.readlines(): {}'.format(str(e)))
 
-	print("Command Executed Successfully")
 	ssh.close()
+
+	info_message('Command Executed Successfully on {}'.format(hostname))
 
 if __name__ == '__main__':
 	update_all_git()

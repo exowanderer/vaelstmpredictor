@@ -164,21 +164,16 @@ if __name__ == '__main__':
 						max_vae_latent = clargs.max_vae_latent,
 						verbose = clargs.verbose)
 
-	dtypes = ['int64', 'int64', 'bool', 'int64', 'int64', 
-			  'int64', 'int64', 'int64', 'float64']
-	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
-	generation = generation.astype(dtypes)
+	generation = convert_dtypes(generation)
 
 	generationID = 0
 	generation = train_generation(generation, clargs)
 
-	dtypes = ['int64', 'int64', 'bool', 'int64', 'int64', 
-			  'int64', 'int64', 'int64', 'float64']
-	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
-	generation = generation.astype(dtypes)
+	generation = convert_dtypes(generation)
 
 	best_fitness = []
-	fitnesses = [chrom[1].fitness for chrom in generation.iterrows()]
+	fitnesses = [chromosome.fitness for chromosome in generation.itertuples()]
+
 	new_best_fitness = max(fitnesses)
 	
 	if clargs.verbose:
@@ -205,10 +200,7 @@ if __name__ == '__main__':
 		generationID += 1
 		
 		new_generation = create_blank_dataframe(generationID, population_size)
-		dtypes = ['int64', 'int64', 'bool', 'int64', 'int64', 
-			  'int64', 'int64', 'int64', 'float64']
-		dtypes = {name:dtype for name,dtype in zip(generation.columns, dtypes)}
-		new_generation = new_generation.astype(dtypes)
+		new_generation = convert_dtypes(new_generation)
 
 		for chromosomeID in tqdm(range(population_size)):
 			parent1, parent2 = select_parents(generation)
@@ -241,7 +233,8 @@ if __name__ == '__main__':
 		print('Time for Generation{}: {} minutes'.format(generationID, 
 											(time() - start_while)//60))
 
-		fitnesses = [chrom[1].fitness for chrom in generation.iterrows()]
+		fitnesses = [chrom.fitness for chrom in generation.itertuples()]
+		
 		new_best_fitness = max(fitnesses)
 
 		if clargs.verbose:

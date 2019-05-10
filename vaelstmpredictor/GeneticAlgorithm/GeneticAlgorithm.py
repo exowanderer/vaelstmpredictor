@@ -133,12 +133,20 @@ def create_blank_dataframe(generationID, population_size):
 	generation['generationID'] = generation['generationID'] * generationID
 	generation['generationID'] = np.int64(generation['generationID'])
 	
-	dtypes = ['int64', 'int64', 'int64', 'int64', 'int64', 
-			  'int64', 'int64', 'int64', 'float64']
-	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
-	generation = generation.astype(dtypes)
+	generation = convert_dtypes(generation)
 
 	return generation
+
+def convert_dtypes(df, dtypes = ['int64', 'int64', 'int64', 'int64', 'int64', 
+			  					 'int64', 'int64', 'int64', 'float64']):
+	
+	dtypes = {name:dtype for name, dtype in zip(df.columns, dtypes)}
+	df = df.astype(dtypes)
+	
+	for colname, dtype in dtypes.items(): 
+		df[colname] = df[colname].astype(dtype)
+
+	return df
 
 def generate_random_chromosomes(population_size,
 						min_vae_hidden_layers = 1, max_vae_hidden_layers = 5, 
@@ -170,10 +178,7 @@ def generate_random_chromosomes(population_size,
 														size = population_size)
 	generation['fitness'] = np.zeros(population_size, dtype = int) - 1
 
-	dtypes = ['int64', 'int64', 'int64', 'int64', 'int64', 
-			  'int64', 'int64', 'int64', 'float64']
-	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
-	generation = generation.astype(dtypes)
+	generation = convert_dtypes(generation)
 
 	return generation
 
@@ -206,11 +211,11 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 					"key_filename": key_filename}
 				]
 	
-	dtypes = ['int64', 'int64', 'int64', 'int64', 'int64', 
-			  'int64', 'int64', 'int64', 'float64']
-	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
-	generation = generation.astype(dtypes)
-	
+	generation = convert_dtypes(generation)
+
+	generation.generationID = np.int64(generation.generationID)
+	generation.chromosomeID = np.int64(generation.chromosomeID)
+
 	queue = mp.Queue()
 	bad_machines = []
 
@@ -221,7 +226,9 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 		# Run until entire Generation is listed as isTrained == True
 		if all(generation.isTrained.values == 2): break
 
-		for k, chromosome in generation.iterrows():
+		for chromosome in generation.itertuples():
+			# chromosome = chromosome.astype('int64')
+			
 			if chromosome.isTrained == 0:
 				print("\n\nCreating Process for Chromosome "\
 						"{} on GenerationID {}".format(chromosome.chromosomeID,
@@ -266,24 +273,25 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 				process.start()
 
 				chromosome.isTrained = 1
-			
-			sql_json = query_sql_database(chromosome.generationID, 
-										  chromosome.chromosomeID, 
-										  verbose = False)
 
-			if sql_json is not -1:
-				assert(sql_json['fitness'] > 0), \
-					"[ERROR] If ID exists in SQL, why is fitness == -1?"
+			if chromosome.isTrained != 2:
+				sql_json = query_sql_database(chromosome.generationID, 
+											  chromosome.chromosomeID, 
+											  verbose = False)
 
-				chromosome.isTrained = 2
-				for key, val in sql_json.keys(): chromosome[key] = val
-				generation.iloc[chromosome.chromosomeID] = chromosome
+				if sql_json is not -1:
+					assert(sql_json['fitness'] > 0), \
+						"[ERROR] If ID exists in SQL, why is fitness == -1?"
 
-				for bad_machine in bad_machines:
-					# This lets us check if it is "good" again
-					queue.put(bad_machine)
+					chromosome.isTrained = 2
+					for key, val in sql_json.keys(): chromosome[key] = val
+					generation.iloc[chromosome.chromosomeID] = chromosome
 
-	for k, chromosome in generation.iterrows():
+			for bad_machine in bad_machines:
+				# This lets us check if it is "good" again
+				queue.put(bad_machine)
+
+	for k, chromosome in generation.itertuples():
 		assert(chromosome.isTrained), 'while loop should not have closed!'
 		chromosome.fitness = query_sql_database(clargs, chromosome)
 		
@@ -506,7 +514,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	info_message("Command Executed Successfully")
 
 def select_parents(generation):
-	total_fitness = sum(chrom.fitness for k, chrom in generation.iterrows())
+	total_fitness = sum(chrom.fitness for k, chrom in generation.itertuples())
 	#Generate two random numbers between 0 and total_fitness 
 	#   not including total_fitness
 	rand_parent1 = random.random()*total_fitness
@@ -516,7 +524,7 @@ def select_parents(generation):
 	parent2 = None
 	
 	fitness_count = 0
-	for k, chromosome in generation.iterrows():
+	for k, chromosome in generation.itertuples():
 		fitness_count += chromosome.fitness
 		if(parent1 is None and fitness_count >= rand_parent1):
 			parent1 = chromosome
@@ -645,8 +653,8 @@ def save_generation_to_tree(generation, verbose = False):
 	generation_dict = {}
 	if verbose: info_message('Current Generation: ' )
 
-	for ID, member in generation.iterrow():
-		if ID not in generation_dict.keys(): generation_dict[ID] = {}
+	for member in generation.itertuples():
+		if member.Index not in generation_dict.keys(): generation_dict[ID] = {}
 		
 		if verbose: 
 			print('memberID: {}'.format(ID))
