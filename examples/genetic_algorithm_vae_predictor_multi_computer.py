@@ -30,22 +30,6 @@ from vaelstmpredictor.GeneticAlgorithm import *
 def debug_message(message): print('[DEBUG] {}'.format(message))
 def info_message(message): print('[INFO] {}'.format(message))
 
-def create_blank_dataframe(generationID, population_size):
-	generation = pd.DataFrame()
-	generation['generationID'] = np.ones(population_size, dtype = int)
-	generation['chromosomeID'] = np.arange(population_size, dtype = int)
-	generation['isTrained'] = np.zeros(population_size, dtype = bool)
-	generation['num_vae_layers'] = np.zeros(population_size, dtype = int)
-	generation['num_dnn_layers'] = np.zeros(population_size, dtype = int)
-	generation['size_vae_latent'] = np.zeros(population_size, dtype = int)
-	generation['size_vae_hidden'] = np.zeros(population_size, dtype = int)
-	generation['size_dnn_hidden'] = np.zeros(population_size, dtype = int)
-	generation['fitness'] = np.zeros(population_size, dtype = int) - 1
-
-	generation['generationID'] = generation['generationID'] * generationID
-
-	return generation
-
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--run_name', type=str, default='deleteme',
@@ -180,12 +164,19 @@ if __name__ == '__main__':
 						max_vae_latent = clargs.max_vae_latent,
 						verbose = clargs.verbose)
 
+	dtypes = ['int64', 'int64', 'bool', 'int64', 'int64', 
+			  'int64', 'int64', 'int64', 'float64']
+	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
+	generation = generation.astype(dtypes)
+
 	generationID = 0
 	generation = train_generation(generation, clargs)
 
-	# evolutionary_tree = {}
-	# evolutionary_tree[generationID] = save_generation_to_tree(generation,
-	# 														verbose=verbose)
+	dtypes = ['int64', 'int64', 'bool', 'int64', 'int64', 
+			  'int64', 'int64', 'int64', 'float64']
+	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
+	generation = generation.astype(dtypes)
+
 	best_fitness = []
 	fitnesses = [chrom[1].fitness for chrom in generation.iterrows()]
 	new_best_fitness = max(fitnesses)
@@ -213,24 +204,29 @@ if __name__ == '__main__':
 
 		# Create new generation
 		generationID += 1
+		
 		new_generation = create_blank_dataframe(generationID, population_size)
-		chromosomeID = 0
+		dtypes = ['int64', 'int64', 'bool', 'int64', 'int64', 
+			  'int64', 'int64', 'int64', 'float64']
+		dtypes = {name:dtype for name,dtype in zip(generation.columns, dtypes)}
+		new_generation = new_generation.astype(dtypes)
+
 		for chromosomeID in tqdm(range(population_size)):
 			parent1, parent2 = select_parents(generation)
+			
 			child, crossover_happened = cross_over(parent1, parent2, 
 											cross_prob, param_choices.keys(), 
 											verbose=verbose)
-			
-			child.generationID = generationID
-			child.chromosomeID = chromosomeID
-			child.fitness = -1
+			child.generationID = int(generationID)
+			child.chromosomeID = int(chromosomeID)
+			child.fitness = -1.0
 			
 			child, mutation_happened = mutate(child, mutate_prob, 
 											param_choices, verbose=verbose)
 			
 			child.isTrained = mutation_happened*crossover_happened
 			
-			info_message('Adding Chromosome: {}'.format(child))
+			info_message('Adding Chromosome:\n{}'.format(child))
 			new_generation.iloc[chromosomeID] = child
 
 		# Re-sort by chromosomeID
@@ -246,10 +242,6 @@ if __name__ == '__main__':
 		print('Time for Generation{}: {} minutes'.format(generationID, 
 											(time() - start_while)//60))
 
-		# generation = new_generation
-		# evolutionary_tree[generationID] = save_generation_to_tree(generation,
-		# verbose=verbose)
-
 		fitnesses = [chrom[1].fitness for chrom in generation.iterrows()]
 		new_best_fitness = max(fitnesses)
 
@@ -263,14 +255,3 @@ if __name__ == '__main__':
 			plt.plot(best_fitness, color="c")
 			plt.xlim([0, num_generations])
 			fig.canvas.draw()
-
-	"""
-	evtree_save_name = 'evolutionary_tree_{}_ps{}_iter{}_epochs{}_cp{}_mp{}'
-	evtree_save_name = evtree_save_name + '.joblib.save'
-	evtree_save_name = evtree_save_name.format(run_name, population_size, 
-						num_generations, num_epochs, cross_prob,mutate_prob)
-	evtree_save_name = os.path.join(clargs.model_dir, evtree_save_name)
-
-	info_message('Saving evolutionary tree to {}'.format(evtree_save_name))
-	joblib.dump(evolutionary_tree, evtree_save_name)
-	"""

@@ -121,6 +121,28 @@ def query_local_csv(clargs, chromosome):
 
 	return -1
 
+def create_blank_dataframe(generationID, population_size):
+	generation = pd.DataFrame()
+	generation['generationID'] = np.ones(population_size, dtype = int)
+	generation['chromosomeID'] = np.arange(population_size, dtype = int)
+	generation['isTrained'] = np.zeros(population_size, dtype = bool)
+	generation['num_vae_layers'] = np.zeros(population_size, dtype = int)
+	generation['num_dnn_layers'] = np.zeros(population_size, dtype = int)
+	generation['size_vae_latent'] = np.zeros(population_size, dtype = int)
+	generation['size_vae_hidden'] = np.zeros(population_size, dtype = int)
+	generation['size_dnn_hidden'] = np.zeros(population_size, dtype = int)
+	generation['fitness'] = np.zeros(population_size, dtype = float) - 1.0
+
+	generation['generationID'] = generation['generationID'] * generationID
+	generation['generationID'] = np.int64(generation['generationID'])
+	
+	dtypes = ['int64', 'int64', 'bool', 'int64', 'int64', 
+			  'int64', 'int64', 'int64', 'float64']
+	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
+	generation = generation.astype(dtypes)
+
+	return generation
+
 def generate_random_chromosomes(population_size,
 						min_vae_hidden_layers = 1, max_vae_hidden_layers = 5, 
 						min_dnn_hidden_layers = 1, max_dnn_hidden_layers = 5, 
@@ -151,6 +173,11 @@ def generate_random_chromosomes(population_size,
 														size = population_size)
 	generation['fitness'] = np.zeros(population_size, dtype = int) - 1
 
+	dtypes = ['int64', 'int64', 'bool', 'int64', 'int64', 
+			  'int64', 'int64', 'int64', 'float64']
+	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
+	generation = generation.astype(dtypes)
+
 	return generation
 
 def train_generation(generation, clargs, private_key='id_ecdsa'):
@@ -158,8 +185,8 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 	
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	
-	machines = [# {"host": "192.168.0.1", "username": "acc", 
-				#   "key_filename": key_filename},
+	machines = [{"host": "192.168.0.1", "username": "not_it", 
+				  "key_filename": key_filename},
 				{"host": "172.16.50.181", "username": "acc", 
 					"key_filename": key_filename},
 				# {"host": "172.16.50.176", "username": "acc", 
@@ -182,6 +209,11 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 					"key_filename": key_filename}
 				]
 	
+	dtypes = ['int64', 'int64', 'bool', 'int64', 'int64', 
+			  'int64', 'int64', 'int64', 'float64']
+	dtypes = {name:dtype for name, dtype in zip(generation.columns, dtypes)}
+	generation = generation.astype(dtypes)
+	
 	queue = mp.Queue()
 	bad_machines = []
 
@@ -199,16 +231,20 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 							chromosome.generationID), end=" on machine ")
 
 				# Find a Chromosome that is not trained yet
-				alldone = False
-				
 				# Wait for queue to have a value, 
 				#	which is the ID of the machine that is done.
+				
 				machine = queue.get()
 				sp_stdout_ = subprocess.STDOUT
 				with open(os.devnull, 'wb') as devnull:
 					callnow = ("ping -c 1 " + machine['host']).split(' ')
-					while subprocess.check_call(callnow, stdout=devnull, 
-													stderr=sp_stdout_) != 0:
+					try:
+						check_ping = subprocess.check_call(callnow, 
+									stdout=devnull, stderr=sp_stdout_)
+					except Exception as error:
+						check_ping = -1
+
+					while check_ping != 0:
 						
 						print('Cannot reach host {}'.format(machine['host']))
 
@@ -217,16 +253,22 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 							'Queue is empty while `bad_machines` is full'
 
 						machine = queue.get()
-						
+
 						callnow = ("ping -c 1 " + machine['host']).split(' ')
+						try:
+							check_ping = subprocess.check_call(callnow, 
+										stdout=devnull, stderr=sp_stdout_)
+						except Exception as error:
+							print(error)
+							check_ping = -1
 
 				print('{}'.format(machine['host']))
 
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
-				
 				chromosome.isTrained = 1
+
 				generation.iloc[chromosome.chromosomeID] = chromosome
 
 				for bad_machine in bad_machines:
@@ -240,7 +282,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 		if chromosome.fitness is -1:
 			chromosome.fitness = query_local_csv(clargs, chromosome)
 
-		if chromosome.fitness is not -1:
+		if chromosome.fitness != -1:
 			print('\n\n[INFO]')
 			print('GenerationID:{}'.format(chromosome.generationID))
 			print('ChromosomeID:{}'.format(chromosome.chromosomeID))
@@ -250,6 +292,7 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 			print('Size VAE Latent:{}'.format(chromosome.size_vae_latent))
 			print('Size VAE Hidden:{}'.format(chromosome.size_vae_hidden))
 			print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
+			print('Fitniess:{}'.format(chromosome.fitness))
 			print('\n\n')
 
 			generation.iloc[k] = chromosome
@@ -356,12 +399,14 @@ def upload_zip_file(zip_filename, machine, verbose = False):
 	stdin, stdout, stderr = ssh.exec_command('unzip {}'.format(zip_filename))
 	
 	error = "".join(stderr.readlines())
+	
 	if error != "":
 		print("Errors has occured while unzipping file in machine: "\
 				"{} \nError: {}".format(machine, error))
 	
 	stdin, stdout, stderr = ssh.exec_command('cd vaelstmpredictor; '
 					'~/anaconda3/envs/tf_env/bin/python setup.py install')
+	
 	error = "".join(stderr.readlines())
 	if error != "":
 		print("Errors setting up vaelstmpredictor: "
@@ -371,26 +416,27 @@ def upload_zip_file(zip_filename, machine, verbose = False):
 	transport.close()
 	print("File uploaded")
 
-# def print_ssh_output(ssh_output):
-# 	debug_message(ssh_output)
-# 	# try:
-# 	debug_message('** 1 print_ssh_output(ssh_output) **')
-# 	ssh_output.channel.recv_exit_status()
-# 	debug_message('** 2 print_ssh_output(ssh_output) **')
-# 	for line in ssh_output.readlines(): print(line)
-# 	debug_message('** 3 print_ssh_output(ssh_output) **')
-# 	# except Exception as error:
-# 	# 	print('Error on ssh_output.readlines(): {}'.format(error))
+'''
+def print_ssh_output(ssh_output):
+	
+	# try:
+	
+	ssh_output.channel.recv_exit_status()
+	
+	for line in ssh_output.readlines(): print(line)
+	
+	# except Exception as error:
+	# 	print('Error on ssh_output.readlines(): {}'.format(error))
+'''
 
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
 					git_dir = 'vaelstmpredictor',
 					verbose = True):
-	
+
 	if not os.path.exists(logdir): os.mkdir(logdir)
 
-	if verbose: 
-		info_message('Checking if file {} exists on {}'.format(
+	if verbose: info_message('Checking if file {} exists on {}'.format(
 										git_dir, machine['host']))
 	
 	# chromosomeID = chromosome.chromosomeID
@@ -423,7 +469,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	# print_ssh_output(stdout)
 	# info_message('Printing `stderr`')
 	# print_ssh_output(stderr)
-	debug_message('Queue Size:{} on {}'.format(queue.qsize(), machine['host']))
+	
 	queue.put(machine)
 
 	ssh.close()
