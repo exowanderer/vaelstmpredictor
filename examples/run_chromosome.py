@@ -63,6 +63,7 @@ def make_sql_output(clargs, chromosome):
 	output['size_vae_latent'] = clargs.size_vae_latent
 	output['generationID'] = chromosome.generationID
 	output['chromosomeID'] = chromosome.chromosomeID
+	output['isTrained'] = chromosome.isTrained
 	output['fitness'] = chromosome.fitness
 	
 	return output
@@ -311,6 +312,7 @@ if __name__ == '__main__':
 	
 	info_message('Storing to SQL db at {}'.format(putURL))
 	
+	chromosome.isTrained = 2 # Set "is fully trained"
 	put_sql_dict = make_sql_output(clargs, chromosome)
 
 	output_table_name = '{}/{}_{}_{}_trained_model_entry_{}.save'
@@ -348,20 +350,3 @@ if __name__ == '__main__':
 		else:
 			warning_message('!! The World Has Ended !!')
 	except json.decoder.JSONDecodeError as error: warning_message(error)
-
-'''
-problems: do_log, make_plots, verbose
-Works: https://laudeepgenerativegenetics.pythonanywhere.com/AddChrom?run_name=0&batch_size=0&cross_prob=0&do_ckpt=0&hostname=0&iterations=0&kl_anneal=0&log_dir=0&model_dir=0&mutate_prob=0&num_epochs=0&optimizer=0&patience=0&population_size=0&prediction_log_var_prior=0&predictor_type=0&table_dir=0&time_stamp=0&train_file=0&dnn_log_var_prior=0&dnn_kl_weight=0&dnn_weight=0&vae_kl_weight=0&vae_weight=0&w_kl_anneal=0&num_dnn_layers=0&num_vae_layers=0&size_dnn_hidden=0&size_vae_hidden=0&size_vae_latent=0&generationID=-1&chromosomeID=-1&fitness=-42
-'''
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		

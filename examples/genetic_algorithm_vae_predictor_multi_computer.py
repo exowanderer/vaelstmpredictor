@@ -120,6 +120,35 @@ if __name__ == '__main__':
 		if 'dir' in key: 
 			if not os.path.exists(val): 
 				os.mkdir(val)
+
+	key_filename = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
+	
+	machines = [{"host": "127.0.0.1", "username": "jonathan", 
+					"key_filename": key_filename}
+				# {"host": "192.168.0.1", "username": "not_it", 
+				#   "key_filename": key_filename},
+				# {"host": "172.16.50.181", "username": "acc", 
+				# 	"key_filename": key_filename},
+				# # {"host": "172.16.50.176", "username": "acc", 
+				# 	# "key_filename": key_filename},
+				# {"host": "172.16.50.177", "username": "acc", 
+				# 	"key_filename": key_filename},
+				# # {"host": "172.16.50.163", "username": "acc", 
+				# # 	"key_filename": key_filename},
+				# {"host": "172.16.50.182", "username": "acc", 
+				# 	"key_filename": key_filename},# not operation today
+				# {"host": "172.16.50.218", "username": "acc", 
+				# 	"key_filename": key_filename},
+				# {"host": "172.16.50.159", "username": "acc", 
+				# 	"key_filename": key_filename},
+				# {"host": "172.16.50.235", "username": "acc", 
+				# 	"key_filename": key_filename},
+				# {"host": "172.16.50.157", "username": "acc", 
+				# 	"key_filename": key_filename},
+				# {"host": "172.16.50.237", "username": "acc", 
+				# 	"key_filename": key_filename}
+				]
+
 	debug_message(3)
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
@@ -169,7 +198,7 @@ if __name__ == '__main__':
 	# generation = convert_dtypes(generation)
 	debug_message(14)
 	generationID = 0
-	generation = train_generation(generation, clargs)
+	generation = train_generation(generation, clargs, machines)
 	debug_message(15)
 	# generation = convert_dtypes(generation)
 	debug_message(16)
@@ -231,7 +260,7 @@ if __name__ == '__main__':
 			"The GenerationID did not update: should be {}; but is {}".format(
 				generationID, generation['generationID'].values)
 		debug_message(generationID,30)
-		generation = train_generation(new_generation, clargs)
+		generation = train_generation(new_generation, clargs, machines)
 		debug_message(generationID,31)
 		info_message('Time for Generation{}: {} minutes'.format(generationID, 
 											(time() - start_while)//60))

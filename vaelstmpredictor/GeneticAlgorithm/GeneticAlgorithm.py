@@ -215,35 +215,13 @@ def get_machine(queue, bad_machines):
 
 	return machine
 
-def train_generation(generation, clargs, private_key='id_ecdsa'):
+def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 	debug_message(('tg',1))
 	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
 	debug_message(('tg',2))
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	debug_message(('tg',3))
-	machines = [# {"host": "192.168.0.1", "username": "not_it", 
-				#   "key_filename": key_filename},
-				{"host": "172.16.50.181", "username": "acc", 
-					"key_filename": key_filename},
-				# {"host": "172.16.50.176", "username": "acc", 
-					# "key_filename": key_filename},
-				{"host": "172.16.50.177", "username": "acc", 
-					"key_filename": key_filename},
-				# {"host": "172.16.50.163", "username": "acc", 
-				# 	"key_filename": key_filename},
-				{"host": "172.16.50.182", "username": "acc", 
-					"key_filename": key_filename},# not operation today
-				{"host": "172.16.50.218", "username": "acc", 
-					"key_filename": key_filename},
-				{"host": "172.16.50.159", "username": "acc", 
-					"key_filename": key_filename},
-				{"host": "172.16.50.235", "username": "acc", 
-					"key_filename": key_filename},
-				{"host": "172.16.50.157", "username": "acc", 
-					"key_filename": key_filename},
-				{"host": "172.16.50.237", "username": "acc", 
-					"key_filename": key_filename}
-				]
+	
 	debug_message(('tg',5))
 	generation.generationID = np.int64(generation.generationID)
 	generation.chromosomeID = np.int64(generation.chromosomeID)
@@ -311,7 +289,8 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 			sql_json = query_local_csv(generationID, chromosomeID, 
 										clargs = clargs)
 		debug_message(('tg+while+for',25))
-		if chromosome.fitness != -1:
+		if isinstance(sql_json, dict) and 'fitness' in sql_json.keys():
+			assert(sql_json['fitness'] != -1), 'while loop may have failed!'
 			print('\n\n[INFO]')
 			print('GenerationID:{}'.format(generationID))
 			print('ChromosomeID:{}'.format(chromosomeID))
@@ -322,9 +301,13 @@ def train_generation(generation, clargs, private_key='id_ecdsa'):
 			print('Size VAE Hidden:{}'.format(chromosome.size_vae_hidden))
 			print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
 			print('\n\n')
+
 			debug_message(('tg+while+for',26))
-			for icol,col in enumerate(generation.columns):
-				generation.set_value(chromosomeID, col, chromosome[icol])
+			for icol, col in enumerate(generation.columns):
+				# icol == np.where()
+				debug_message(('tg+while+for+for',26.25))
+				generation.set_value(chromosomeID, col, sql_json[col])
+				debug_message(('tg+while+for+for',26.75))
 		debug_message(('tg+while+for',27))
 	# After all is done: return what you received
 	debug_message(('tg+while+for',28))
@@ -374,14 +357,15 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 				port = 22, verbose = True, private_key='id_ecdsa'):
 	
 	key_filename = environ['HOME'] + '/.ssh/{}'.format(private_key)
-	try:
-		ssh = SSHClient()
-		ssh.set_missing_host_key_policy(AutoAddPolicy())
-		ssh.connect(hostname, key_filename = key_filename)
-	except NoValidConnectionsError as error:
-		warning_message(error)
-		ssh.close()
-		return
+
+	# try:
+	# 	ssh = SSHClient()
+	# 	ssh.set_missing_host_key_policy(AutoAddPolicy())
+	# 	ssh.connect(hostname, key_filename = key_filename)
+	# except NoValidConnectionsError as error:
+	# 	warning_message(error)
+	# 	ssh.close()
+	# 	return
 	
 	command = []
 	command.append('git clone https://github.com/{}/{}'.format(gituser,gitdir))
@@ -392,19 +376,19 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 	command = '; '.join(command)
 
 	info_message('Executing {} on {}'.format(command, hostname))
-	try:
-		stdin, stdout, stderr = ssh.exec_command(command)
-	except NoValidConnectionsError as error:
-		warning_message(error)
-		ssh.close()
-		return
+	# try:
+	# 	stdin, stdout, stderr = ssh.exec_command(command)
+	# except NoValidConnectionsError as error:
+	# 	warning_message(error)
+	# 	ssh.close()
+	# 	return
 
 	# info_message('Printing `stdout`')
 	# print_ssh_output(stdout)
 	# info_message('Printing `stderr`')
 	# print_ssh_output(stderr)
 	
-	ssh.close()
+	# ssh.close()
 	info_message('SSH Closed')
 	print("Command Executed Successfully")
 
@@ -419,31 +403,31 @@ def upload_zip_file(zip_filename, machine, verbose = False):
 		info_message('Transfering {} to {}'.format(
 							zip_filename, machine['host']))
 
-	transport = Transport((machine["host"], port))
-	pk = ECDSAKey.from_private_key(open(machine['key_filename']))
-	transport.connect(username = machine["username"], pkey=pk)
+	# transport = Transport((machine["host"], port))
+	# pk = ECDSAKey.from_private_key(open(machine['key_filename']))
+	# transport.connect(username = machine["username"], pkey=pk)
 	
-	sftp = SFTPClient.from_transport(transport)
-	sftp.put(zip_filename, zip_filename)
+	# sftp = SFTPClient.from_transport(transport)
+	# sftp.put(zip_filename, zip_filename)
 	
-	stdin, stdout, stderr = ssh.exec_command('unzip {}'.format(zip_filename))
+	# stdin, stdout, stderr = ssh.exec_command('unzip {}'.format(zip_filename))
 	
-	error = "".join(stderr.readlines())
+	# error = "".join(stderr.readlines())
 	
-	if error != "":
-		print("Errors has occured while unzipping file in machine: "\
-				"{} \nError: {}".format(machine, error))
+	# if error != "":
+	# 	print("Errors has occured while unzipping file in machine: "\
+	# 			"{} \nError: {}".format(machine, error))
 	
-	stdin, stdout, stderr = ssh.exec_command('cd vaelstmpredictor; '
-					'~/anaconda3/envs/tf_env/bin/python setup.py install')
+	# stdin, stdout, stderr = ssh.exec_command('cd vaelstmpredictor; '
+	# 				'~/anaconda3/envs/tf_env/bin/python setup.py install')
 	
-	error = "".join(stderr.readlines())
-	if error != "":
-		print("Errors setting up vaelstmpredictor: "
-				"{}\nError: {}".format(machine, error))
+	# error = "".join(stderr.readlines())
+	# if error != "":
+	# 	print("Errors setting up vaelstmpredictor: "
+	# 			"{}\nError: {}".format(machine, error))
 
-	sftp.close()
-	transport.close()
+	# sftp.close()
+	# transport.close()
 	print("File uploaded")
 
 
@@ -475,41 +459,41 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	# sys.stdout = open('{}/output{}.txt'.format(logdir, chromosomeID),'w')
 	# sys.stderr = open('{}/error{}.txt'.format(logdir, chromosomeID), 'w')
 	
-	try:
-		ssh = SSHClient()
-		ssh.set_missing_host_key_policy(AutoAddPolicy())
-		ssh.connect(machine["host"], key_filename=machine['key_filename'])
-	except NoValidConnectionsError as error:
-		warning_message(error)
-		ssh.close()
-		return
+	# try:
+	# 	ssh = SSHClient()
+	# 	ssh.set_missing_host_key_policy(AutoAddPolicy())
+	# 	ssh.connect(machine["host"], key_filename=machine['key_filename'])
+	# except NoValidConnectionsError as error:
+	# 	warning_message(error)
+	# 	ssh.close()
+	# 	return
 	
 	debug_message('connected to ssh')
 
-	stdin, stdout, stderr = ssh.exec_command('ls | grep {}'.format(git_dir))
+	# stdin, stdout, stderr = ssh.exec_command('ls | grep {}'.format(git_dir))
 	
-	if(len(stdout.readlines()) == 0):
-		git_clone()
-	elif verbose: 
-		info_message('File {} exists on {}'.format(git_dir, machine['host']))
+	# if(len(stdout.readlines()) == 0):
+	# 	git_clone()
+	# elif verbose: 
+	# 	info_message('File {} exists on {}'.format(git_dir, machine['host']))
 
 	command = generate_ssh_command(clargs, chromosome)
 	
 	# print("\n\nExecuting command:\n\t{}".format(command))
 	
-	stdin, stdout, stderr = ssh.exec_command(command)
-	# debug_message('\nCOMPLETED :{}'.format(command))
+	# stdin, stdout, stderr = ssh.exec_command(command)
+	# # debug_message('\nCOMPLETED :{}'.format(command))
 	
-	info_message('Printing `stdout`')
-	print_ssh_output(stdout)
-	info_message('Printing `stderr`')
-	print_ssh_output(stderr)
+	# info_message('Printing `stdout`')
+	# print_ssh_output(stdout)
+	# info_message('Printing `stderr`')
+	# print_ssh_output(stderr)
 	
 	queue.put(machine)
 
 	debug_message('PUT Machine back in QUEUE')
 
-	ssh.close()
+	# ssh.close()
 	
 	info_message('SSH Closed')
 
