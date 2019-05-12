@@ -249,7 +249,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 				# Find a Chromosome that is not trained yet
 				# Wait for queue to have a value, 
 				#	which is the ID of the machine that is done.
-				machine = machines[0]#get_machine(queue, bad_machines)
+				machine = get_machine(queue, bad_machines)
 				print('{}'.format(machine['host']))
 				
 				process = mp.Process(target=train_chromosome, 
@@ -309,10 +309,8 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 
 			
 			for col in generation.columns:
-				# icol == np.where()
-				
 				generation.set_value(chromosomeID, col, sql_json[col])
-				
+	
 	# After all is done: return what you received
 	
 	return generation
@@ -440,7 +438,6 @@ def print_ssh_output(ssh_output):
 	# try:
 	ssh_output.channel.recv_exit_status()
 	for line in ssh_output.readlines(): print(line)
-	
 	# except Exception as error:
 	# 	print('Error on ssh_output.readlines(): {}'.format(error))
 
@@ -492,26 +489,6 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	ssh.close()
 	
 	info_message('SSH Closed')
-
-	# table_dir = clargs.table_dir
-	# table_name = '{}/{}_fitness_table_{}.csv'
-	# table_name = table_name.format(clargs.table_dir, 
-	# 								clargs.run_name, 
-	# 								clargs.time_stamp)
-	"""
-	if os.path.exists(table_name):
-		with open(table_name, 'r') as f_in:
-			check = 'fitness:'
-			for line in f_in.readlines():
-				ck1 = 'generationID:{}'.format(chromosome.generationID) in line
-				ck2 = 'chromosomeID:{}'.format(chromosome.chromosomeID) in line
-				if ck2 and ck2:
-					fitness = line.split(check)[1].split(',')[0]
-					chromosome.fitness = float(fitness)
-					break
-
-	chromosome.isTrained = True
-	"""
 	info_message("Command Executed Successfully")
 
 def select_parents(generation):
@@ -577,7 +554,6 @@ def cross_over(new_generation, generation, parent1, parent2,
 
 	if random.random() >= prob:
 		crossover_happened = True
-		# idx_child = parent1 # this only sets up the pd.Series framework
 		for param in param_choices:
 			p1_param = generation.iloc[idx_parent1][param]
 			p2_param = generation.iloc[idx_parent2][param]

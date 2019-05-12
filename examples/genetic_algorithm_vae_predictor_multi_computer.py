@@ -28,9 +28,7 @@ from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 from vaelstmpredictor.GeneticAlgorithm import *
 
 def debuge_message(message): print('[DEBUG] {}'.format(message))
-def info_message(message): 
-	# print('[INFO] {}'.format(message))
-	pass
+def info_message(message): print('[INFO] {}'.format(message))
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
