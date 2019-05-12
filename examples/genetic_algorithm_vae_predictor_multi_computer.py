@@ -123,30 +123,26 @@ if __name__ == '__main__':
 
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
 
-	machines = [{"host": "192.168.86.26", "username": "jonathan", 
+	machines = [{"host": "172.16.50.181", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.176", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.177", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.163", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.182", "username": "acc", 
+					"key_filename": key_filename},# not operation today
+				{"host": "172.16.50.218", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.159", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.235", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.157", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.237", "username": "acc", 
 					"key_filename": key_filename}
-				# {"host": "192.168.0.1", "username": "not_it", 
-				#   "key_filename": key_filename},
-				# {"host": "172.16.50.181", "username": "acc", 
-				# 	"key_filename": key_filename},
-				# # {"host": "172.16.50.176", "username": "acc", 
-				# 	# "key_filename": key_filename},
-				# {"host": "172.16.50.177", "username": "acc", 
-				# 	"key_filename": key_filename},
-				# # {"host": "172.16.50.163", "username": "acc", 
-				# # 	"key_filename": key_filename},
-				# {"host": "172.16.50.182", "username": "acc", 
-				# 	"key_filename": key_filename},# not operation today
-				# {"host": "172.16.50.218", "username": "acc", 
-				# 	"key_filename": key_filename},
-				# {"host": "172.16.50.159", "username": "acc", 
-				# 	"key_filename": key_filename},
-				# {"host": "172.16.50.235", "username": "acc", 
-				# 	"key_filename": key_filename},
-				# {"host": "172.16.50.157", "username": "acc", 
-				# 	"key_filename": key_filename},
-				# {"host": "172.16.50.237", "username": "acc", 
-				# 	"key_filename": key_filename}
 				]
 
 	debug_message(3)
