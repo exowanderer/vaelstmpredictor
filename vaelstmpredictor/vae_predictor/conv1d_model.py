@@ -334,9 +334,7 @@ class ConvVAEPredictor(object):
 	def dnn_predictor_loss(self, labels, preds):
 		# pred_shape = (self.dnn_out_dim,)
 		# preds = Reshape(pred_shape)(preds)
-		debug_message('dnn_predictor_loss+labels:{}'.format(labels))
-		debug_message('dnn_predictor_loss+preds:{}'.format(preds))
-
+		
 		if self.predictor_type is 'classification':
 			reconstruction_loss = categorical_crossentropy(labels, preds)
 			# reconstruction_loss = self.dnn_latent_dim * reconstruction_loss

@@ -26,6 +26,10 @@ with warnings.catch_warnings():
 	from paramiko.ssh_exception import NoValidConnectionsError
 
 warnings.filterwarnings(action='ignore',module='.*paramiko.*')
+warnings.simplefilter(action='ignore', category=FutureWarning)
+# warnings.filterwarnings(action='ignore',module='.*sklearn.*')
+# warnings.simplefilter(action='ignore', category=DeprecationWarning)
+# warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from sklearn.externals import joblib
 from time import time
@@ -41,7 +45,8 @@ from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
 from .Chromosome import Chromosome
 
-def debug_message(message): print('[DEBUG] {}'.format(message))
+
+def debuge_message(message): print('[DEBUG] {}'.format(message))
 def warning_message(message): print('[WARNING] {}'.format(message))
 def info_message(message): print('[INFO] {}'.format(message))
 
@@ -137,6 +142,7 @@ def create_blank_dataframe(generationID, population_size):
 	generation['generationID'] = np.int64(generation['generationID'])
 	
 	return generation
+
 '''
 def convert_dtypes(df, dtypes = ['int64', 'int64', 'int64', 'int64', 'int64', 
 			  					 'int64', 'int64', 'int64', 'float64']):
@@ -149,6 +155,7 @@ def convert_dtypes(df, dtypes = ['int64', 'int64', 'int64', 'int64', 'int64',
 
 	return df
 '''
+
 def generate_random_chromosomes(population_size,
 						min_vae_hidden_layers = 1, max_vae_hidden_layers = 5, 
 						min_dnn_hidden_layers = 1, max_dnn_hidden_layers = 5, 
@@ -215,80 +222,72 @@ def get_machine(queue, bad_machines):
 	return machine
 
 def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
-	debug_message(('tg',1))
 	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
-	debug_message(('tg',2))
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
-	debug_message(('tg',3))
 	
-	debug_message(('tg',5))
 	generation.generationID = np.int64(generation.generationID)
 	generation.chromosomeID = np.int64(generation.chromosomeID)
-	debug_message(('tg',6))
+	
 	queue = mp.Queue()
 	bad_machines = []
-	debug_message(('tg',7))
+	
 	#Create Processes
 	for machine in machines: queue.put(machine)
-	debug_message(('tg',8))
+	
 	while True:
 		generationID = generation.generationID[0]
 		# Run until entire Generation is listed as isTrained == True
 		if all(generation.isTrained.values == 2): break
-		debug_message(('tg+while',9,generationID))
+		
 		for chromosome in generation.itertuples():
-			debug_message(('tg+while+for',10))
+			
 			if chromosome.isTrained == 0:
 				print("\n\nCreating Process for Chromosome "\
 						"{} on GenerationID {}".format(chromosome.chromosomeID,
 							chromosome.generationID), end=" on machine ")
-				debug_message(('tg+while+for',11))
+				
 				# Find a Chromosome that is not trained yet
 				# Wait for queue to have a value, 
 				#	which is the ID of the machine that is done.
-				debug_message(('tg+while+for',12))
-				machine = get_machine(queue, bad_machines)
+				machine = machines[0]#get_machine(queue, bad_machines)
 				print('{}'.format(machine['host']))
-				debug_message(('tg+while+for',13))
+				
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
 				generation.set_value(chromosome.Index, 'isTrained', 1)
-				debug_message(('tg+while+for',14))
+
 			if chromosome.isTrained != 2:
-				debug_message(('tg+while+for',15))
+				
 				sql_json = query_sql_database(chromosome.generationID, 
 											  chromosome.chromosomeID, 
 											  verbose = False)
-				debug_message(('tg+while+for',16))
+				
 				if sql_json is not -1:
 					assert(sql_json['fitness'] > 0), \
 						"[ERROR] If ID exists in SQL, why is fitness == -1?"
-					debug_message(('tg+while+for',17))
+					
 					generation.set_value(chromosome.Index, 'isTrained', 2)
-					debug_message(('tg+while+for',18))
+					
 					for key, val in sql_json.items(): 
 						generation.set_value(chromosome.Index, key, val)
-					debug_message(('tg+while+for',19))
-			debug_message(('tg+while+for',20))
+					
 			for bad_machine in bad_machines:
 				# This lets us check if it is "good" again
 				queue.put(bad_machine)
-			debug_message(('tg+while+for',21))
 
 	for chromosome in generation.itertuples():
-		debug_message(('tg+while+for',22))
 		assert(chromosome.isTrained), 'while loop should not have closed!'
 		chromosomeID = chromosome.chromosomeID
 		generationID = chromosome.generationID
-		debug_message(('tg+while+for',23))
+		
 		sql_json = query_sql_database(generationID, chromosomeID, 
 										clargs=clargs, verbose=True)
-		debug_message(('tg+while+for',24))
+		
 		if sql_json['fitness'] is -1:
 			sql_json = query_local_csv(generationID, chromosomeID, 
 										clargs = clargs)
-		debug_message(('tg+while+for',25))
+		
 		if isinstance(sql_json, dict) and 'fitness' in sql_json.keys():
 			assert(sql_json['fitness'] != -1), 'while loop may have failed!'
 
@@ -305,15 +304,14 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 			print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
 			print('\n\n')
 
-			debug_message(('tg+while+for',26))
+			
 			for col in generation.columns:
 				# icol == np.where()
-				debug_message(('tg+while+for+for',26.25))
+				
 				generation.set_value(chromosomeID, col, sql_json[col])
-				debug_message(('tg+while+for+for',26.75))
-		debug_message(('tg+while+for',27))
+				
 	# After all is done: return what you received
-	debug_message(('tg+while+for',28))
+	
 	return generation
 
 def generate_ssh_command(clargs, chromosome):
@@ -448,11 +446,9 @@ def train_chromosome(chromosome, machine, queue, clargs,
 					git_dir = 'vaelstmpredictor',
 					verbose = True):
 	
-	debug_message('train_chromosome'.upper())
-	debug_message('Starting train_chromosome')
+	
 	if not os.path.exists(logdir): os.mkdir(logdir)
-	debug_message('Created logdir in :{}'.format(logdir))
-
+	
 	if verbose: 
 		info_message('Checking if file {} exists on {}'.format(
 										git_dir, machine['host']))
@@ -470,8 +466,6 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		ssh.close()
 		return
 	
-	debug_message('connected to ssh')
-
 	stdin, stdout, stderr = ssh.exec_command('ls | grep {}'.format(git_dir))
 	
 	if(len(stdout.readlines()) == 0):
@@ -484,7 +478,6 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	print("\n\nExecuting command:\n\t{}".format(command))
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
-	# debug_message('\nCOMPLETED :{}'.format(command))
 	
 	info_message('Printing `stdout`')
 	print_ssh_output(stdout)
@@ -492,8 +485,6 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	print_ssh_output(stderr)
 	
 	queue.put(machine)
-
-	debug_message('PUT Machine back in QUEUE')
 
 	ssh.close()
 	
@@ -574,25 +565,34 @@ def reconfigure_vae_params(params, static_params_):
 	
 	return params
 
-def cross_over(new_generation, parent1, parent2, chromosomeID,
-				param_choices, prob, verbose=False):
+def cross_over(new_generation, generation, parent1, parent2, 
+				chromosomeID, param_choices, prob, verbose=False):
 	if verbose: info_message('Crossing over with probability: {}'.format(prob))
+
+	idx_parent1 = parent1.Index
+	idx_parent2 = parent2.Index
 
 	if random.random() >= prob:
 		crossover_happened = True
-		child = parent1#.copy() # this only sets up the pd.Series framework
+		# idx_child = parent1 # this only sets up the pd.Series framework
 		for param in param_choices:
-			child_gene = random.choice([parent1[param], parent2[param]])
+			p1_param = generation.iloc[idx_parent1][param]
+			p2_param = generation.iloc[idx_parent2][param]
+			child_gene = random.choice([p1_param, p2_param])
 			new_generation.set_value(chromosomeID, param, child_gene)
 	else: 
 		crossover_happened = False
 		
-		child = parent1 if parent1.fitness > parent2.fitness else parent2
-		new_generation.iloc[chromosomeID] = child
+		p1_fitness = generation.iloc[idx_parent1]['fitness']
+		p2_fitness = generation.iloc[idx_parent2]['fitness']
+
+		idx_child = idx_parent1 if p1_fitness > p2_fitness else idx_parent1
+		new_generation.iloc[chromosomeID] = generation.iloc[idx_child].copy()
 
 	return new_generation, crossover_happened
 
-def mutate(new_generation, chromosomeID, prob, param_choices, verbose = False):
+def mutate(new_generation, generation, chromosomeID, 
+			prob, param_choices, verbose = False):
 	
 	# explicit declaration
 	zero = 0 
@@ -610,11 +610,11 @@ def mutate(new_generation, chromosomeID, prob, param_choices, verbose = False):
 			change_p = np.random.uniform(-range_change, range_change)
 
 			# Add delta_param to param
-			current_p = child[param] + change_p
+			current_p = generation.loc[chromosomeID, param] + change_p
 			
 			# If param less than `min_val`, then set param to `min_val`
 			current_p = np.max([current_p, min_val])
-			current_p = np.int(np.round(child[param]))
+			current_p = np.int(np.round(current_p))
 
 			# All params must be integer sized: round and convert
 			new_generation.set_value(chromosomeID, param, current_p)

@@ -335,8 +335,6 @@ class VAEPredictor(object):
 		# optimizer = None
 		# metrics = None
 		
-		debug_message('INSIDE DENSE_MODEL COMPILE')
-
 		# monitor in addition to normal output
 		metrics_ = {'dnn_prediction': ['acc', 'mse'],
 					'dnn_latent_layer': ['acc', 'mse'],
