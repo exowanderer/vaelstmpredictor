@@ -81,15 +81,16 @@ def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
 
 	json_ID = {'generationID':generationID, 'chromosomeID':chromosomeID}
 	
-	sql_json = requests.get(getFitness, params=json_ID).json()
+	sql_json = requests.get(getFitness, params=json_ID)
 	
 	if not isinstance(sql_json, dict):
 		if verbose: 
 			print('SQL Request Failed: sql_json = {} with {}'.format(sql_json, 
 																	json_ID))
 		return -1
-
 	# Only triggered if `sql_json` is a `dict`
+	sql_json = sql_json.json()
+	
 	if clargs is not None:
 		with open(table_name, 'a') as f_out: 
 			json.dump(sql_json, f_out)
@@ -119,7 +120,9 @@ def query_local_csv(clargs, chromosome):
 	return -1
 
 def create_blank_dataframe(generationID, population_size):
+
 	generation = pd.DataFrame()
+	
 	generation['generationID'] = np.ones(population_size, dtype = int)
 	generation['chromosomeID'] = np.arange(population_size, dtype = int)
 	generation['isTrained'] = np.zeros(population_size, dtype = int)
@@ -133,8 +136,6 @@ def create_blank_dataframe(generationID, population_size):
 	generation['generationID'] = generation['generationID'] * generationID
 	generation['generationID'] = np.int64(generation['generationID'])
 	
-	# generation = convert_dtypes(generation)
-
 	return generation
 '''
 def convert_dtypes(df, dtypes = ['int64', 'int64', 'int64', 'int64', 'int64', 
@@ -177,8 +178,6 @@ def generate_random_chromosomes(population_size,
 	generation['size_dnn_hidden'] = np.random.choice(dnn_nUnits_choices, 
 														size = population_size)
 	generation['fitness'] = np.zeros(population_size, dtype = int) - 1
-
-	# generation = convert_dtypes(generation)
 
 	return generation
 
@@ -233,9 +232,10 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 	for machine in machines: queue.put(machine)
 	debug_message(('tg',8))
 	while True:
+		generationID = generation.generationID[0]
 		# Run until entire Generation is listed as isTrained == True
 		if all(generation.isTrained.values == 2): break
-		debug_message(('tg+while',9))
+		debug_message(('tg+while',9,generationID))
 		for chromosome in generation.itertuples():
 			debug_message(('tg+while+for',10))
 			if chromosome.isTrained == 0:
@@ -291,6 +291,9 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 		debug_message(('tg+while+for',25))
 		if isinstance(sql_json, dict) and 'fitness' in sql_json.keys():
 			assert(sql_json['fitness'] != -1), 'while loop may have failed!'
+
+			if 'isTrained' not in sql_json.keys(): sql_json['isTrained'] = 2
+
 			print('\n\n[INFO]')
 			print('GenerationID:{}'.format(generationID))
 			print('ChromosomeID:{}'.format(chromosomeID))
@@ -303,7 +306,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 			print('\n\n')
 
 			debug_message(('tg+while+for',26))
-			for icol, col in enumerate(generation.columns):
+			for col in generation.columns:
 				# icol == np.where()
 				debug_message(('tg+while+for+for',26.25))
 				generation.set_value(chromosomeID, col, sql_json[col])
@@ -356,16 +359,16 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 				gituser = 'exowanderer', branchname = 'conv1d_model',
 				port = 22, verbose = True, private_key='id_ecdsa'):
 	
-	key_filename = environ['HOME'] + '/.ssh/{}'.format(private_key)
+	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 
-	# try:
-	# 	ssh = SSHClient()
-	# 	ssh.set_missing_host_key_policy(AutoAddPolicy())
-	# 	ssh.connect(hostname, key_filename = key_filename)
-	# except NoValidConnectionsError as error:
-	# 	warning_message(error)
-	# 	ssh.close()
-	# 	return
+	try:
+		ssh = SSHClient()
+		ssh.set_missing_host_key_policy(AutoAddPolicy())
+		ssh.connect(hostname, key_filename = key_filename)
+	except NoValidConnectionsError as error:
+		warning_message(error)
+		ssh.close()
+		return
 	
 	command = []
 	command.append('git clone https://github.com/{}/{}'.format(gituser,gitdir))
@@ -376,19 +379,19 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 	command = '; '.join(command)
 
 	info_message('Executing {} on {}'.format(command, hostname))
-	# try:
-	# 	stdin, stdout, stderr = ssh.exec_command(command)
-	# except NoValidConnectionsError as error:
-	# 	warning_message(error)
-	# 	ssh.close()
-	# 	return
+	try:
+		stdin, stdout, stderr = ssh.exec_command(command)
+	except NoValidConnectionsError as error:
+		warning_message(error)
+		ssh.close()
+		return
 
-	# info_message('Printing `stdout`')
-	# print_ssh_output(stdout)
-	# info_message('Printing `stderr`')
-	# print_ssh_output(stderr)
+	info_message('Printing `stdout`')
+	print_ssh_output(stdout)
+	info_message('Printing `stderr`')
+	print_ssh_output(stderr)
 	
-	# ssh.close()
+	ssh.close()
 	info_message('SSH Closed')
 	print("Command Executed Successfully")
 
@@ -403,31 +406,31 @@ def upload_zip_file(zip_filename, machine, verbose = False):
 		info_message('Transfering {} to {}'.format(
 							zip_filename, machine['host']))
 
-	# transport = Transport((machine["host"], port))
-	# pk = ECDSAKey.from_private_key(open(machine['key_filename']))
-	# transport.connect(username = machine["username"], pkey=pk)
+	transport = Transport((machine["host"], port))
+	pk = ECDSAKey.from_private_key(open(machine['key_filename']))
+	transport.connect(username = machine["username"], pkey=pk)
 	
-	# sftp = SFTPClient.from_transport(transport)
-	# sftp.put(zip_filename, zip_filename)
+	sftp = SFTPClient.from_transport(transport)
+	sftp.put(zip_filename, zip_filename)
 	
-	# stdin, stdout, stderr = ssh.exec_command('unzip {}'.format(zip_filename))
+	stdin, stdout, stderr = ssh.exec_command('unzip {}'.format(zip_filename))
 	
-	# error = "".join(stderr.readlines())
+	error = "".join(stderr.readlines())
 	
-	# if error != "":
-	# 	print("Errors has occured while unzipping file in machine: "\
-	# 			"{} \nError: {}".format(machine, error))
+	if error != "":
+		print("Errors has occured while unzipping file in machine: "\
+				"{} \nError: {}".format(machine, error))
 	
-	# stdin, stdout, stderr = ssh.exec_command('cd vaelstmpredictor; '
-	# 				'~/anaconda3/envs/tf_env/bin/python setup.py install')
+	stdin, stdout, stderr = ssh.exec_command('cd vaelstmpredictor; '
+					'~/anaconda3/envs/tf_env/bin/python setup.py install')
 	
-	# error = "".join(stderr.readlines())
-	# if error != "":
-	# 	print("Errors setting up vaelstmpredictor: "
-	# 			"{}\nError: {}".format(machine, error))
+	error = "".join(stderr.readlines())
+	if error != "":
+		print("Errors setting up vaelstmpredictor: "
+				"{}\nError: {}".format(machine, error))
 
-	# sftp.close()
-	# transport.close()
+	sftp.close()
+	transport.close()
 	print("File uploaded")
 
 
@@ -435,7 +438,6 @@ def print_ssh_output(ssh_output):
 	
 	# try:
 	ssh_output.channel.recv_exit_status()
-	
 	for line in ssh_output.readlines(): print(line)
 	
 	# except Exception as error:
@@ -455,45 +457,45 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		info_message('Checking if file {} exists on {}'.format(
 										git_dir, machine['host']))
 	
-	# chromosomeID = chromosome.chromosomeID
+	chromosomeID = chromosome.chromosomeID
 	# sys.stdout = open('{}/output{}.txt'.format(logdir, chromosomeID),'w')
 	# sys.stderr = open('{}/error{}.txt'.format(logdir, chromosomeID), 'w')
 	
-	# try:
-	# 	ssh = SSHClient()
-	# 	ssh.set_missing_host_key_policy(AutoAddPolicy())
-	# 	ssh.connect(machine["host"], key_filename=machine['key_filename'])
-	# except NoValidConnectionsError as error:
-	# 	warning_message(error)
-	# 	ssh.close()
-	# 	return
+	try:
+		ssh = SSHClient()
+		ssh.set_missing_host_key_policy(AutoAddPolicy())
+		ssh.connect(machine["host"], key_filename=machine['key_filename'])
+	except NoValidConnectionsError as error:
+		warning_message(error)
+		ssh.close()
+		return
 	
 	debug_message('connected to ssh')
 
-	# stdin, stdout, stderr = ssh.exec_command('ls | grep {}'.format(git_dir))
+	stdin, stdout, stderr = ssh.exec_command('ls | grep {}'.format(git_dir))
 	
-	# if(len(stdout.readlines()) == 0):
-	# 	git_clone()
-	# elif verbose: 
-	# 	info_message('File {} exists on {}'.format(git_dir, machine['host']))
+	if(len(stdout.readlines()) == 0):
+		git_clone()
+	elif verbose: 
+		info_message('File {} exists on {}'.format(git_dir, machine['host']))
 
 	command = generate_ssh_command(clargs, chromosome)
 	
-	# print("\n\nExecuting command:\n\t{}".format(command))
+	print("\n\nExecuting command:\n\t{}".format(command))
 	
-	# stdin, stdout, stderr = ssh.exec_command(command)
-	# # debug_message('\nCOMPLETED :{}'.format(command))
+	stdin, stdout, stderr = ssh.exec_command(command)
+	# debug_message('\nCOMPLETED :{}'.format(command))
 	
-	# info_message('Printing `stdout`')
-	# print_ssh_output(stdout)
-	# info_message('Printing `stderr`')
-	# print_ssh_output(stderr)
+	info_message('Printing `stdout`')
+	print_ssh_output(stdout)
+	info_message('Printing `stderr`')
+	print_ssh_output(stderr)
 	
 	queue.put(machine)
 
 	debug_message('PUT Machine back in QUEUE')
 
-	# ssh.close()
+	ssh.close()
 	
 	info_message('SSH Closed')
 
@@ -519,7 +521,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	info_message("Command Executed Successfully")
 
 def select_parents(generation):
-	total_fitness = sum(chrom.fitness for k, chrom in generation.itertuples())
+	total_fitness = sum(chrom.fitness for chrom in generation.itertuples())
 	#Generate two random numbers between 0 and total_fitness 
 	#   not including total_fitness
 	rand_parent1 = random.random()*total_fitness
@@ -529,7 +531,7 @@ def select_parents(generation):
 	parent2 = None
 	
 	fitness_count = 0
-	for k, chromosome in generation.itertuples():
+	for chromosome in generation.itertuples():
 		fitness_count += chromosome.fitness
 		if(parent1 is None and fitness_count >= rand_parent1):
 			parent1 = chromosome
@@ -572,61 +574,25 @@ def reconfigure_vae_params(params, static_params_):
 	
 	return params
 
-def cross_over(parent1, parent2, prob, param_choices, verbose=False):
-	if verbose: 
-		info_message('Crossing over with probability: {}'.format(prob))
+def cross_over(new_generation, parent1, parent2, chromosomeID,
+				param_choices, prob, verbose=False):
+	if verbose: info_message('Crossing over with probability: {}'.format(prob))
 
 	if random.random() >= prob:
 		crossover_happened = True
-		child = parent1.copy() # this only sets up the pd.Series framework
+		child = parent1#.copy() # this only sets up the pd.Series framework
 		for param in param_choices:
-			child[param] = random.choice([parent1[param], parent2[param]])
+			child_gene = random.choice([parent1[param], parent2[param]])
+			new_generation.set_value(chromosomeID, param, child_gene)
 	else: 
 		crossover_happened = False
+		
 		child = parent1 if parent1.fitness > parent2.fitness else parent2
+		new_generation.iloc[chromosomeID] = child
 
-	return child, crossover_happened
-"""
-def cross_over_orig(parent1, parent2, prob, verbose=False):
-	if verbose:
-		print('Crossing over with Parent {} and Parent {}'.format(
-						parent1.chromosomeID, parent2.chromosomeID))
+	return new_generation, crossover_happened
 
-	static_params_ = {  'clargs':parent1.clargs, 
-						'data_instance':parent1.data_instance, 
-						'vae_weight':parent1.vae_weight, 
-						'vae_kl_weight':parent1.vae_kl_weight, 
-						'dnn_weight':parent1.dnn_weight,
-						'dnn_kl_weight':parent1.dnn_kl_weight,
-						'verbose':parent1.verbose
-					  }
-
-	crossover_happened = True # Flag if child == parent: no need to train
-
-	if(random.random() <= prob):
-		params1 = {}
-		params2 = {}
-		for param in parent1.params_dict.keys():
-			if(random.random() <= 0.5):
-				params1[param] = parent1.params_dict[param]
-				params2[param] = parent2.params_dict[param]
-			else:
-				params1[param] = parent2.params_dict[param]
-				params2[param] = parent1.params_dict[param]
-		
-		# Reconfigure each child's collection of layer sizes into arrays
-		params1 = reconfigure_vae_params(params1, static_params_)
-		params2 = reconfigure_vae_params(params2, static_params_)
-		
-		# child1 = Chromosome(**params1)
-		# child2 = Chromosome(**params2)
-
-		return child1, child2, crossover_happened
-	
-	return parent1, parent2, not crossover_happened
-"""
-def mutate(child, prob, param_choices, forced_evolve = False, 
-			min_layer_size = 2, verbose = False):
+def mutate(new_generation, chromosomeID, prob, param_choices, verbose = False):
 	
 	# explicit declaration
 	zero = 0 
@@ -647,12 +613,13 @@ def mutate(child, prob, param_choices, forced_evolve = False,
 			current_p = child[param] + change_p
 			
 			# If param less than `min_val`, then set param to `min_val`
-			child[param] = np.max([current_p, min_val])
-			
-			# All params must be integer sized: round and convert
-			child[param] = np.int(np.round(child[param]))
+			current_p = np.max([current_p, min_val])
+			current_p = np.int(np.round(child[param]))
 
-	return child, mutation_happened
+			# All params must be integer sized: round and convert
+			new_generation.set_value(chromosomeID, param, current_p)
+
+	return new_generation, mutation_happened
 
 def save_generation_to_tree(generation, verbose = False):
 	generation_dict = {}

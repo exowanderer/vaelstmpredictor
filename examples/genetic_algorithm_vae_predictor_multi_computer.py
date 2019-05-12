@@ -122,8 +122,8 @@ if __name__ == '__main__':
 				os.mkdir(val)
 
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
-	
-	machines = [{"host": "127.0.0.1", "username": "jonathan", 
+
+	machines = [{"host": "192.168.86.26", "username": "jonathan", 
 					"key_filename": key_filename}
 				# {"host": "192.168.0.1", "username": "not_it", 
 				#   "key_filename": key_filename},
@@ -195,12 +195,10 @@ if __name__ == '__main__':
 						max_vae_latent = clargs.max_vae_latent,
 						verbose = clargs.verbose)
 	debug_message(13)
-	# generation = convert_dtypes(generation)
 	debug_message(14)
 	generationID = 0
 	generation = train_generation(generation, clargs, machines)
 	debug_message(15)
-	# generation = convert_dtypes(generation)
 	debug_message(16)
 	best_fitness = []
 	fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
@@ -228,55 +226,58 @@ if __name__ == '__main__':
 	for generationID in range(1,num_generations):
 		start_while = time()
 		# Create new generation
-		debug_message(generationID,23)
+		debug_message((generationID,23))
 		new_generation = create_blank_dataframe(generationID, population_size)
-		# new_generation = convert_dtypes(new_generation)
-		debug_message(generationID,24)
+		debug_message((generationID,24))
 		for chromosomeID in tqdm(range(population_size)):
 			parent1, parent2 = select_parents(generation)
-			debug_message(generationID,chromosomeID,25)
-			child, crossover_happened = cross_over(parent1, parent2, 
-											cross_prob, param_choices.keys(), 
-											verbose=verbose)
-			debug_message(generationID,chromosomeID,26)
-			child.generationID = int(generationID)
-			child.chromosomeID = int(chromosomeID)
-			child.fitness = -1.0
-			debug_message(generationID,chromosomeID,27)
-			child, mutation_happened = mutate(child, mutate_prob, 
-											param_choices, verbose=verbose)
-			debug_message(generationID,chromosomeID,28)
-			new_generation.set_value(child.Index, 'isTrained', 2)
-			child.isTrained = mutation_happened*crossover_happened
-			debug_message(generationID,chromosomeID,29)
+			debug_message((generationID,chromosomeID,25))
+			child, crossover_happened = cross_over(new_generation,
+											parent1, parent2, 
+											param_choices.keys(), cross_prob, 
+											verbose = verbose)
+			debug_message((generationID,chromosomeID,26))
+			debug_message((generationID,chromosomeID,27))
+			new_generation, mutation_happened = mutate(new_generation, 
+											mutate_prob, param_choices, 
+											verbose = verbose)
+			debug_message((generationID,chromosomeID,28))
+			isTrained = mutation_happened*crossover_happened
+			if isTrained: isTrained = 2
+
+			new_generation.set_value(chromosomeID, 'isTrained', isTrained)
+			new_generation.set_value(chromosomeID, 'chromosomeID',chromosomeID)
+			new_generation.set_value(chromosomeID, 'fitness', -1)
+			
+			debug_message((generationID,chromosomeID,29))
 			info_message('Adding Chromosome:\n{}'.format(child))
-			new_generation.iloc[chromosomeID] = child
-		debug_message(generationID,28)
+			# new_generation.iloc[chromosomeID] = child
+		debug_message((generationID,28))
 		# Re-sort by chromosomeID
 		new_generation = new_generation.sort_values('chromosomeID')
 		new_generation.index = np.arange(population_size)
-		debug_message(generationID,29)
+		debug_message((generationID,29))
 		assert((new_generation['generationID'].values == generationID)).all(),\
 			"The GenerationID did not update: should be {}; but is {}".format(
 				generationID, generation['generationID'].values)
-		debug_message(generationID,30)
+		debug_message((generationID,30))
 		generation = train_generation(new_generation, clargs, machines)
-		debug_message(generationID,31)
+		debug_message((generationID,31))
 		info_message('Time for Generation{}: {} minutes'.format(generationID, 
 											(time() - start_while)//60))
-		debug_message(generationID,32)
+		debug_message((generationID,32))
 		fitnesses = [chrom.fitness for _, chrom in generation.iterrows()]
-		debug_message(generationID,33)
+		debug_message((generationID,33))
 		new_best_fitness = max(fitnesses)
-		debug_message(generationID,34)
+		debug_message((generationID,34))
 		if clargs.verbose:
 			info_message('For Generation: {}, the best fitness was {}'.format(
 					generationID, new_best_fitness))
-		debug_message(generationID,35)
+		debug_message((generationID,35))
 		best_fitness.append(new_best_fitness)
-		debug_message(generationID,36)
+		debug_message((generationID,36))
 		if make_plots:
 			plt.plot(best_fitness, color="c")
 			plt.xlim([0, num_generations])
 			fig.canvas.draw()
-		debug_message(generationID,37)
+		debug_message((generationID,37))
