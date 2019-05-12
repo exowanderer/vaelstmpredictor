@@ -255,6 +255,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
+
 				generation.set_value(chromosome.Index, 'isTrained', 1)
 
 			if chromosome.isTrained != 2:
@@ -265,7 +266,9 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 				
 				if sql_json is not -1:
 					assert(sql_json['fitness'] > 0), \
-						"[ERROR] If ID exists in SQL, why is fitness == -1?"
+						"[ERROR] If ID exists in SQL, why is fitness == -1?"\
+						"\n GenerationID:{} ChromosomeID:{}".format(
+							chromosome.generationID, chromosome.chromosomeID)
 					
 					generation.set_value(chromosome.Index, 'isTrained', 2)
 					
