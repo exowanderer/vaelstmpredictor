@@ -287,6 +287,9 @@ if __name__ == '__main__':
 	chromosome.verbose = True
 	chromosome.train(verbose=True)
 	
+	generationID = chromosome.generationID
+	chromosomeID = chromosome.chromosomeID
+	
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
 
 	local_wghts = chromosome.wghts_save_loc
