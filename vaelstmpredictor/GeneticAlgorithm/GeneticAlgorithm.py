@@ -401,6 +401,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		info_message('Checking if file {} exists on {}'.format(
 										git_dir, machine['host']))
 	
+	generationID = chromosome.generationID
 	chromosomeID = chromosome.chromosomeID
 	# sys.stdout = open('{}/output{}.txt'.format(logdir, chromosomeID),'w')
 	# sys.stderr = open('{}/error{}.txt'.format(logdir, chromosomeID), 'w')
@@ -423,7 +424,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 
 	command = generate_ssh_command(clargs, chromosome)
 	
-	print("\n\nExecuting command:\n\t{}".format(command))
+	print("\n\nExecuting Train Chromosome Command:\n\t{}".format(command))
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
 	
@@ -437,7 +438,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	ssh.close()
 	
 	info_message('SSH Closed on Train Chromosome')
-	info_message("Train Chromosome Executed Successfully\ngenerationID:"\
+	info_message("Train Chromosome Executed Successfully: generationID:"\
 					"{}\tchromosomeID:{}".format(generationID,chromosomeID))
 
 def select_parents(generation):

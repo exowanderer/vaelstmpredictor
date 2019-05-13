@@ -289,7 +289,7 @@ if __name__ == '__main__':
 	
 	generationID = chromosome.generationID
 	chromosomeID = chromosome.chromosomeID
-	
+
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
 
 	local_wghts = chromosome.wghts_save_loc
@@ -350,12 +350,14 @@ if __name__ == '__main__':
 	debug_message('\n\nRUN_CHROMOSOME after purURL: genID, chromID:{}'.format(
 						generationID, chromosomeID))
 	
-	try:
-		if req.json() == 1:
-			info_message('Remote SQL Entry Added Successfully')
-		else:
-			warning_message('!! The World Has Ended !!')
-	except json.decoder.JSONDecodeError as error: warning_message(error)
+	# try:
+	debug_message(req)
+	debug_message(req.json())
+	if req.json() == 1:
+		info_message('Remote SQL Entry Added Successfully')
+	else:
+		warning_message('\n\n!! The World Has Ended !!\n\n')
+	# except json.decoder.JSONDecodeError as error: warning_message(error)
 
-	debug_message('\n\nRUN_CHROMOSOME FINISHED: genID, chromID:{}'.format(
-						generationID, chromosomeID))
+	debug_message('\n\nRUN_CHROMOSOME FINISHED: generationID:'
+					'{}, chromomosomeID:{}'.format(generationID, chromosomeID))
