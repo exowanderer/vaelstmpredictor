@@ -519,9 +519,12 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	
 	info_message('Printing `stdout` in Train Chromosome')
 	# print_ssh_output(stdout)
-	stdout_ = stdout.readlines()
+	
 	debug_message('Printing `stderr` in Train Chromosome')
 	stderr_ = stderr.readlines()
+	print(stderr_)
+	stdout_ = stdout.readlines()
+	print(stdout_)
 	ssh.close()
 	debug_message('Printing `stdout` in Train Chromosome')
 	if stdout_ is not None:
