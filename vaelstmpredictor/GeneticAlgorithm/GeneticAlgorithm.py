@@ -508,8 +508,18 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	if(len(stdout.readlines()) == 0):
 		git_clone()
 	elif verbose: 
-		
 		info_message('File {} exists on {}'.format(git_dir, machine['host']))
+	
+	ssh.close()
+
+	try:
+		ssh = SSHClient()
+		ssh.set_missing_host_key_policy(AutoAddPolicy())
+		ssh.connect(machine["host"], key_filename=machine['key_filename'])
+	except NoValidConnectionsError as error:
+		warning_message(error)
+		ssh.close()
+		return
 	
 	command = generate_ssh_command(clargs, chromosome)
 
