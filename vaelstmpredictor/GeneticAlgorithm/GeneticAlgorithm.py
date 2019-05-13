@@ -465,7 +465,8 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 	info_message('SSH Closed on Git Clone')
 	print("Git Clone Executed Successfully")
 
-def # print_ssh_output(ssh_output):
+'''
+def  print_ssh_output(ssh_output):
 	debug_message('INSIDE: # print_ssh_output')
 	try:
 		debug_message('INSIDE: TRY1')
@@ -486,7 +487,7 @@ def # print_ssh_output(ssh_output):
 		warning_message('\n\n2,Error on ssh_output.readlines():'
 						'{}'.format(error))
 		debug_message('INSIDE: FINSIHED EXCEPT1')
-
+'''
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
 					git_dir = 'vaelstmpredictor',
