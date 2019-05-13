@@ -207,26 +207,25 @@ def create_blank_dataframe(generationID, population_size):
 	generation['hostname'] = ['127.0.0.1']*population_size
 	generation['iterations'] = zeros
 	generation['kl_anneal'] = zeros
-	generation['log_dir'] = zeros
-	generation['model_dir'] = zeros
+	generation['log_dir'] = ['../data/logs']*population_size
+	generation['model_dir'] = ['../data/models']*population_size
 	generation['mutate_prob'] = zeros
 	generation['num_epochs'] = zeros
-	generation['optimizer'] = zeros
+	generation['optimizer'] = ['adam']*population_size
 	generation['patience'] = zeros
 	generation['population_size'] = zeros
 	generation['prediction_log_var_prior'] = zeros
-	generation['predictor_type'] = zeros
-	generation['run_name'] = zeros
-	generation['table_dir'] = zeros
+	generation['predictor_type'] = ['classification']*population_size
+	generation['run_name'] = ['run_name']*population_size
+	generation['table_dir'] = ['../data/tables']*population_size
 	generation['time_stamp'] = zeros
-	generation['train_file'] = zeros
+	generation['train_file'] = ['train_file']*population_size
 	generation['vae_kl_weight'] = zeros
 	generation['vae_weight'] = zeros
 	generation['w_kl_anneal'] = zeros
 
 	generation['generationID'] = generation['generationID'] * generationID
 	generation['generationID'] = np.int64(generation['generationID'])
-
 	
 	return generation
 
@@ -275,23 +274,23 @@ def generate_random_chromosomes(population_size,
 	generation['hostname'] = ['127.0.0.1']*population_size
 	generation['iterations'] = zeros
 	generation['kl_anneal'] = zeros
-	generation['log_dir'] = zeros
-	generation['model_dir'] = zeros
+	generation['log_dir'] = ['../data/logs']*population_size
+	generation['model_dir'] = ['../data/models']*population_size
 	generation['mutate_prob'] = zeros
 	generation['num_epochs'] = zeros
-	generation['optimizer'] = zeros
+	generation['optimizer'] = ['adam']*population_size
 	generation['patience'] = zeros
 	generation['population_size'] = zeros
 	generation['prediction_log_var_prior'] = zeros
-	generation['predictor_type'] = zeros
-	generation['run_name'] = zeros
-	generation['table_dir'] = zeros
+	generation['predictor_type'] = ['classification']*population_size
+	generation['run_name'] = ['run_name']*population_size
+	generation['table_dir'] = ['../data/tables']*population_size
 	generation['time_stamp'] = zeros
-	generation['train_file'] = zeros
+	generation['train_file'] = ['train_file']*population_size
 	generation['vae_kl_weight'] = zeros
 	generation['vae_weight'] = zeros
 	generation['w_kl_anneal'] = zeros
-
+	
 	return generation
 
 def get_machine(queue, bad_machines):
