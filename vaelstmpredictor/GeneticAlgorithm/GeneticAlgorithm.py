@@ -339,7 +339,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 					debug_message('15,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
-				else isinstance(sql_json, dict):
+				else:
 					warning_message('SQL_JSON:{}'.formatin(sql_json))
 
 				debug_message('16,tg+while+for+generationID:'
