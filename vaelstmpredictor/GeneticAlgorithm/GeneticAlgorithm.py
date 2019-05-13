@@ -474,29 +474,9 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 
 
 def print_ssh_output(ssh_output):
-	debug_message('INSIDE: print_ssh_output":{}'.format(ssh_output))
-	debug_message('INSIDE: print_ssh_output":{}'.format(ssh_output.flush()))
-	for line in ssh_output.readlines(): print(line)
-	debug_message('INSIDE: print_ssh_output')
-	try:
-		debug_message('INSIDE: TRY1')
-		# try:
-		# 	debug_message('INSIDE: TRY2')
-		# 	ssh_output.channel.recv_exit_status()
-		# 	debug_message('INSIDE: TRY2 DONE')
-		# except Exception as error:
-		# 	debug_message('INSIDE: EXCEPT2')
-		# 	warning_message('\n\n1,Error on ssh_output.readlines():'
-		# 				'{}'.format(error))
-		# 	debug_message('INSIDE: FINSIHED EXCEPT2')
-		debug_message('INSIDE: Continuing TRY1')
-		
-		debug_message('INSIDE: FINSIHED TRY1')
-	except Exception as error:
-		debug_message('INSIDE: EXCEPT1')
-		warning_message('\n\n2,Error on ssh_output.readlines():'
-						'{}'.format(error))
-		debug_message('INSIDE: FINSIHED EXCEPT1')
+	debug_message('FLUSHING SSH_OUTPUT')
+	ssh_output.flush()
+	# for line in ssh_output.readlines(): print(line)
 
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
