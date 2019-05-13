@@ -141,7 +141,8 @@ def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
 					'{}+chromosomeID:{}+sql_json:{}'.format(
 						generationID, chromosomeID, type(sql_json)))
 	# Only triggered if `sql_json` is a `dict`
-	sql_json = sql_json.json()
+	
+	# sql_json = sql_json.json()
 	debug_message('11,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
 						generationID, chromosomeID, type(sql_json)))
