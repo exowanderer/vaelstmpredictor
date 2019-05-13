@@ -79,32 +79,62 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 	return hidden_dims
 
 def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
+	debug_message('1,query_sql_database+generationID:{}+chromosomeID:{}'.format(
+					generationID, chromosomeID))
 	getFitness = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
 	getFitness = getFitness + 'GetFitness'
-
+	debug_message('2,query_sql_database+generationID:'
+					'{}+chromosomeID:{}'.format(generationID, chromosomeID))
 	if clargs is not None:
+		debug_message('3,query_sql_database+generationID:'
+					'{}+chromosomeID:{}'.format(generationID, chromosomeID))
 		table_dir = clargs.table_dir
 		table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
 		table_name = table_name.format(clargs.table_dir, 
 						clargs.run_name, generationID, 
 						chromosomeID, clargs.time_stamp)
+		debug_message('4,query_sql_database+generationID:'
+					'{}+chromosomeID:{}'.format(generationID, chromosomeID))
+
+	debug_message('5,query_sql_database+generationID:'
+					'{}+chromosomeID:{}'.format(generationID, chromosomeID))
 
 	json_ID = {'generationID':generationID, 'chromosomeID':chromosomeID}
-	
+	debug_message('6,query_sql_database+generationID:'
+					'{}+chromosomeID:{}'.format(generationID, chromosomeID))
 	sql_json = requests.get(getFitness, params=json_ID)
-	
+	debug_message('7,query_sql_database+generationID:'
+					'{}+chromosomeID:{}+sql_json:{}'.format(
+						generationID, chromosomeID, sql_json))
+
 	if not isinstance(sql_json, dict):
+		debug_message('8,query_sql_database+generationID:'
+					'{}+chromosomeID:{}+sql_json:{}'.format(
+						generationID, chromosomeID, sql_json))
 		if verbose: 
 			print('SQL Request Failed: sql_json = {} with {}'.format(sql_json, 
 																	json_ID))
+		debug_message('9,query_sql_database+generationID:'
+					'{}+chromosomeID:{}+sql_json:{}'.format(
+						generationID, chromosomeID, sql_json))
 		return -1
+	debug_message('10,query_sql_database+generationID:'
+					'{}+chromosomeID:{}+sql_json:{}'.format(
+						generationID, chromosomeID, sql_json))
 	# Only triggered if `sql_json` is a `dict`
 	sql_json = sql_json.json()
-	
+	debug_message('11,query_sql_database+generationID:'
+					'{}+chromosomeID:{}+sql_json:{}'.format(
+						generationID, chromosomeID, sql_json))
 	if clargs is not None:
+		debug_message('12,query_sql_database+generationID:'
+					'{}+chromosomeID:{}+sql_json:{}'.format(
+						generationID, chromosomeID, sql_json))
 		with open(table_name, 'a') as f_out: 
 			json.dump(sql_json, f_out)
-	
+	debug_message('13,query_sql_database+generationID:'
+					'{}+chromosomeID:{}+sql_json:{}'.format(
+						generationID, chromosomeID, sql_json))
 	return sql_json
 
 def query_local_csv(clargs, chromosome):
