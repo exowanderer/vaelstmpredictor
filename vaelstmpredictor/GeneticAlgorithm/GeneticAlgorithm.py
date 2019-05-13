@@ -143,19 +143,6 @@ def create_blank_dataframe(generationID, population_size):
 	
 	return generation
 
-'''
-def convert_dtypes(df, dtypes = ['int64', 'int64', 'int64', 'int64', 'int64', 
-			  					 'int64', 'int64', 'int64', 'float64']):
-	
-	dtypes = {name:dtype for name, dtype in zip(df.columns, dtypes)}
-	df = df.astype(dtypes)
-	
-	for colname, dtype in dtypes.items(): 
-		df[colname] = df[colname].astype(dtype)
-
-	return df
-'''
-
 def generate_random_chromosomes(population_size,
 						min_vae_hidden_layers = 1, max_vae_hidden_layers = 5, 
 						min_dnn_hidden_layers = 1, max_dnn_hidden_layers = 5, 
@@ -391,47 +378,8 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 	print_ssh_output(stderr)
 	
 	ssh.close()
-	info_message('SSH Closed')
-	print("Command Executed Successfully")
-
-def upload_zip_file(zip_filename, machine, verbose = False):
-	if verbose: info_message('File {} does not exists on {}'.format(
-									zip_filename, machine['host']))
-	
-	#Upload Files to Machine
-	info_message('Uploading file to machine')
-	
-	if verbose: 
-		info_message('Transfering {} to {}'.format(
-							zip_filename, machine['host']))
-
-	transport = Transport((machine["host"], port))
-	pk = ECDSAKey.from_private_key(open(machine['key_filename']))
-	transport.connect(username = machine["username"], pkey=pk)
-	
-	sftp = SFTPClient.from_transport(transport)
-	sftp.put(zip_filename, zip_filename)
-	
-	stdin, stdout, stderr = ssh.exec_command('unzip {}'.format(zip_filename))
-	
-	error = "".join(stderr.readlines())
-	
-	if error != "":
-		print("Errors has occured while unzipping file in machine: "\
-				"{} \nError: {}".format(machine, error))
-	
-	stdin, stdout, stderr = ssh.exec_command('cd vaelstmpredictor; '
-					'~/anaconda3/envs/tf_env/bin/python setup.py install')
-	
-	error = "".join(stderr.readlines())
-	if error != "":
-		print("Errors setting up vaelstmpredictor: "
-				"{}\nError: {}".format(machine, error))
-
-	sftp.close()
-	transport.close()
-	print("File uploaded")
-
+	info_message('SSH Closed on Git Clone')
+	print("Git Clone Executed Successfully")
 
 def print_ssh_output(ssh_output):
 	
@@ -488,8 +436,9 @@ def train_chromosome(chromosome, machine, queue, clargs,
 
 	ssh.close()
 	
-	info_message('SSH Closed')
-	info_message("Command Executed Successfully")
+	info_message('SSH Closed on Train Chromosome')
+	info_message("Train Chromosome Executed Successfully\ngenerationID:"\
+					"{}\tchromosomeID:{}".format(generationID,chromosomeID))
 
 def select_parents(generation):
 	total_fitness = sum(chrom.fitness for chrom in generation.itertuples())
@@ -512,38 +461,6 @@ def select_parents(generation):
 			break
 
 	return parent1, parent2
-
-def reconfigure_vae_params(params, static_params_):
-	clargs = static_params_['clargs']
-
-	max_vae_hidden_layers = clargs.max_vae_hidden_layers
-	max_dnn_hidden_layers = clargs.max_dnn_hidden_layers
-
-	for key,val in static_params_.items():
-		params[key] = val
-
-	# Reconfigure child1's collection of layer sizes into arrays
-	vae_hidden_dims = np.zeros(max_vae_hidden_layers, dtype=int)
-	dnn_hidden_dims = np.zeros(max_dnn_hidden_layers, dtype=int)
-
-	params_copy = {key:val for key,val in params.items()}
-
-	for key,val in params_copy.items():
-		if 'size_vae_hidden' in key:
-			idx = int(key[-1])
-			vae_hidden_dims[idx] = val
-			del params[key]
-
-		if 'size_dnn_hidden' in key:
-			idx = int(key[-1])
-			dnn_hidden_dims[idx] = val
-			del params[key]
-	
-	# params['vae_latent_dim'] = vae_latent_dim
-	params['vae_hidden_dims'] = vae_hidden_dims
-	params['dnn_hidden_dims'] = dnn_hidden_dims
-	
-	return params
 
 def cross_over(new_generation, generation, parent1, parent2, 
 				chromosomeID, param_choices, prob, verbose=False):
@@ -599,21 +516,3 @@ def mutate(new_generation, generation, chromosomeID,
 			new_generation.set_value(chromosomeID, param, current_p)
 
 	return new_generation, mutation_happened
-
-def save_generation_to_tree(generation, verbose = False):
-	generation_dict = {}
-	if verbose: info_message('Current Generation: ' )
-
-	for member in generation.itertuples():
-		if member.Index not in generation_dict.keys(): generation_dict[ID] = {}
-		
-		if verbose: 
-			print('memberID: {}'.format(ID))
-			print('Fitness: {}'.format(member.fitness))
-			for key,val in member.items():
-				print('\t{}: {}'.format(key, val))
-
-		generation_dict[ID]['params'] = member
-		generation_dict[ID]['fitness'] = member.fitness
-	
-	return generation_dict

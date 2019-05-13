@@ -122,12 +122,12 @@ if __name__ == '__main__':
 
 	machines = [{"host": "172.16.50.181", "username": "acc", 
 					"key_filename": key_filename},
-				{"host": "172.16.50.176", "username": "acc", 
-					"key_filename": key_filename},
+				#{"host": "172.16.50.176", "username": "acc", 
+				#	"key_filename": key_filename},
 				{"host": "172.16.50.177", "username": "acc", 
 					"key_filename": key_filename},
-				{"host": "172.16.50.163", "username": "acc", 
-					"key_filename": key_filename},
+				#{"host": "172.16.50.163", "username": "acc", 
+				#	"key_filename": key_filename},
 				{"host": "172.16.50.182", "username": "acc", 
 					"key_filename": key_filename},# not operation today
 				{"host": "172.16.50.218", "username": "acc", 
