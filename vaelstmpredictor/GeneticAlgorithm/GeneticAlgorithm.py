@@ -467,11 +467,11 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 
 def print_ssh_output(ssh_output):
 	
-	# try:
-	ssh_output.channel.recv_exit_status()
-	for line in ssh_output.readlines(): print(line)
-	# except Exception as error:
-	# 	print('Error on ssh_output.readlines(): {}'.format(error))
+	try:
+		ssh_output.channel.recv_exit_status()
+		for line in ssh_output.readlines(): print(line)
+	except Exception as error:
+		warning_message('\n\nError on ssh_output.readlines():{}'.format(error))
 
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
