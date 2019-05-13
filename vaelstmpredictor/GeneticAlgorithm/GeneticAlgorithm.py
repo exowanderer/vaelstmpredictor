@@ -463,25 +463,24 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 		ssh.close()
 		return
 
-	info_message('Printing `stdout`')
-	print_ssh_output(stdout)
-	info_message('Printing `stderr`')
-	print_ssh_output(stderr)
+	info_message('Printing `stdout` in Git Clone')
+	for line in stdout.readlines(): print(line)
+
+	info_message('Printing `stderr` in Git Clone')
+	for line in stderr.readlines(): print(line)
 	
 	ssh.close()
 	info_message('SSH Closed on Git Clone')
 	print("Git Clone Executed Successfully")
 
-
-def print_ssh_output(ssh_output):
-	debug_message('FLUSHING SSH_OUTPUT')
-	print(ssh_output.readlines())
-	# for line in ssh_output.readlines(): print(line)
+# def print_ssh_output(ssh_output):
+# 	for line in ssh_output.readlines(): print(line)
 
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
 					git_dir = 'vaelstmpredictor',
 					verbose = True):
+	
 	generationID = chromosome.generationID
 	chromosomeID = chromosome.chromosomeID
 	
@@ -509,18 +508,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		git_clone()
 	elif verbose: 
 		info_message('File {} exists on {}'.format(git_dir, machine['host']))
-	
-	ssh.close()
 
-	try:
-		ssh = SSHClient()
-		ssh.set_missing_host_key_policy(AutoAddPolicy())
-		ssh.connect(machine["host"], key_filename=machine['key_filename'])
-	except NoValidConnectionsError as error:
-		warning_message(error)
-		ssh.close()
-		return
-	
 	command = generate_ssh_command(clargs, chromosome)
 
 	print("\n\nExecuting Train Chromosome Command:\n\t{}".format(command))
@@ -528,31 +516,15 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	stdin, stdout, stderr = ssh.exec_command(command)
 	
 	info_message('Printing `stdout` in Train Chromosome')
-	# print_ssh_output(stdout)
-	
-	debug_message('Printing `stderr` in Train Chromosome')
-	stderr_ = stderr.readlines()
-	print(stderr_)
-	stdout_ = stdout.readlines()
-	print(stdout_)
-	ssh.close()
-	debug_message('Printing `stdout` in Train Chromosome')
-	if stdout_ is not None:
-		debug_message('Printing `stdout` in Train Chromosome')
-		print(stdout_)
-		debug_message('Printing `stdout` in Train Chromosome')
-	debug_message('Printing `stderr` in Train Chromosome')
-	# print_ssh_output(stderr)
-	if stderr_ is not None:
-		debug_message('Printing `stderr` in Train Chromosome')
-		print(stderr_)
-		debug_message('Printing `stderr` in Train Chromosome')
+	for line in stdout.readlines(): print(line)
+
+	info_message('Printing `stderr` in Train Chromosome')
+	for line in stderr.readlines(): print(line)
 
 	queue.put(machine)
 	
-	# ssh.close()
-	
-	
+	ssh.close()
+		
 	info_message('SSH Closed on Train Chromosome')
 	info_message("Train Chromosome Executed Successfully: generationID:"\
 					"{}\tchromosomeID:{}".format(generationID,chromosomeID))
