@@ -520,23 +520,24 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	info_message('Printing `stdout` in Train Chromosome')
 	# print_ssh_output(stdout)
 	stdout_ = stdout.readlines()
-	info_message('Printing `stdout` in Train Chromosome')
-	if stdout_ is not None:
-		info_message('Printing `stdout` in Train Chromosome')
-		print(stdout_)
-		info_message('Printing `stdout` in Train Chromosome')
-	info_message('Printing `stderr` in Train Chromosome')
-	# print_ssh_output(stderr)
+	debug_message('Printing `stderr` in Train Chromosome')
 	stderr_ = stderr.readlines()
-	info_message('Printing `stderr` in Train Chromosome')
+	ssh.close()
+	debug_message('Printing `stdout` in Train Chromosome')
+	if stdout_ is not None:
+		debug_message('Printing `stdout` in Train Chromosome')
+		print(stdout_)
+		debug_message('Printing `stdout` in Train Chromosome')
+	debug_message('Printing `stderr` in Train Chromosome')
+	# print_ssh_output(stderr)
 	if stderr_ is not None:
-		info_message('Printing `stderr` in Train Chromosome')
+		debug_message('Printing `stderr` in Train Chromosome')
 		print(stderr_)
-		info_message('Printing `stderr` in Train Chromosome')
+		debug_message('Printing `stderr` in Train Chromosome')
 
 	queue.put(machine)
 	
-	ssh.close()
+	# ssh.close()
 	
 	
 	info_message('SSH Closed on Train Chromosome')
