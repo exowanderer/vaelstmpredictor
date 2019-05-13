@@ -229,6 +229,8 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 	debug_message('2,tg+generationID:{}'.format(generation.generationID))
 	while True:
 		generationID = generation.generationID.values[0]
+		debug_message('2b,tg+while+generationID:{}+queue size:{}'.format(
+							generationID, queue.qsize()))
 		debug_message('3,tg+while+generationID:{}'.format(generationID))
 		
 		# Run until entire Generation is listed as isTrained == True
