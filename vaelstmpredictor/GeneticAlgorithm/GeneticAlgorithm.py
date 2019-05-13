@@ -272,8 +272,8 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 			if chromosome.isTrained != 2:
 				# Check if chromosome has been updated on SQL
 				debug_message('10,tg+while+for+generationID:'
-							'{}+chromosomeID:{}'.format(
-								generationID, chromosomeID))
+							'{}+chromosomeID:{}+isTrained:{}'.format(
+							generationID, chromosomeID,chromosome.isTrained))
 				sql_json = query_sql_database(chromosome.generationID, 
 											  chromosome.chromosomeID, 
 											  verbose = False)
