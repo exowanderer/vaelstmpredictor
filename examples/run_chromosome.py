@@ -344,10 +344,12 @@ if __name__ == '__main__':
 		del put_sql_dict['do_log']
 		del put_sql_dict['make_plots']
 		del put_sql_dict['verbose']
-	debug_message('\n\nRUN_CHROMOSOME before purURL: genID, chromID:{}'.format(
+	debug_message('\n\nRUN_CHROMOSOME before purURL: '
+					'generationID, chromosomeID:{}'.format(
 						generationID, chromosomeID))
 	req = requests.get(url = putURL, params = put_sql_dict)
-	debug_message('\n\nRUN_CHROMOSOME after purURL: genID, chromID:{}'.format(
+	debug_message('\n\nRUN_CHROMOSOME after purURL: '
+					'generationID, chromosomeID:{}'.format(
 						generationID, chromosomeID))
 	
 	# try:

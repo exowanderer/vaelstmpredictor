@@ -27,7 +27,7 @@ from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
 from vaelstmpredictor.GeneticAlgorithm import *
 
-def debuge_message(message): print('[DEBUG] {}'.format(message))
+def debug_message(message): print('[DEBUG] {}'.format(message))
 def info_message(message): print('[INFO] {}'.format(message))
 
 if __name__ == '__main__':
@@ -189,13 +189,8 @@ if __name__ == '__main__':
 						verbose = clargs.verbose)
 	
 	generationID = 0
-	debuge_message('\n\n')
-	debuge_message('0,__main__+generationID:{}'.format(generationID))
-	debuge_message('\n\n')
 	generation = train_generation(generation, clargs, machines)
-	debuge_message('\n\n')
-	debuge_message('0b,__main__+generationID:{}'.format(generationID))
-	debuge_message('\n\n')
+	
 	best_fitness = []
 	fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
 	
@@ -222,16 +217,9 @@ if __name__ == '__main__':
 	for generationID in range(1,num_generations):
 		start_while = time()
 		# Create new generation
-		debuge_message('\n\n')
-		debuge_message('1,__main__+loop+generationID:{}'.format(generationID))
-		debuge_message('\n\n')
 		new_generation = create_blank_dataframe(generationID, population_size)
 		
 		for chromosomeID in tqdm(range(population_size)):
-			debuge_message('\n\n')
-			debuge_message('2,__main__+loop2+generationID,'\
-				'chromosomeID:{}'.format(generationID, chromosomeID))
-			debuge_message('\n\n')
 			parent1, parent2 = select_parents(generation)
 			
 			child, crossover_happened = cross_over(new_generation, generation,

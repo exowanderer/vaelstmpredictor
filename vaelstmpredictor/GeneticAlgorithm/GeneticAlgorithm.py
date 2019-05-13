@@ -79,37 +79,20 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 	return hidden_dims
 
 def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
-	debug_message('1,query_sql_database+generationID:'
-					'{}+chromosomeID:{}'.format(generationID, chromosomeID))
 	getFitness = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
 	getFitness = getFitness + 'GetFitness'
-	debug_message('2,query_sql_database+generationID:'
-					'{}+chromosomeID:{}'.format(generationID, chromosomeID))
+	
 	if clargs is not None:
-		debug_message('3,query_sql_database+generationID:'
-					'{}+chromosomeID:{}'.format(generationID, chromosomeID))
 		table_dir = clargs.table_dir
 		table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
 		table_name = table_name.format(clargs.table_dir, 
 						clargs.run_name, generationID, 
 						chromosomeID, clargs.time_stamp)
-		debug_message('4,query_sql_database+generationID:'
-					'{}+chromosomeID:{}'.format(generationID, chromosomeID))
-
-	debug_message('5,query_sql_database+generationID:'
-					'{}+chromosomeID:{}'.format(generationID, chromosomeID))
-
+		
 	json_ID = {'generationID':generationID, 'chromosomeID':chromosomeID}
-	debug_message('6,query_sql_database+generationID:'
-					'{}+chromosomeID:{}'.format(generationID, chromosomeID))
+	
 	sql_json = requests.get(getFitness, params=json_ID)
-	debug_message('7,query_sql_database+generationID:'
-					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, type(sql_json)))
-	debug_message('7b,query_sql_database+generationID:'
-					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, sql_json))
-
+	
 	print(getFitness,end="?")
 	for key,val in json_ID.items():
 		print('{}={}&'.format(key,val), end="")
@@ -120,43 +103,20 @@ def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
 	except Exception as error:
 		warning_message('query_sql_database+Except:\n{}'.format(error))
 	
-	debug_message('7c,query_sql_database+generationID:'
-					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, sql_json))
-	
 	if sql_json == 0:#not isinstance(sql_json, requests.models.Response):
-		debug_message('8,query_sql_database+generationID:'
-					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, type(sql_json)))
 		if verbose: 
 			print('SQL Request Failed: sql_json = {} with {}'.format(sql_json, 
 																	json_ID))
-		debug_message('9,query_sql_database+generationID:'
-					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, type(sql_json)))
-		
 		return sql_json
 
-	debug_message('10,query_sql_database+generationID:'
-					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, type(sql_json)))
 	# Only triggered if `sql_json` is a `dict`
 
 	# sql_json = sql_json.json()
-	debug_message('11,query_sql_database+generationID:'
-					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, type(sql_json)))
-
+	
 	if clargs is not None:
-		debug_message('12,query_sql_database+generationID:'
-					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, type(sql_json)))
 		with open(table_name, 'a') as f_out: 
 			json.dump(sql_json, f_out)
 
-	debug_message('13,query_sql_database+generationID:'
-					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, type(sql_json)))
 	return sql_json
 
 def query_local_csv(clargs, chromosome):
@@ -290,7 +250,7 @@ def generate_random_chromosomes(population_size,
 	generation['vae_kl_weight'] = zeros
 	generation['vae_weight'] = zeros
 	generation['w_kl_anneal'] = zeros
-	
+
 	return generation
 
 def get_machine(queue, bad_machines):
@@ -327,7 +287,7 @@ def get_machine(queue, bad_machines):
 	return machine, bad_machines
 
 def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
-	debug_message('1,tg+generationID:{}'.format(generation.generationID))
+	
 	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	
@@ -341,19 +301,14 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 	
 	#Create Processes
 	for machine in machines: queue.put(machine)
-	debug_message('2,tg+generationID:{}'.format(generationID))
+	
 	while True:
-		debug_message('2b,tg+while+generationID:{}+queue size:{}'.format(
-							generationID, queue.qsize()))
-		debug_message('3,tg+while+generationID:{}'.format(generationID))
-		
 		# Run until entire Generation is listed as isTrained == True
 		if all(generation.isTrained.values == 2): break
-		debug_message('4,tg+while+generationID:{}'.format(generationID))
+		
 		for chromosome in generation.itertuples():
 			chromosomeID = chromosome.chromosomeID
-			debug_message('5,tg+while+for+generationID:{}'.format(
-				generationID, chromosomeID))
+			
 			if chromosome.isTrained == 0:# and queue.qsize() > 0:
 				# Chromosome has never been touched
 				info_message("\n\nCreating Process for Chromosome "\
@@ -366,123 +321,58 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 				machine, bad_machines = get_machine(queue, bad_machines)
 
 				print('{}'.format(machine['host']))
-				debug_message('6,tg+while+for+generationID:'
-							'{}+chromosomeID:{}'.format(
-								generationID, chromosomeID))
-
+				
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
-				debug_message('7,tg+while+for+generationID:'
-							'{}+chromosomeID:{}'.format(
-								generationID, chromosomeID))
+				
 				generation.set_value(chromosome.Index, 'isTrained', 1)
-				debug_message('8,tg+while+for+generationID:'
-							'{}+chromosomeID:{}'.format(
-								generationID, chromosomeID))
-			debug_message('9,tg+while+for+generationID:'
-							'{}+chromosomeID:{}'.format(
-								generationID, chromosomeID))
+			
 			if chromosome.isTrained != 2:
 				# Check if chromosome has been updated on SQL
-				debug_message('10,tg+while+for+generationID:'
-							'{}+chromosomeID:{}+isTrained:{}'.format(
-							generationID, chromosomeID,chromosome.isTrained))
+				
 				sql_json = query_sql_database(chromosome.generationID, 
 											  chromosome.chromosomeID, 
 											  verbose = False)
-				debug_message('11,tg+while+for+generationID:'
-							'{}+chromosomeID:{}+sql_json:{}'.format(
-								generationID, chromosomeID,sql_json))
 				
 				if isinstance(sql_json, requests.models.Response):
 					warning_message('sql_json =?= sql_json.json()')
 					sql_json = sql_json.json()
 
 				elif isinstance(sql_json, dict):
-					debug_message('12,tg+while+for+generationID:'
-							'{}+chromosomeID:{}'.format(
-								generationID, chromosomeID))
 					assert(sql_json['fitness'] > 0), \
 						"[ERROR] If ID exists in SQL, why is fitness == -1?"\
 						"\n GenerationID:{} ChromosomeID:{}".format(
 							chromosome.generationID, chromosome.chromosomeID)
-					debug_message('13,tg+while+for+generationID:'
-						'{}+chromosomeID:{}'.format(
-						generationID, chromosomeID))
-					debug_message('A,generation.columns:\n{}'.format(
-									generation.columns))
-					debug_message('A,generation.dtypes:\n{}'.format(
-									generation.dtypes))
+					
 					for key, val in sql_json.items(): 
 						debug_message('for key, val in sql_json.items():{}'.format(key))
 						generation.set_value(chromosome.Index, key, val)
-					debug_message('B,generation:\n{}'.format(
-									generation.columns))
-					debug_message('14,tg+while+for+generationID:'
-							'{}+chromosomeID:{}'.format(
-								generationID, chromosomeID))
-
+					
 					generation.set_value(chromosome.Index, 'isTrained', 2)
-					debug_message('C,generation:\n{}'.format(
-									generation.columns))
-					debug_message('15,tg+while+for+generationID:'
-							'{}+chromosomeID:{}'.format(
-								generationID, chromosomeID))
 				else:
 					warning_message('SQL_JSON:{}'.format(sql_json))
-
-				debug_message('16,tg+while+for+generationID:'
-							'generationID:{}+chromosomeID:{}'.format(
-								generationID, chromosomeID))
-			
-			debug_message('17,tg+while+for+generationID:'
-							'generationID:{}+chromosomeID:{}'.format(
-								generationID, chromosomeID))
 
 			for bad_machine in bad_machines:
 				# This lets us check if it is "good" again
 				queue.put(bad_machine)
 
-		debug_message('18,tg+while+for+generationID:'
-						'generationID:{}+chromosomeID:{}'.format(
-							generationID, chromosomeID))
-
-	debug_message('19,tg+while+for+generationID:'
-					'generationID:{}'.format(generationID))
-
 	for chromosome in generation.itertuples():
-		debug_message('20,tg+while+for+generationID:'
-					'generationID:{}+chromosomeID:{}'.format(
-						generationID, chromosomeID))
 		assert(chromosome.isTrained), 'while loop should not have closed!'
-		debug_message('21,tg+while+for+generationID:'
-					'generationID:{}+chromosomeID:{}'.format(
-						generationID, chromosomeID))
+		
 		chromosomeID = chromosome.chromosomeID
 		generationID = chromosome.generationID
-		debug_message('22,tg+while+for+generationID:'
-					'generationID:{}+chromosomeID:{}'.format(
-						generationID, chromosomeID))
+		
 		sql_json = query_sql_database(generationID, chromosomeID, 
 										clargs=clargs, verbose=True)
-		debug_message('23,tg+while+for+generationID:'
-					'generationID:{}+chromosomeID:{}'.format(
-						generationID, chromosomeID))
+		
 		if sql_json['fitness'] is -1:
-			debug_message('24,tg+while+for+generationID:'
-					'generationID:{}+chromosomeID:{}'.format(
-						generationID, chromosomeID))
 			sql_json = query_local_csv(generationID, chromosomeID, 
 										clargs = clargs)
-		debug_message('25,tg+while+for+generationID:'
-					'generationID:{}+chromosomeID:{}'.format(
-						generationID, chromosomeID))
+		
 		if isinstance(sql_json, dict) and 'fitness' in sql_json.keys():
 			assert(sql_json['fitness'] != -1), 'while loop may have failed!'
-			debug_message('26,tg+while+for+generationID:'
-					'generationID:{}+chromosomeID:{}'.format(
-						generationID, chromosomeID))
+			
 			if 'isTrained' not in sql_json.keys(): sql_json['isTrained'] = 2
 
 			print('\n\n[INFO]')
@@ -496,22 +386,9 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 			print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
 			print('\n\n')
 
-			debug_message('27,tg+while+for+generationID:'
-					'generationID:{}+chromosomeID:{}'.format(
-						generationID, chromosomeID))
-
 			for col in generation.columns:
 				generation.set_value(chromosomeID, col, sql_json[col])
 
-			debug_message('28,tg+while+for+generationID:'
-					'generationID:{}+chromosomeID:{}'.format(
-						generationID, chromosomeID))
-		debug_message('29,tg+while+for+generationID:'
-					'generationID:{}+chromosomeID:{}'.format(
-						generationID, chromosomeID))
-	debug_message('30,tg+while+for+generationID:'
-					'generationID:{}+chromosomeID:{}'.format(
-						generationID, chromosomeID))
 	# After all is done: return what you received
 	
 	return generation
@@ -625,86 +502,50 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	generationID = chromosome.generationID
 	chromosomeID = chromosome.chromosomeID
 	
-	debug_message('1,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
-	
 	if not os.path.exists(logdir): os.mkdir(logdir)
-	debug_message('2,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
+	
 	if verbose: 
 		info_message('Checking if file {} exists on {}'.format(
 										git_dir, machine['host']))
-	debug_message('3,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
+	
 	# sys.stdout = open('{}/output{}.txt'.format(logdir, chromosomeID),'w')
 	# sys.stderr = open('{}/error{}.txt'.format(logdir, chromosomeID), 'w')
 	
 	try:
-		debug_message('4,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
 		ssh = SSHClient()
 		ssh.set_missing_host_key_policy(AutoAddPolicy())
 		ssh.connect(machine["host"], key_filename=machine['key_filename'])
-		debug_message('5,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
 	except NoValidConnectionsError as error:
-		debug_message('5b,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
 		warning_message(error)
 		ssh.close()
 		return
-	debug_message('6,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
+	
 	stdin, stdout, stderr = ssh.exec_command('ls | grep {}'.format(git_dir))
-	debug_message('7,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
+	
 	if(len(stdout.readlines()) == 0):
-		debug_message('8,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
 		git_clone()
-		debug_message('9,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
 	elif verbose: 
-		debug_message('10,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
+		
 		info_message('File {} exists on {}'.format(git_dir, machine['host']))
-		debug_message('11,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
-
-	debug_message('12,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
+	
 	command = generate_ssh_command(clargs, chromosome)
 
-	debug_message('13,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
-	
 	print("\n\nExecuting Train Chromosome Command:\n\t{}".format(command))
-	debug_message('14,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
+	
 	stdin, stdout, stderr = ssh.exec_command(command)
-	debug_message('15,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
 	
 	info_message('Printing `stdout` in Train Chromosome')
 	# print_ssh_output(stdout)
 	info_message('Printing `stderr` in Train Chromosome')
 	# print_ssh_output(stderr)
-	debug_message('16,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
-	debug_message('queue size:{}'.format(queue.qsize()))
 	queue.put(machine)
-	debug_message('queue size:{}'.format(queue.qsize()))
-	debug_message('17,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
+	
 	ssh.close()
 	
-	debug_message('18,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
+	
 	info_message('SSH Closed on Train Chromosome')
 	info_message("Train Chromosome Executed Successfully: generationID:"\
 					"{}\tchromosomeID:{}".format(generationID,chromosomeID))
-	debug_message('19,tc+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
 
 def select_parents(generation):
 	total_fitness = sum(chrom.fitness for chrom in generation.itertuples())
