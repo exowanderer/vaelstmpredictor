@@ -79,8 +79,8 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 	return hidden_dims
 
 def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
-	debug_message('1,query_sql_database+generationID:{}+chromosomeID:{}'.format(
-					generationID, chromosomeID))
+	debug_message('1,query_sql_database+generationID:'
+					'{}+chromosomeID:{}'.format(generationID, chromosomeID))
 	getFitness = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
 	getFitness = getFitness + 'GetFitness'
 	debug_message('2,query_sql_database+generationID:'
@@ -107,7 +107,7 @@ def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
 					'{}+chromosomeID:{}+sql_json:{}'.format(
 						generationID, chromosomeID, type(sql_json)))
 
-	if sql_json == -1:#not isinstance(sql_json, dict):
+	if not isinstance(sql_json, requests.models.Response):
 		debug_message('8,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
 						generationID, chromosomeID, type(sql_json)))
@@ -310,7 +310,10 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 				debug_message('11,tg+while+for+generationID:'
 							'{}+chromosomeID:{}+sql_json:{}'.format(
 								generationID, chromosomeID,sql_json))
-				if sql_json is not -1:
+				if isinstance(sql_json, requests.models.Response):
+					sql_json = sql_json.json()
+				
+				if isinstance(sql_json, dict):
 					debug_message('12,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
