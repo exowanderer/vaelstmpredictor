@@ -604,6 +604,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	debug_message('12,tc+generationID:{}+chromosomeID:{}'.format(
 					generationID, chromosomeID))
 	command = generate_ssh_command(clargs, chromosome)
+
 	debug_message('13,tc+generationID:{}+chromosomeID:{}'.format(
 					generationID, chromosomeID))
 	
