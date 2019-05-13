@@ -149,40 +149,40 @@ def create_blank_dataframe(generationID, population_size):
 	ones = np.ones(population_size, dtype = int)
 	arange = np.arange(population_size, dtype = int)
 
-	generation['generationID'] = ones
-	generation['chromosomeID'] = arange
-	generation['isTrained'] = zeros
-	generation['num_vae_layers'] = zeros
-	generation['num_dnn_layers'] = zeros
-	generation['size_vae_latent'] = zeros
-	generation['size_vae_hidden'] = zeros
-	generation['size_dnn_hidden'] = zeros
-	generation['fitness'] = np.float32(zeros) - 1.0
-	generation['batch_size'] = zeros
-	generation['cross_prob'] = zeros
-	generation['dnn_kl_weight'] = zeros
-	generation['dnn_log_var_prior'] = zeros
-	generation['dnn_weight'] = zeros
-	generation['do_chckpt'] = np.bool8(zeros)
+	generation['generationID'] = ones.copy()
+	generation['chromosomeID'] = arange.copy()
+	generation['isTrained'] = zeros.copy()
+	generation['num_vae_layers'] = zeros.copy()
+	generation['num_dnn_layers'] = zeros.copy()
+	generation['size_vae_latent'] = zeros.copy()
+	generation['size_vae_hidden'] = zeros.copy()
+	generation['size_dnn_hidden'] = zeros.copy()
+	generation['fitness'] = np.float32(zeros.copy()) - 1.0
+	generation['batch_size'] = zeros.copy()
+	generation['cross_prob'] = zeros.copy()
+	generation['dnn_kl_weight'] = zeros.copy()
+	generation['dnn_log_var_prior'] = zeros.copy()
+	generation['dnn_weight'] = zeros.copy()
+	generation['do_chckpt'] = np.bool8(zeros.copy())
 	generation['hostname'] = ['127.0.0.1']*population_size
-	generation['iterations'] = zeros
-	generation['kl_anneal'] = zeros
+	generation['iterations'] = zeros.copy()
+	generation['kl_anneal'] = zeros.copy()
 	generation['log_dir'] = ['../data/logs']*population_size
 	generation['model_dir'] = ['../data/models']*population_size
-	generation['mutate_prob'] = zeros
-	generation['num_epochs'] = zeros
+	generation['mutate_prob'] = zeros.copy()
+	generation['num_epochs'] = zeros.copy()
 	generation['optimizer'] = ['adam']*population_size
-	generation['patience'] = zeros
-	generation['population_size'] = zeros
-	generation['prediction_log_var_prior'] = zeros
+	generation['patience'] = zeros.copy()
+	generation['population_size'] = zeros.copy()
+	generation['prediction_log_var_prior'] = zeros.copy()
 	generation['predictor_type'] = ['classification']*population_size
 	generation['run_name'] = ['run_name']*population_size
 	generation['table_dir'] = ['../data/tables']*population_size
-	generation['time_stamp'] = zeros
+	generation['time_stamp'] = zeros.copy()
 	generation['train_file'] = ['train_file']*population_size
-	generation['vae_kl_weight'] = zeros
-	generation['vae_weight'] = zeros
-	generation['w_kl_anneal'] = zeros
+	generation['vae_kl_weight'] = zeros.copy()
+	generation['vae_weight'] = zeros.copy()
+	generation['w_kl_anneal'] = zeros.copy()
 
 	generation['generationID'] = generation['generationID'] * generationID
 	generation['generationID'] = np.int64(generation['generationID'])
@@ -209,9 +209,9 @@ def generate_random_chromosomes(population_size,
 	ones = np.ones(population_size, dtype = int)
 	arange = np.arange(population_size, dtype = int)
 
-	generation['generationID'] = zeros
-	generation['chromosomeID'] = arange
-	generation['isTrained'] = zeros
+	generation['generationID'] = zeros.copy()
+	generation['chromosomeID'] = arange.copy()
+	generation['isTrained'] = zeros.copy()
 	generation['num_vae_layers'] = np.random.choice(vae_nLayers_choices,
 														size = population_size)
 	generation['num_dnn_layers'] = np.random.choice(dnn_nLayers_choices,
@@ -222,34 +222,34 @@ def generate_random_chromosomes(population_size,
 														size = population_size)
 	generation['size_dnn_hidden'] = np.random.choice(dnn_nUnits_choices, 
 														size = population_size)
-	generation['fitness'] = np.float32(zeros) - 1.0
+	generation['fitness'] = np.float32(zeros.copy()) - 1.0
 
 	# Place holders for after training
-	generation['batch_size'] = zeros
-	generation['cross_prob'] = zeros
-	generation['dnn_kl_weight'] = zeros
-	generation['dnn_log_var_prior'] = zeros
-	generation['dnn_weight'] = zeros
-	generation['do_chckpt'] = np.bool8(zeros)
+	generation['batch_size'] = zeros.copy()
+	generation['cross_prob'] = zeros.copy()
+	generation['dnn_kl_weight'] = zeros.copy()
+	generation['dnn_log_var_prior'] = zeros.copy()
+	generation['dnn_weight'] = zeros.copy()
+	generation['do_chckpt'] = np.bool8(zeros.copy())
 	generation['hostname'] = ['127.0.0.1']*population_size
-	generation['iterations'] = zeros
-	generation['kl_anneal'] = zeros
+	generation['iterations'] = zeros.copy()
+	generation['kl_anneal'] = zeros.copy()
 	generation['log_dir'] = ['../data/logs']*population_size
 	generation['model_dir'] = ['../data/models']*population_size
-	generation['mutate_prob'] = zeros
-	generation['num_epochs'] = zeros
+	generation['mutate_prob'] = zeros.copy()
+	generation['num_epochs'] = zeros.copy()
 	generation['optimizer'] = ['adam']*population_size
-	generation['patience'] = zeros
-	generation['population_size'] = zeros
-	generation['prediction_log_var_prior'] = zeros
+	generation['patience'] = zeros.copy()
+	generation['population_size'] = zeros.copy()
+	generation['prediction_log_var_prior'] = zeros.copy()
 	generation['predictor_type'] = ['classification']*population_size
 	generation['run_name'] = ['run_name']*population_size
 	generation['table_dir'] = ['../data/tables']*population_size
-	generation['time_stamp'] = zeros
+	generation['time_stamp'] = zeros.copy()
 	generation['train_file'] = ['train_file']*population_size
-	generation['vae_kl_weight'] = zeros
-	generation['vae_weight'] = zeros
-	generation['w_kl_anneal'] = zeros
+	generation['vae_kl_weight'] = zeros.copy()
+	generation['vae_weight'] = zeros.copy()
+	generation['w_kl_anneal'] = zeros.copy()
 
 	return generation
 
@@ -464,15 +464,15 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 		return
 
 	info_message('Printing `stdout`')
-	# print_ssh_output(stdout)
+	print_ssh_output(stdout)
 	info_message('Printing `stderr`')
-	# print_ssh_output(stderr)
+	print_ssh_output(stderr)
 	
 	ssh.close()
 	info_message('SSH Closed on Git Clone')
 	print("Git Clone Executed Successfully")
 
-'''
+
 def  print_ssh_output(ssh_output):
 	debug_message('INSIDE: # print_ssh_output')
 	try:
@@ -494,7 +494,7 @@ def  print_ssh_output(ssh_output):
 		warning_message('\n\n2,Error on ssh_output.readlines():'
 						'{}'.format(error))
 		debug_message('INSIDE: FINSIHED EXCEPT1')
-'''
+
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
 					git_dir = 'vaelstmpredictor',
@@ -535,9 +535,9 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	stdin, stdout, stderr = ssh.exec_command(command)
 	
 	info_message('Printing `stdout` in Train Chromosome')
-	# print_ssh_output(stdout)
+	print_ssh_output(stdout)
 	info_message('Printing `stderr` in Train Chromosome')
-	# print_ssh_output(stderr)
+	print_ssh_output(stderr)
 	queue.put(machine)
 	
 	ssh.close()
