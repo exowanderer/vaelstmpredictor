@@ -341,8 +341,11 @@ if __name__ == '__main__':
 		del put_sql_dict['do_log']
 		del put_sql_dict['make_plots']
 		del put_sql_dict['verbose']
-	
+	debug_message('\n\nRUN_CHROMOSOME before purURL: genID, chromID:{}'.format(
+						generationID, chromosomeID))
 	req = requests.get(url = putURL, params = put_sql_dict)
+	debug_message('\n\nRUN_CHROMOSOME after purURL: genID, chromID:{}'.format(
+						generationID, chromosomeID))
 	
 	try:
 		if req.json() == 1:
@@ -350,3 +353,6 @@ if __name__ == '__main__':
 		else:
 			warning_message('!! The World Has Ended !!')
 	except json.decoder.JSONDecodeError as error: warning_message(error)
+
+	debug_message('\n\nRUN_CHROMOSOME FINISHED: genID, chromID:{}'.format(
+						generationID, chromosomeID))
