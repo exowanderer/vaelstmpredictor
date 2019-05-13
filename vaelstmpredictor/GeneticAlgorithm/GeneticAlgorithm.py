@@ -474,6 +474,7 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 
 
 def  print_ssh_output(ssh_output):
+	for line in ssh_output.readlines(): print(line)
 	debug_message('INSIDE: print_ssh_output')
 	try:
 		debug_message('INSIDE: TRY1')
@@ -487,7 +488,7 @@ def  print_ssh_output(ssh_output):
 		# 				'{}'.format(error))
 		# 	debug_message('INSIDE: FINSIHED EXCEPT2')
 		debug_message('INSIDE: Continuing TRY1')
-		for line in ssh_output.readlines(): print(line)
+		
 		debug_message('INSIDE: FINSIHED TRY1')
 	except Exception as error:
 		debug_message('INSIDE: EXCEPT1')
