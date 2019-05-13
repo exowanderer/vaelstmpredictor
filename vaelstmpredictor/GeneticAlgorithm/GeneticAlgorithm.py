@@ -107,7 +107,7 @@ def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
 					'{}+chromosomeID:{}+sql_json:{}'.format(
 						generationID, chromosomeID, type(sql_json)))
 
-	if not isinstance(sql_json, requests.models.Response):
+	if sql_json == 0:#not isinstance(sql_json, requests.models.Response):
 		debug_message('8,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
 						generationID, chromosomeID, type(sql_json)))
@@ -117,7 +117,9 @@ def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
 		debug_message('9,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
 						generationID, chromosomeID, type(sql_json)))
+		
 		return sql_json
+
 	debug_message('10,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
 						generationID, chromosomeID, type(sql_json)))
