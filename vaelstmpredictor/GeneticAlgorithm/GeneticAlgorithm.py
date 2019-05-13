@@ -211,10 +211,10 @@ def get_machine(queue, bad_machines):
 				print(error)
 				check_ping = -1
 
-	return machine
+	return machine, bad_machines
 
 def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
-	debug_message('1,tr+generationID:{}'.format(generation.generationID))
+	debug_message('1,tg+generationID:{}'.format(generation.generationID))
 	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	
@@ -226,19 +226,20 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 	
 	#Create Processes
 	for machine in machines: queue.put(machine)
-	debug_message('2,tr+generationID:{}'.format(generation.generationID))
+	debug_message('2,tg+generationID:{}'.format(generation.generationID))
 	while True:
 		generationID = generation.generationID.values[0]
-		debug_message('3,tr+while+generationID:{}'.format(generationID))
+		debug_message('3,tg+while+generationID:{}'.format(generationID))
 		
 		# Run until entire Generation is listed as isTrained == True
 		if all(generation.isTrained.values == 2): break
-		debug_message('4,tr+while+generationID:{}'.format(generationID))
+		debug_message('4,tg+while+generationID:{}'.format(generationID))
 		for chromosome in generation.itertuples():
 			chromosomeID = chromosome.chromosomeID
-			debug_message('5,tr+while+for+generationID:{}'.format(
+			debug_message('5,tg+while+for+generationID:{}'.format(
 				generationID, chromosomeID))
-			if chromosome.isTrained == 0:
+			if chromosome.isTrained == 0:# and queue.qsize() > 0:
+				# Chromosome has never been touched
 				info_message("\n\nCreating Process for Chromosome "\
 						"{} on GenerationID {}".format(chromosome.chromosomeID,
 							chromosome.generationID), end=" on machine ")
@@ -246,63 +247,67 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 				# Find a Chromosome that is not trained yet
 				# Wait for queue to have a value, 
 				#	which is the ID of the machine that is done.
-				machine = get_machine(queue, bad_machines)
+				machine, bad_machines = get_machine(queue, bad_machines)
+
 				print('{}'.format(machine['host']))
-				debug_message('6,tr+while+for+generationID:'
+				debug_message('6,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
 
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
-				debug_message('7,tr+while+for+generationID:'
+				debug_message('7,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
 				generation.set_value(chromosome.Index, 'isTrained', 1)
-				debug_message('8,tr+while+for+generationID:'
+				debug_message('8,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
-			debug_message('9,tr+while+for+generationID:'
+			debug_message('9,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
 			if chromosome.isTrained != 2:
-				debug_message('10,tr+while+for+generationID:'
+				# Check if chromosome has been updated on SQL
+				debug_message('10,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
 				sql_json = query_sql_database(chromosome.generationID, 
 											  chromosome.chromosomeID, 
 											  verbose = False)
-				debug_message('11,tr+while+for+generationID:'
+				debug_message('11,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
 				if sql_json is not -1:
-					debug_message('12,tr+while+for+generationID:'
+					debug_message('12,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
 					assert(sql_json['fitness'] > 0), \
 						"[ERROR] If ID exists in SQL, why is fitness == -1?"\
 						"\n GenerationID:{} ChromosomeID:{}".format(
 							chromosome.generationID, chromosome.chromosomeID)
-					debug_message('13,tr+while+for+generationID:'
+					debug_message('13,tg+while+for+generationID:'
 						'{}+chromosomeID:{}'.format(
 						generationID, chromosomeID))
-					generation.set_value(chromosome.Index, 'isTrained', 2)
-					debug_message('14,tr+while+for+generationID:'
+					
+					debug_message('14,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
 
 					for key, val in sql_json.items(): 
 						generation.set_value(chromosome.Index, key, val)
 
-					debug_message('15,tr+while+for+generationID:'
+					generation.set_value(chromosome.Index, 'isTrained', 2)
+
+					debug_message('15,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
 				
-				debug_message('16,tr+while+for+generationID:'
+				debug_message('16,tg+while+for+generationID:'
 							'chromosomeID:{}+generationID:{}'.format(
 								generationID, chromosomeID))
 			
-			debug_message('17,tr+while+for+generationID:'
+			debug_message('17,tg+while+for+generationID:'
 							'chromosomeID:{}+generationID:{}'.format(
 								generationID, chromosomeID))
 
@@ -310,42 +315,42 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 				# This lets us check if it is "good" again
 				queue.put(bad_machine)
 
-			debug_message('18,tr+while+for+generationID:'
+			debug_message('18,tg+while+for+generationID:'
 							'chromosomeID:{}+generationID:{}'.format(
 								generationID, chromosomeID))
-	debug_message('19,tr+while+for+generationID:'
+	debug_message('19,tg+while+for+generationID:'
 					'generationID:{}'.format(generationID))
 
 	for chromosome in generation.itertuples():
-		debug_message('20,tr+while+for+generationID:'
+		debug_message('20,tg+while+for+generationID:'
 					'chromosomeID:{}+generationID:{}'.format(
 						generationID, chromosomeID))
 		assert(chromosome.isTrained), 'while loop should not have closed!'
-		debug_message('21,tr+while+for+generationID:'
+		debug_message('21,tg+while+for+generationID:'
 					'chromosomeID:{}+generationID:{}'.format(
 						generationID, chromosomeID))
 		chromosomeID = chromosome.chromosomeID
 		generationID = chromosome.generationID
-		debug_message('22,tr+while+for+generationID:'
+		debug_message('22,tg+while+for+generationID:'
 					'chromosomeID:{}+generationID:{}'.format(
 						generationID, chromosomeID))
 		sql_json = query_sql_database(generationID, chromosomeID, 
 										clargs=clargs, verbose=True)
-		debug_message('23,tr+while+for+generationID:'
+		debug_message('23,tg+while+for+generationID:'
 					'chromosomeID:{}+generationID:{}'.format(
 						generationID, chromosomeID))
 		if sql_json['fitness'] is -1:
-			debug_message('24,tr+while+for+generationID:'
+			debug_message('24,tg+while+for+generationID:'
 					'chromosomeID:{}+generationID:{}'.format(
 						generationID, chromosomeID))
 			sql_json = query_local_csv(generationID, chromosomeID, 
 										clargs = clargs)
-		debug_message('25,tr+while+for+generationID:'
+		debug_message('25,tg+while+for+generationID:'
 					'chromosomeID:{}+generationID:{}'.format(
 						generationID, chromosomeID))
 		if isinstance(sql_json, dict) and 'fitness' in sql_json.keys():
 			assert(sql_json['fitness'] != -1), 'while loop may have failed!'
-			debug_message('26,tr+while+for+generationID:'
+			debug_message('26,tg+while+for+generationID:'
 					'chromosomeID:{}+generationID:{}'.format(
 						generationID, chromosomeID))
 			if 'isTrained' not in sql_json.keys(): sql_json['isTrained'] = 2
@@ -361,20 +366,20 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 			print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
 			print('\n\n')
 
-			debug_message('27,tr+while+for+generationID:'
+			debug_message('27,tg+while+for+generationID:'
 					'chromosomeID:{}+generationID:{}'.format(
 						generationID, chromosomeID))
 
 			for col in generation.columns:
 				generation.set_value(chromosomeID, col, sql_json[col])
 
-			debug_message('28,tr+while+for+generationID:'
+			debug_message('28,tg+while+for+generationID:'
 					'chromosomeID:{}+generationID:{}'.format(
 						generationID, chromosomeID))
-		debug_message('29,tr+while+for+generationID:'
+		debug_message('29,tg+while+for+generationID:'
 					'chromosomeID:{}+generationID:{}'.format(
 						generationID, chromosomeID))
-	debug_message('30,tr+while+for+generationID:'
+	debug_message('30,tg+while+for+generationID:'
 					'chromosomeID:{}+generationID:{}'.format(
 						generationID, chromosomeID))
 	# After all is done: return what you received
