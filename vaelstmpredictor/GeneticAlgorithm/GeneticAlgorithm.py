@@ -411,8 +411,10 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 					debug_message('13,tg+while+for+generationID:'
 						'{}+chromosomeID:{}'.format(
 						generationID, chromosomeID))
-					debug_message('A,generation:\n{}'.format(
+					debug_message('A,generation.columns:\n{}'.format(
 									generation.columns))
+					debug_message('A,generation.dtypes:\n{}'.format(
+									generation.dtypes))
 					for key, val in sql_json.items(): 
 						generation.set_value(chromosome.Index, key, val)
 					debug_message('B,generation:\n{}'.format(
