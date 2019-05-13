@@ -137,6 +137,23 @@ def query_local_csv(clargs, chromosome):
 
 	return -1
 
+def save_sql_to_csv(clargs):
+	import pandas as pd
+	import requests
+
+	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
+
+	table_dir = clargs.table_dir
+	table_name = '{}/{}_fitness_table_{}.csv'
+	table_name = table_name.format(clargs.table_dir, 
+									clargs.run_name, 
+									clargs.time_stamp)
+
+
+	req = requests.get(getChrom)
+	sql_table = pd.DataFrame(req.json())
+	sql_table.to_csv(table_name)
+
 def create_blank_dataframe(generationID, population_size):
 
 	generation = pd.DataFrame()
@@ -307,17 +324,17 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 			
 			if chromosome.isTrained == 0:# and queue.qsize() > 0:
 				# Chromosome has never been touched
+				machine, bad_machines = get_machine(queue, bad_machines)
+
 				info_message("\n\nCreating Process for Chromosome "\
-						"{} on GenerationID {}".format(chromosome.chromosomeID,
-							chromosome.generationID), end=" on machine ")
+						"{} on GenerationID {} on machine {}".format(
+													chromosome.chromosomeID,
+													chromosome.generationID,
+													machine['host']))
 				
 				# Find a Chromosome that is not trained yet
 				# Wait for queue to have a value, 
 				#	which is the ID of the machine that is done.
-				machine, bad_machines = get_machine(queue, bad_machines)
-
-				print('{}'.format(machine['host']))
-				
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()

@@ -27,8 +27,14 @@ from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
 from vaelstmpredictor.GeneticAlgorithm import *
 
-def debug_message(message): print('[DEBUG] {}'.format(message))
-def info_message(message): print('[INFO] {}'.format(message))
+def debug_message(message, end = '\n'):
+	print('[DEBUG] {}'.format(message), end = end)
+
+def warning_message(message, end = '\n'):
+	print('[WARNING] {}'.format(message), end = end)
+
+def info_message(message, end = '\n'):
+	print('[INFO] {}'.format(message), end = end)
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -214,6 +220,13 @@ if __name__ == '__main__':
 	start = time()
 	# while gen_num < num_generations:
 	for generationID in range(1,num_generations):
+
+		try:
+			save_sql_to_csv(clargs)
+		except Exception as error:
+			warning_message('`save_sql_to_csv` failed because:\n{}'.format(
+								error))
+		
 		start_while = time()
 		# Create new generation
 		new_generation = create_blank_dataframe(generationID, population_size)
