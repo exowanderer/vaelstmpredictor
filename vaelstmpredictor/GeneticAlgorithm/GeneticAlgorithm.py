@@ -332,6 +332,8 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	
+	generationID = generation.generationID.values[0]
+	
 	generation.generationID = np.int64(generation.generationID)
 	generation.chromosomeID = np.int64(generation.chromosomeID)
 	
@@ -340,9 +342,8 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 	
 	#Create Processes
 	for machine in machines: queue.put(machine)
-	debug_message('2,tg+generationID:{}'.format(generation.generationID))
+	debug_message('2,tg+generationID:{}'.format(generationID))
 	while True:
-		generationID = generation.generationID.values[0]
 		debug_message('2b,tg+while+generationID:{}+queue size:{}'.format(
 							generationID, queue.qsize()))
 		debug_message('3,tg+while+generationID:{}'.format(generationID))
