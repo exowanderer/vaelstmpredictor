@@ -185,18 +185,48 @@ def create_blank_dataframe(generationID, population_size):
 
 	generation = pd.DataFrame()
 	
-	generation['generationID'] = np.ones(population_size, dtype = int)
-	generation['chromosomeID'] = np.arange(population_size, dtype = int)
-	generation['isTrained'] = np.zeros(population_size, dtype = int)
-	generation['num_vae_layers'] = np.zeros(population_size, dtype = int)
-	generation['num_dnn_layers'] = np.zeros(population_size, dtype = int)
-	generation['size_vae_latent'] = np.zeros(population_size, dtype = int)
-	generation['size_vae_hidden'] = np.zeros(population_size, dtype = int)
-	generation['size_dnn_hidden'] = np.zeros(population_size, dtype = int)
-	generation['fitness'] = np.zeros(population_size, dtype = float) - 1.0
+	zeros = np.zeros(population_size, dtype = int)
+	ones = np.ones(population_size, dtype = int)
+	arange = np.arange(population_size, dtype = int)
+
+	generation['generationID'] = ones
+	generation['chromosomeID'] = arange
+	generation['isTrained'] = zeros
+	generation['num_vae_layers'] = zeros
+	generation['num_dnn_layers'] = zeros
+	generation['size_vae_latent'] = zeros
+	generation['size_vae_hidden'] = zeros
+	generation['size_dnn_hidden'] = zeros
+	generation['fitness'] = np.float32(zeros) - 1.0
+	generation['batch_size'] = zeros
+	generation['cross_prob'] = zeros
+	generation['dnn_kl_weight'] = zeros
+	generation['dnn_log_var_prior'] = zeros
+	generation['dnn_weight'] = zeros
+	generation['do_chckpt'] = zeros
+	generation['hostname'] = zeros
+	generation['iterations'] = zeros
+	generation['kl_anneal'] = zeros
+	generation['log_dir'] = zeros
+	generation['model_dir'] = zeros
+	generation['mutate_prob'] = zeros
+	generation['num_epochs'] = zeros
+	generation['optimizer'] = zeros
+	generation['patience'] = zeros
+	generation['population_size'] = zeros
+	generation['prediction_log_var_prior'] = zeros
+	generation['predictor_type'] = zeros
+	generation['run_name'] = zeros
+	generation['table_dir'] = zeros
+	generation['time_stamp'] = zeros
+	generation['train_file'] = zeros
+	generation['vae_kl_weight'] = zeros
+	generation['vae_weight'] = zeros
+	generation['w_kl_anneal'] = zeros
 
 	generation['generationID'] = generation['generationID'] * generationID
 	generation['generationID'] = np.int64(generation['generationID'])
+
 	
 	return generation
 
@@ -215,9 +245,14 @@ def generate_random_chromosomes(population_size,
 	dnn_nUnits_choices = range(min_dnn_hidden, max_dnn_hidden)
 	
 	generation = pd.DataFrame()
-	generation['generationID'] = np.zeros(population_size, dtype = int)
-	generation['chromosomeID'] = np.arange(population_size, dtype = int)
-	generation['isTrained'] = np.zeros(population_size, dtype = int)
+	
+	zeros = np.zeros(population_size, dtype = int)
+	ones = np.ones(population_size, dtype = int)
+	arange = np.arange(population_size, dtype = int)
+
+	generation['generationID'] = zeros
+	generation['chromosomeID'] = arange
+	generation['isTrained'] = zeros
 	generation['num_vae_layers'] = np.random.choice(vae_nLayers_choices,
 														size = population_size)
 	generation['num_dnn_layers'] = np.random.choice(dnn_nLayers_choices,
@@ -228,7 +263,34 @@ def generate_random_chromosomes(population_size,
 														size = population_size)
 	generation['size_dnn_hidden'] = np.random.choice(dnn_nUnits_choices, 
 														size = population_size)
-	generation['fitness'] = np.zeros(population_size, dtype = int) - 1
+	generation['fitness'] = np.float32(zeros) - 1.0
+
+	# Place holders for after training
+	generation['batch_size'] = zeros
+	generation['cross_prob'] = zeros
+	generation['dnn_kl_weight'] = zeros
+	generation['dnn_log_var_prior'] = zeros
+	generation['dnn_weight'] = zeros
+	generation['do_chckpt'] = zeros
+	generation['hostname'] = zeros
+	generation['iterations'] = zeros
+	generation['kl_anneal'] = zeros
+	generation['log_dir'] = zeros
+	generation['model_dir'] = zeros
+	generation['mutate_prob'] = zeros
+	generation['num_epochs'] = zeros
+	generation['optimizer'] = zeros
+	generation['patience'] = zeros
+	generation['population_size'] = zeros
+	generation['prediction_log_var_prior'] = zeros
+	generation['predictor_type'] = zeros
+	generation['run_name'] = zeros
+	generation['table_dir'] = zeros
+	generation['time_stamp'] = zeros
+	generation['train_file'] = zeros
+	generation['vae_kl_weight'] = zeros
+	generation['vae_weight'] = zeros
+	generation['w_kl_anneal'] = zeros
 
 	return generation
 
