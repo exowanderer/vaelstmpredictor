@@ -348,16 +348,19 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 					debug_message('13,tg+while+for+generationID:'
 						'{}+chromosomeID:{}'.format(
 						generationID, chromosomeID))
-					debug_message('A,generation:\n{}'.format(generation))
+					debug_message('A,generation:\n{}'.format(
+									generation.columns))
 					for key, val in sql_json.items(): 
 						generation.set_value(chromosome.Index, key, val)
-					debug_message('B,generation:\n{}'.format(generation))
+					debug_message('B,generation:\n{}'.format(
+									generation.columns))
 					debug_message('14,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
 
 					generation.set_value(chromosome.Index, 'isTrained', 2)
-					debug_message('C,generation:\n{}'.format(generation))
+					debug_message('C,generation:\n{}'.format(
+									generation.columns))
 					debug_message('15,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
