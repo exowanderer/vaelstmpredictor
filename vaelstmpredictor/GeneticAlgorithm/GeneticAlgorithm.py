@@ -602,11 +602,11 @@ def mutate(new_generation, generation, chromosomeID,
 
 	if verbose:
 		print('Mutating Child {} in Generation {}'.format(
-			generation[chromosomeID, 'chromosomeID'], 
-			generation[chromosomeID, 'generationID']))
+			generation.loc[chromosomeID, 'chromosomeID'], 
+			generation.loc[chromosomeID, 'generationID']))
 		print('Mutating Child {} in Generation {}'.format(
-			new_generation[chromosomeID, 'chromosomeID'], 
-			new_generation[chromosomeID, 'generationID']))
+			new_generation.loc[chromosomeID, 'chromosomeID'], 
+			new_generation.loc[chromosomeID, 'generationID']))
 	
 	mutation_happened = False
 	for param, (range_change, min_val) in param_choices.items():
