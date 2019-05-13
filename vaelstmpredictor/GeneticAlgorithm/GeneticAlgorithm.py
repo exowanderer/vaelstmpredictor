@@ -203,7 +203,7 @@ def create_blank_dataframe(generationID, population_size):
 	generation['dnn_kl_weight'] = zeros
 	generation['dnn_log_var_prior'] = zeros
 	generation['dnn_weight'] = zeros
-	generation['do_chckpt'] = zeros
+	generation['do_chckpt'] = np.bool8(zeros)
 	generation['hostname'] = zeros
 	generation['iterations'] = zeros
 	generation['kl_anneal'] = zeros
