@@ -105,36 +105,36 @@ def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
 	sql_json = requests.get(getFitness, params=json_ID)
 	debug_message('7,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, sql_json))
+						generationID, chromosomeID, type(sql_json)))
 
-	if not isinstance(sql_json, dict):
+	if sql_json == -1:#not isinstance(sql_json, dict):
 		debug_message('8,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, sql_json))
+						generationID, chromosomeID, type(sql_json)))
 		if verbose: 
 			print('SQL Request Failed: sql_json = {} with {}'.format(sql_json, 
 																	json_ID))
 		debug_message('9,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, sql_json))
-		return -1
+						generationID, chromosomeID, type(sql_json)))
+		return sql_json
 	debug_message('10,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, sql_json))
+						generationID, chromosomeID, type(sql_json)))
 	# Only triggered if `sql_json` is a `dict`
 	sql_json = sql_json.json()
 	debug_message('11,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, sql_json))
+						generationID, chromosomeID, type(sql_json)))
 	if clargs is not None:
 		debug_message('12,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, sql_json))
+						generationID, chromosomeID, type(sql_json)))
 		with open(table_name, 'a') as f_out: 
 			json.dump(sql_json, f_out)
 	debug_message('13,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
-						generationID, chromosomeID, sql_json))
+						generationID, chromosomeID, type(sql_json)))
 	return sql_json
 
 def query_local_csv(clargs, chromosome):
