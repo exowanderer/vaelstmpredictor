@@ -93,15 +93,11 @@ def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
 	
 	sql_json = requests.get(getFitness, params=json_ID)
 	
-	print(getFitness,end="?")
-	for key,val in json_ID.items():
-		print('{}={}&'.format(key,val), end="")
-	print('')
-
 	try:
 		sql_json = sql_json.json()
 	except Exception as error:
-		warning_message('query_sql_database+Except:\n{}'.format(error))
+		warning_message('GeneticAlgorithm.py+query_sql_database+Exception:'
+							'\n{}'.format(error))
 	
 	if sql_json == 0:#not isinstance(sql_json, requests.models.Response):
 		if verbose: 
@@ -350,9 +346,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 						generation.set_value(chromosome.Index, key, val)
 					
 					generation.set_value(chromosome.Index, 'isTrained', 2)
-				else:
-					warning_message('SQL_JSON:{}'.format(sql_json))
-
+			
 			for bad_machine in bad_machines:
 				# This lets us check if it is "good" again
 				queue.put(bad_machine)
