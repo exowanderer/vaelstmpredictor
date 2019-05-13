@@ -310,10 +310,12 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 				debug_message('11,tg+while+for+generationID:'
 							'{}+chromosomeID:{}+sql_json:{}'.format(
 								generationID, chromosomeID,sql_json))
-				if isinstance(sql_json, requests.models.Response):
-					sql_json = sql_json.json()
 				
-				if isinstance(sql_json, dict):
+				if isinstance(sql_json, requests.models.Response):
+					warning_message('sql_json =?= sql_json.json()')
+					sql_json = sql_json.json()
+
+				elif isinstance(sql_json, dict):
 					debug_message('12,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
@@ -337,7 +339,9 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 					debug_message('15,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
-				
+				else isinstance(sql_json, dict):
+					warning_message('SQL_JSON:{}'.formatin(sql_json))
+
 				debug_message('16,tg+while+for+generationID:'
 							'chromosomeID:{}+generationID:{}'.format(
 								generationID, chromosomeID))
