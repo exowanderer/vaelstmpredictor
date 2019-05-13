@@ -248,30 +248,37 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 				#	which is the ID of the machine that is done.
 				machine = get_machine(queue, bad_machines)
 				print('{}'.format(machine['host']))
-				debug_message('6,tr+while+for+generationID:{}'.format(
-					chromosomeID, generationID))
+				debug_message('6,tr+while+for+generationID:'
+							'{}+chromosomeID:{}'.format(
+								chromosomeID, generationID))
 
 				process = mp.Process(target=train_chromosome, 
 									args=(chromosome, machine, queue, clargs))
 				process.start()
-				debug_message('7,tr+while+for+generationID:{}'.format(
-					chromosomeID, generationID))
+				debug_message('7,tr+while+for+generationID:'
+							'{}+chromosomeID:{}'.format(
+								chromosomeID, generationID))
 				generation.set_value(chromosome.Index, 'isTrained', 1)
-				debug_message('8,tr+while+for+generationID:{}'.format(
-					chromosomeID, generationID))
-			debug_message('9,tr+while+for+generationID:{}'.format(
-						chromosomeID, generationID))
+				debug_message('8,tr+while+for+generationID:'
+							'{}+chromosomeID:{}'.format(
+								chromosomeID, generationID))
+			debug_message('9,tr+while+for+generationID:{}'
+							'{}+chromosomeID:{}'.format(
+								chromosomeID, generationID))
 			if chromosome.isTrained != 2:
-				debug_message('10,tr+while+for+generationID:{}'.format(
-					chromosomeID, generationID))
+				debug_message('10,tr+while+for+generationID:'
+							'{}+chromosomeID:{}'.format(
+								chromosomeID, generationID))
 				sql_json = query_sql_database(chromosome.generationID, 
 											  chromosome.chromosomeID, 
 											  verbose = False)
-				debug_message('11,tr+while+for+generationID:{}'.format(
-					chromosomeID, generationID))
+				debug_message('11,tr+while+for+generationID:{}'
+							'{}+chromosomeID:{}'.format(
+								chromosomeID, generationID))
 				if sql_json is not -1:
-					debug_message('12,tr+while+for+generationID:{}'.format(
-						chromosomeID, generationID))
+					debug_message('12,tr+while+for+generationID:'
+							'{}+chromosomeID:{}'.format(
+								chromosomeID, generationID))
 					assert(sql_json['fitness'] > 0), \
 						"[ERROR] If ID exists in SQL, why is fitness == -1?"\
 						"\n GenerationID:{} ChromosomeID:{}".format(
@@ -279,14 +286,16 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 					debug_message('13,tr+while+for+generationID:{}'.format(
 						chromosomeID, generationID))
 					generation.set_value(chromosome.Index, 'isTrained', 2)
-					debug_message('14,tr+while+for+generationID:{}'.format(
-						chromosomeID, generationID))
+					debug_message('14,tr+while+for+generationID:'
+							'{}+chromosomeID:{}'.format(
+								chromosomeID, generationID))
 
 					for key, val in sql_json.items(): 
 						generation.set_value(chromosome.Index, key, val)
 
-					debug_message('15,tr+while+for+generationID:{}'.format(
-						chromosomeID, generationID))
+					debug_message('15,tr+while+for+generationID:'
+							'{}+chromosomeID:{}'.format(
+								chromosomeID, generationID))
 				
 				debug_message('16,tr+while+for+generationID:'
 							'chromosomeID:{}+generationID:{}'.format(
