@@ -141,7 +141,6 @@ if __name__ == '__main__':
 				{"host": "172.16.50.237", "username": "acc", 
 					"key_filename": key_filename}
 				]
-
 	
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
