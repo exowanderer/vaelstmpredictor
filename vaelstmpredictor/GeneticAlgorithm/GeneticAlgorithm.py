@@ -141,7 +141,7 @@ def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
 					'{}+chromosomeID:{}+sql_json:{}'.format(
 						generationID, chromosomeID, type(sql_json)))
 	# Only triggered if `sql_json` is a `dict`
-	
+
 	# sql_json = sql_json.json()
 	debug_message('11,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(
@@ -349,12 +349,12 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 						'{}+chromosomeID:{}'.format(
 						generationID, chromosomeID))
 					
+					for key, val in sql_json.items(): 
+						generation.set_value(chromosome.Index, key, val)
+
 					debug_message('14,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								generationID, chromosomeID))
-
-					for key, val in sql_json.items(): 
-						generation.set_value(chromosome.Index, key, val)
 
 					generation.set_value(chromosome.Index, 'isTrained', 2)
 
@@ -376,9 +376,10 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 				# This lets us check if it is "good" again
 				queue.put(bad_machine)
 
-			debug_message('18,tg+while+for+generationID:'
-							'generationID:{}+chromosomeID:{}'.format(
-								generationID, chromosomeID))
+		debug_message('18,tg+while+for+generationID:'
+						'generationID:{}+chromosomeID:{}'.format(
+							generationID, chromosomeID))
+	
 	debug_message('19,tg+while+for+generationID:'
 					'generationID:{}'.format(generationID))
 
