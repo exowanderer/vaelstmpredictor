@@ -113,7 +113,9 @@ def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
 		sql_json = sql_json.json()
 	except Exception as error:
 		warning_message('query_sql_database+Except:\n{}'.format(error))
-	
+	debug_message('7c,query_sql_database+generationID:'
+					'{}+chromosomeID:{}+sql_json:{}'.format(
+						generationID, chromosomeID, sql_json))
 	if sql_json == 0:#not isinstance(sql_json, requests.models.Response):
 		debug_message('8,query_sql_database+generationID:'
 					'{}+chromosomeID:{}+sql_json:{}'.format(

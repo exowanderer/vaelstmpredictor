@@ -2,7 +2,7 @@
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('commit_message')
+parser.add_argument('-m','--commit_message', nargs='?')
 
 clargs = parser.parse_args()
 
@@ -15,7 +15,7 @@ os.chdir('/home/acc/github/vaelstmpredictor/')
 
 subprocess.run("git status".split(' '))
 subprocess.run("git add -u".split(' '))
-subprocess.run("git commit -m '{}'".format(clargs.commit_message).split(' '))
+subprocess.run("git commit -m {}".format(clargs.commit_message).split(' '))
 subprocess.run("git push".split(' '))
 subprocess.run("python update_machines_via_github.py".split(' '))
 
