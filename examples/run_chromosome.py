@@ -344,22 +344,13 @@ if __name__ == '__main__':
 		del put_sql_dict['do_log']
 		del put_sql_dict['make_plots']
 		del put_sql_dict['verbose']
-	debug_message('\n\nRUN_CHROMOSOME before purURL: '
-					'generationID, chromosomeID:{}'.format(
-						generationID, chromosomeID))
-	req = requests.get(url = putURL, params = put_sql_dict)
-	debug_message('\n\nRUN_CHROMOSOME after purURL: '
-					'generationID, chromosomeID:{}'.format(
-						generationID, chromosomeID))
 	
-	# try:
-	debug_message(req)
-	debug_message(req.json())
-	if req.json() == 1:
-		info_message('Remote SQL Entry Added Successfully')
-	else:
-		warning_message('\n\n!! The World Has Ended !!\n\n')
-	# except json.decoder.JSONDecodeError as error: warning_message(error)
-
-	debug_message('\n\nRUN_CHROMOSOME FINISHED: generationID:'
-					'{}, chromomosomeID:{}'.format(generationID, chromosomeID))
+	req = requests.get(url = putURL, params = put_sql_dict)
+	
+	try:
+		if req.json() == 1:
+			info_message('Remote SQL Entry Added Successfully')
+		else:
+			warning_message('\n\n!! The World Has Ended !!\n\n')
+	except json.decoder.JSONDecodeError as error: 
+		warning_message(error)

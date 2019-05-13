@@ -342,11 +342,10 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 							chromosome.generationID, chromosome.chromosomeID)
 					
 					for key, val in sql_json.items(): 
-						debug_message('for key, val in sql_json.items():{}'.format(key))
 						generation.set_value(chromosome.Index, key, val)
 					
 					generation.set_value(chromosome.Index, 'isTrained', 2)
-			
+
 			for bad_machine in bad_machines:
 				# This lets us check if it is "good" again
 				queue.put(bad_machine)
