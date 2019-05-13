@@ -272,7 +272,7 @@ def generate_random_chromosomes(population_size,
 	generation['dnn_log_var_prior'] = zeros
 	generation['dnn_weight'] = zeros
 	generation['do_chckpt'] = np.bool8(zeros)
-	generation['hostname'] = zeros
+	generation['hostname'] = ['127.0.0.1']*population_size
 	generation['iterations'] = zeros
 	generation['kl_anneal'] = zeros
 	generation['log_dir'] = zeros
