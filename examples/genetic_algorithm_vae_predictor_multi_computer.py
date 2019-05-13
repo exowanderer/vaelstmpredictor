@@ -68,11 +68,11 @@ if __name__ == '__main__':
 				 help='minimum number of DNN hidden layers')	
 	parser.add_argument('--dnn_weight', type=float, default=1.0,
 				help='relative weight on prediction loss')
-	parser.add_argument('--vae_weight', type=float, default=30.53,
+	parser.add_argument('--vae_weight', type=float, default=1.0,#30.53,
 				help='relative weight on prediction loss')
-	parser.add_argument('--vae_kl_weight', type=float, default=1.39e6,
+	parser.add_argument('--vae_kl_weight', type=float, default=1.0,#1.39e6,
 				help='relative weight on prediction loss')
-	parser.add_argument('--dnn_kl_weight', type=float, default=6.35,
+	parser.add_argument('--dnn_kl_weight', type=float, default=1.0,#6.35,
 				help='relative weight on prediction loss')
 	parser.add_argument('--prediction_log_var_prior', type=float, default=0.0,
 				help='w log var prior')
