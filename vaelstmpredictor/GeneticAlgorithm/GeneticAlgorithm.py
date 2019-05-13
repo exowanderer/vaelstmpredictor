@@ -475,7 +475,7 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 
 def print_ssh_output(ssh_output):
 	debug_message('FLUSHING SSH_OUTPUT')
-	ssh_output.flush()
+	print(ssh_output.readlines())
 	# for line in ssh_output.readlines(): print(line)
 
 def train_chromosome(chromosome, machine, queue, clargs, 
