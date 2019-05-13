@@ -262,7 +262,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 				debug_message('8,tr+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								chromosomeID, generationID))
-			debug_message('9,tr+while+for+generationID:{}'
+			debug_message('9,tr+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
 								chromosomeID, generationID))
 			if chromosome.isTrained != 2:
@@ -539,7 +539,9 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	print_ssh_output(stderr)
 	debug_message('16,tc+generationID:{}+chromosomeID:{}'.format(
 					generationID, chromosomeID))
+	debug_message('queue size:{}'.format(queue.qsize()))
 	queue.put(machine)
+	debug_message('queue size:{}'.format(queue.qsize()))
 	debug_message('17,tc+generationID:{}+chromosomeID:{}'.format(
 					generationID, chromosomeID))
 	ssh.close()
@@ -549,7 +551,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	info_message('SSH Closed on Train Chromosome')
 	info_message("Train Chromosome Executed Successfully: generationID:"\
 					"{}\tchromosomeID:{}".format(generationID,chromosomeID))
-	debug_message('18,tc+generationID:{}+chromosomeID:{}'.format(
+	debug_message('19,tc+generationID:{}+chromosomeID:{}'.format(
 					generationID, chromosomeID))
 
 def select_parents(generation):
