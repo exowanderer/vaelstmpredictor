@@ -474,6 +474,7 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 
 
 def  print_ssh_output(ssh_output):
+	debug_message('INSIDE: print_ssh_output')
 	for line in ssh_output.readlines(): print(line)
 	debug_message('INSIDE: print_ssh_output')
 	try:
