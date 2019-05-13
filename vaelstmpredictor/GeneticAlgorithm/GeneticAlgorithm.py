@@ -278,8 +278,8 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 											  chromosome.chromosomeID, 
 											  verbose = False)
 				debug_message('11,tg+while+for+generationID:'
-							'{}+chromosomeID:{}'.format(
-								generationID, chromosomeID))
+							'{}+chromosomeID:{}+sql_json:{}'.format(
+								generationID, chromosomeID,sql_json))
 				if sql_json is not -1:
 					debug_message('12,tg+while+for+generationID:'
 							'{}+chromosomeID:{}'.format(
