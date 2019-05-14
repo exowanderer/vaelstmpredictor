@@ -408,8 +408,8 @@ def train_generation(generation, clargs, machines,
 	sql_generation = query_generation(generationID, loop_until_done=True)
 	# debug_message('4,sql_generation:\n{}'.format(sql_generation.dtypes))
 	# debug_message('4,generation:\n{}'.format(generation.dtypes))
-	assert(all(sql_generation.isTrained == 2)), \
-				'while loop should not have closed!'
+	# assert(all(sql_generation.isTrained == 2)), \
+				# 'while loop should not have closed!'
 
 	# Assign sql data to generation dataframe
 	# 	effectively: generation = sql_generation
