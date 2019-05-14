@@ -114,7 +114,7 @@ def query_generation(generationID, loop_until_done=False):
 		except Exception as error:
 			message = 'Full query failed with error:\n{}'.format(error)
 			warning_message(message)
-		
+
 		# Only triggers if requests+dataframe fails and not `loop_until_done`
 		if not loop_until_done: return None
 
@@ -376,7 +376,9 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 		''' Loop over all chromosomse to check if they exist in SQL database'''
 		
 		# Set all `isTrained==2` to `isTrained==0`
-		generation['isTrained'][generation['isTrained'] == 2] = 0
+		for chromosome in generation.itertuples():
+			if chromosomeID.isTraind == 2:
+				generation.set_value(chromosome.chromosomeID,'isTrained', 0)
 
 		# If chromosomeID exists in SQL and fitness >= 0, 
 		#	then set `isTrained` back to 2 (i.e. "fully trained")
