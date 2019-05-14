@@ -39,84 +39,85 @@ def info_message(message, end = '\n'):
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--run_name', type=str, default='deleteme',
-				help='tag for current run')
+			help='tag for current run')
 	parser.add_argument('--predictor_type', type=str, default="classification",
-				help='select `classification` or `regression`')
+			help='select `classification` or `regression`')
 	parser.add_argument('--batch_size', type=int, default=128,
-				help='batch size')
+			help='batch size')
 	parser.add_argument('--optimizer', type=str, default='adam',
-				help='optimizer name') 
+			help='optimizer name') 
 	parser.add_argument('--num_epochs', type=int, default=1,
-				help='number of epochs')
+			help='number of epochs')
 	parser.add_argument('--max_vae_hidden_layers', type=int, default=5, 
-				 help='Maximum number of VAE hidden layers')
+			help='Maximum number of VAE hidden layers')
 	parser.add_argument('--max_vae_latent', type=int, default=512, 
-				 help='Maximum number of VAE neurons per layer')
+			help='Maximum number of VAE neurons per layer')
 	parser.add_argument('--max_dnn_latent', type=int, default=512, 
-				 help='Maximum number of DNN neurons per layer')
+			help='Maximum number of DNN neurons per layer')
 	parser.add_argument('--max_vae_hidden', type=int, default=512, 
-				 help='Maximum number of VAE neurons per layer')
+			help='Maximum number of VAE neurons per layer')
 	parser.add_argument('--max_dnn_hidden', type=int, default=512, 
-				 help='Maximum number of VAE neurons per layer')
+			help='Maximum number of VAE neurons per layer')
 	parser.add_argument('--max_dnn_hidden_layers', type=int, default=5,
-				 help='Maximum number of DNN hidden layers')
+			help='Maximum number of DNN hidden layers')
 	parser.add_argument('--min_vae_hidden_layers', type=int, default=1, 
-				 help='minimum number of VAE hidden layers')
+			help='minimum number of VAE hidden layers')
 	parser.add_argument('--min_vae_latent', type=int, default=2, 
-				 help='minimum number of VAE neurons per layer')
+			help='minimum number of VAE neurons per layer')
 	parser.add_argument('--min_dnn_latent', type=int, default=2, 
-				 help='minimum number of DNN neurons per layer')
+			help='minimum number of DNN neurons per layer')
 	parser.add_argument('--min_vae_hidden', type=int, default=2, 
-				 help='Maximum number of VAE neurons per layer')
+			help='Maximum number of VAE neurons per layer')
 	parser.add_argument('--min_dnn_hidden', type=int, default=2, 
-				 help='Maximum number of VAE neurons per layer')
+			help='Maximum number of VAE neurons per layer')
 	parser.add_argument('--min_dnn_hidden_layers', type=int, default=1,
-				 help='minimum number of DNN hidden layers')	
+			help='minimum number of DNN hidden layers')	
 	parser.add_argument('--dnn_weight', type=float, default=1.0,
-				help='relative weight on prediction loss')
+			help='relative weight on prediction loss')
 	parser.add_argument('--vae_weight', type=float, default=1.0,#30.53,
-				help='relative weight on prediction loss')
+			help='relative weight on prediction loss')
 	parser.add_argument('--vae_kl_weight', type=float, default=1.0,#1.39e6,
-				help='relative weight on prediction loss')
+			help='relative weight on prediction loss')
 	parser.add_argument('--dnn_kl_weight', type=float, default=1.0,#6.35,
-				help='relative weight on prediction loss')
+			help='relative weight on prediction loss')
 	parser.add_argument('--prediction_log_var_prior', type=float, default=0.0,
-				help='w log var prior')
+			help='w log var prior')
 	parser.add_argument("--do_log", action="store_true", 
-				help="save log files")
+			help="save log files")
 	parser.add_argument("--do_ckpt", action="store_true",
-				help="save model checkpoints")
+			help="save model checkpoints")
 	parser.add_argument('--patience', type=int, default=10,
-				help='# of epochs, for early stopping')
+			help='# of epochs, for early stopping')
 	parser.add_argument("--kl_anneal", type=int, default=0, 
-				help="number of epochs before kl loss term is 1.0")
+			help="number of epochs before kl loss term is 1.0")
 	parser.add_argument("--w_kl_anneal", type=int, default=0, 
-				help="number of epochs before w's kl loss term is 1.0")
+			help="number of epochs before w's kl loss term is 1.0")
 	parser.add_argument('--dnn_log_var_prior', type=float, default=0.0,
-				help='Prior on the log variance for the DNN predictor')
+			help='Prior on the log variance for the DNN predictor')
 	parser.add_argument('--log_dir', type=str, default='../data/logs',
-				help='basedir for saving log files')
+			help='basedir for saving log files')
 	parser.add_argument('--model_dir', type=str, default='../data/models',
-				help='basedir for saving model weights')
+			help='basedir for saving model weights')
 	parser.add_argument('--table_dir', type=str, default='../data/tables',
-				help='basedir for storing the table of params and fitnesses.')
+			help='basedir for storing the table of params and fitnesses.')
 	parser.add_argument('--train_file', type=str, default='MNIST',
-				help='file of training data (.pickle)')
+			help='file of training data (.pickle)')
 	parser.add_argument('--cross_prob', type=float, default=0.7,
-				help='Probability of crossover between generations')
+			help='Probability of crossover between generations')
 	parser.add_argument('--mutate_prob', type=float, default=0.01,
-				help='Probability of mutation for each member')
+			help='Probability of mutation for each member')
 	parser.add_argument('--population_size', type=int, default=3,
-				help='size of the population to evolve; '\
-						'preferably divisible by 2')
+			help='size of the population to evolve; preferably divisible by 2')
 	parser.add_argument('--num_generations', type=int, default=2,
-				help='number of generations for genetic algorithm')
+			help='number of generations for genetic algorithm')
 	parser.add_argument('--verbose', action='store_true',
-				help='print more [INFO] and [DEBUG] statements')
+			help='print more [INFO] and [DEBUG] statements')
 	parser.add_argument('--make_plots', action='store_true',
-				help='make plots of growth in the best_loss over generations')
+			help='make plots of growth in the best_loss over generations')
 	parser.add_argument('--port', type=int, default=22,
-				help='IP port over which to ssh')
+			help='IP port over which to ssh')
+	parser.add_argument('--send_back', action='store_true', 
+			help='Toggle whether to send the ckpt file + population local csv')
 	clargs = parser.parse_args()
 	
 	for key,val in clargs.__dict__.items(): 
@@ -128,8 +129,8 @@ if __name__ == '__main__':
 
 	machines = [{"host": "172.16.50.181", "username": "acc", 
 					"key_filename": key_filename},
-				#{"host": "172.16.50.176", "username": "acc", 
-				#	"key_filename": key_filename},
+				{"host": "172.16.50.176", "username": "acc", 
+					"key_filename": key_filename},
 				{"host": "172.16.50.177", "username": "acc", 
 					"key_filename": key_filename},
 				{"host": "172.16.50.163", "username": "acc", 

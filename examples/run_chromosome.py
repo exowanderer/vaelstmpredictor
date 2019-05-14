@@ -172,65 +172,67 @@ def ssh_out_table_entry(clargs, chromosome):
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--run_name', type=str, default='ga_test',
-				help='tag for current run')
+			help='tag for current run')
 	parser.add_argument('--predictor_type', type=str, default="classification",
-				help='select `classification` or `regression`')
+			help='select `classification` or `regression`')
 	parser.add_argument('--batch_size', type=int, default=128,
-				help='batch size')
+			help='batch size')
 	parser.add_argument('--optimizer', type=str, default='adam',
-				help='optimizer name') 
+			help='optimizer name') 
 	parser.add_argument('--num_epochs', type=int, default=200,
-				help='number of epochs')
+			help='number of epochs')
 	parser.add_argument('--dnn_weight', type=float, default=1.0,
-				help='relative weight on prediction loss')
+			help='relative weight on prediction loss')
 	parser.add_argument('--vae_weight', type=float, default=1.0,
-				help='relative weight on prediction loss')
+			help='relative weight on prediction loss')
 	parser.add_argument('--vae_kl_weight', type=float, default=1.0,
-				help='relative weight on prediction loss')
+			help='relative weight on prediction loss')
 	parser.add_argument('--dnn_kl_weight', type=float, default=1.0,
-				help='relative weight on prediction loss')
+			help='relative weight on prediction loss')
 	parser.add_argument('--prediction_log_var_prior', type=float, default=0.0,
-				help='w log var prior')
+			help='w log var prior')
 	# parser.add_argument("--do_log", action="store_true", 
-	# 			help="save log files")
+	# 		help="save log files")
 	# parser.add_argument("--do_ckpt", action="store_true",
-	# 			help="save model checkpoints")
+	# 		help="save model checkpoints")
 	parser.add_argument('--patience', type=int, default=10,
-				help='# of epochs, for early stopping')
+			help='# of epochs, for early stopping')
 	parser.add_argument("--kl_anneal", type=int, default=0, 
-				help="number of epochs before kl loss term is 1.0")
+			help="number of epochs before kl loss term is 1.0")
 	parser.add_argument("--w_kl_anneal", type=int, default=0, 
-				help="number of epochs before w's kl loss term is 1.0")
+			help="number of epochs before w's kl loss term is 1.0")
 	parser.add_argument('--dnn_log_var_prior', type=float, default=0.0,
-				help='Prior on the log variance for the DNN predictor')
+			help='Prior on the log variance for the DNN predictor')
 	parser.add_argument('--log_dir', type=str, default='../data/logs',
-				help='basedir for saving log files')
+			help='basedir for saving log files')
 	parser.add_argument('--model_dir', type=str, default='../data/models',
-				help='basedir for saving model weights')
+			help='basedir for saving model weights')
 	parser.add_argument('--table_dir', type=str, default='../data/tables',
-				help='basedir for storing the table of params and fitnesses.')
+			help='basedir for storing the table of params and fitnesses.')
 	parser.add_argument('--train_file', type=str, default='MNIST',
-				help='file of training data (.pickle)')
+			help='file of training data (.pickle)')
 	parser.add_argument('--time_stamp', type=int, default=0,
-				help='Keeps track of runs and re-runs')
+			help='Keeps track of runs and re-runs')
 	parser.add_argument('--hostname', type=str, default='127.0.0.1',
-				help='The hostname of the computer to send results back to.')
+			help='The hostname of the computer to send results back to.')
 	parser.add_argument('--port', type=int, default=22,
-				help='The port on the work computer to send ssh over.')
+			help='The port on the work computer to send ssh over.')
+	parser.add_argument('--send_back', action='store_true', 
+			help='Toggle whether to send the ckpt file + population local csv')
 	parser.add_argument('--generationID', type=int, default=-1,
-				help='Chromosome Generation ID')
+			help='Chromosome Generation ID')
 	parser.add_argument('--chromosomeID', type=int, default=-1,
-				help='Chromosome Chromosome ID')
+			help='Chromosome Chromosome ID')
 	parser.add_argument('--num_vae_layers', type=int, default=1,
-				help='Depth of the VAE')
+			help='Depth of the VAE')
 	parser.add_argument('--num_dnn_layers', type=int, default=1,
-				help='Depth of the DNN')
+			help='Depth of the DNN')
 	parser.add_argument('--size_vae_latent', type=int, default=16,
-				help='Size of the VAE Latent Layer')
+			help='Size of the VAE Latent Layer')
 	parser.add_argument('--size_vae_hidden', type=int, default=16,
-				help='Size of the VAE Hidden Layer')
+			help='Size of the VAE Hidden Layer')
 	parser.add_argument('--size_dnn_hidden', type=int, default=16,
-				help='Size of the DNN Hidden Layer')
+			help='Size of the DNN Hidden Layer')
 
 	clargs = parser.parse_args()
 	
@@ -296,15 +298,16 @@ if __name__ == '__main__':
 	remote_wghts = 'vaelstmpredictor/{}'.format(local_wghts)
 	remote_wghts = remote_wghts.replace('../','')
 	
-	sftp_send(local_file = local_wghts, 
-				remote_file = remote_wghts,
-				hostname = clargs.hostname, 
-				port = clargs.port, 
-				key_filename = key_filename, 
-				verbose = clargs.verbose)
+	if clargs.send_back:
+		sftp_send(local_file = local_wghts, 
+					remote_file = remote_wghts,
+					hostname = clargs.hostname, 
+					port = clargs.port, 
+					key_filename = key_filename, 
+					verbose = clargs.verbose)
 
-	ssh_out_table_entry(clargs, chromosome)
-
+		ssh_out_table_entry(clargs, chromosome)
+	
 	print('\n[INFO]')
 	print('Result: ', end=" ")
 	print('GenerationID: {}'.format(chromosome.generationID), end=" ")
