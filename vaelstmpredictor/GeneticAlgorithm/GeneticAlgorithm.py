@@ -97,6 +97,7 @@ def query_full_sql(loop_until_done=False):
 		if not loop_until_done: return None
 
 def query_generation(generationID, loop_until_done=False):
+	# could add time_stamp,  to args and RESTful API call
 	getGeneration = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
 	getGeneration = getGeneration + 'GetGeneration'
 
@@ -283,7 +284,7 @@ def get_machine(queue):
 
 	return machine
 
-def process_generation(generation, chromosomeID, queue, clargs):
+def process_generation(generation, queue, clargs):
 	for chromosome in generation.itertuples():
 		''' Chromosome has never been touched '''
 		if chromosome.isTrained == 0:# and queue.qsize() >= 0:
@@ -362,7 +363,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 		start = time()
 		count_while = count_while + 1
 		# End debug_message
-		
+
 		generation = process_generation(generation, queue, clargs)
 		sql_generation = query_generation(generationID, loop_until_done=False)
 		
