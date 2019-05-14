@@ -222,12 +222,12 @@ if __name__ == '__main__':
 					 'size_vae_latent': (10,1), 
 					 'size_vae_hidden': (50,1), 
 					 'size_dnn_hidden': (50,1)}
-	debug_message('__main__+generation:\n{}'.format(,
+	debug_message('__main__+generation:\n{}'.format(
 				generation.dtypes))
 	start = time()
 	# while gen_num < num_generations:
 	for generationID in range(1,num_generations):
-		debug_message('1,__main__+forGenID+generation:\n{}'.format(,
+		debug_message('1,__main__+forGenID+generation:\n{}'.format(
 				generation.dtypes))
 		try:
 			save_sql_to_csv(clargs)
