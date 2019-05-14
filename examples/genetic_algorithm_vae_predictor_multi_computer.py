@@ -197,7 +197,7 @@ if __name__ == '__main__':
 						verbose = clargs.verbose)
 	
 	generationID = 0
-	debug_message('__main__+before_train_generation:\n{}'.format(,
+	debug_message('__main__+before_train_generation:\n{}'.format(
 				generation.dtypes))
 	generation = train_generation(generation, clargs, machines,verbose=verbose)
 	debug_message('__main__+after_train_generation:\n{}'.format(
