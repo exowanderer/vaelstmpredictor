@@ -148,6 +148,8 @@ if __name__ == '__main__':
 					"key_filename": key_filename}
 				]
 	
+	machines = machines[:clargs.population_size]
+	
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
 	hostname = s.getsockname()[0]

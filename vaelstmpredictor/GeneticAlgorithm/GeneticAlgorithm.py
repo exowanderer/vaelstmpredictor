@@ -78,41 +78,66 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 
 	return hidden_dims
 
-def query_sql_database(generationID, chromosomeID, clargs=None, verbose=True):
-	getFitness = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	getFitness = getFitness + 'GetFitness'
+def query_full_sql(loop_until_done=False):
+	getDatabase = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
+	getDatabase = getDatabase + 'GetDatabase'
+
+	while True: # maybe use `for _ in range(iterations)` instead?
+		try:
+			req = requests.get(getDatabase).json()
+			sql_full_json = pd.DataFrame(req.json())
+			
+			# Toggle triggers if request+dataframe are successful
+			return sql_full_json
+		except Exception as error:
+			message = 'Full query failed with error:\n{}'.format(error)
+			warning_message(message)
+
+		# Only triggers if requests+dataframe fails and not `loop_until_done`
+		if not loop_until_done: return None
+
+def query_generation(generationID, loop_until_done=False):
+	getGeneration = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
+	getGeneration = getGeneration + 'GetGeneration'
+
+	while True: # maybe use `for _ in range(iterations)` instead?
+		try:
+			json_ID = {'generationID':generationID}
+			req = requests.get(getGeneration, params=json_ID).json()
+			sql_generation = pd.DataFrame(req.json())
+			
+			# Toggle triggers if request+dataframe are successful
+			# FINDME: Should probably sort `sql_generation` by `chromosomeID`
+			return sql_generation
+		except Exception as error:
+			message = 'Full query failed with error:\n{}'.format(error)
+			warning_message(message)
+
+		# Only triggers if requests+dataframe fails and not `loop_until_done`
+		if not loop_until_done: return None
+
+def query_chromosome(generationID, chromosomeID, verbose=True):
+	getChromosome = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
+	getChromosome = getChromosome + 'GetChrom'
 	
-	if clargs is not None:
-		table_dir = clargs.table_dir
-		table_name = '{}/{}_{}_{}_sql_fitness_table_{}.json'
-		table_name = table_name.format(clargs.table_dir, 
-						clargs.run_name, generationID, 
-						chromosomeID, clargs.time_stamp)
-		
 	json_ID = {'generationID':generationID, 'chromosomeID':chromosomeID}
 	
-	sql_json = requests.get(getFitness, params=json_ID)
+	sql_json = requests.get(getChromosome, params=json_ID)
 	
 	try:
 		sql_json = sql_json.json()
+		debug_message('type(sql_json):{}\nsql_json:{}'.format(
+								type(sql_json), sql_json))
 	except Exception as error:
-		warning_message('GeneticAlgorithm.py+query_sql_database+Exception:'
+		warning_message('GeneticAlgorithm.py+query_chromosome+Exception:'
 							'\n{}'.format(error))
 	
-	if sql_json == 0:#not isinstance(sql_json, requests.models.Response):
+	if sql_json == 0:# not isinstance(sql_json, requests.models.Response):
 		if verbose: 
 			print('SQL Request Failed: sql_json = {} with {}'.format(sql_json, 
 																	json_ID))
 		return sql_json
-
-	# Only triggered if `sql_json` is a `dict`
-
-	# sql_json = sql_json.json()
 	
-	if clargs is not None:
-		with open(table_name, 'a') as f_out: 
-			json.dump(sql_json, f_out)
-
 	return sql_json
 
 def query_local_csv(clargs, chromosome):
@@ -162,7 +187,7 @@ def create_blank_dataframe(generationID, population_size):
 	ones = np.ones(population_size, dtype = int)
 	arange = np.arange(population_size, dtype = int)
 
-	generation['generationID'] = ones.copy()
+	generation['generationID'] = zeros.copy() + generationID
 	generation['chromosomeID'] = arange.copy()
 	generation['isTrained'] = zeros.copy()
 	generation['num_vae_layers'] = zeros.copy()
@@ -197,12 +222,9 @@ def create_blank_dataframe(generationID, population_size):
 	generation['vae_weight'] = zeros.copy()
 	generation['w_kl_anneal'] = zeros.copy()
 
-	generation['generationID'] = generation['generationID'] * generationID
-	generation['generationID'] = np.int64(generation['generationID'])
-	
 	return generation
 
-def generate_random_chromosomes(population_size,
+def generate_random_chromosomes(population_size, geneationID = 0,
 						min_vae_hidden_layers = 1, max_vae_hidden_layers = 5, 
 						min_dnn_hidden_layers = 1, max_dnn_hidden_layers = 5, 
 						min_vae_hidden = 2, max_vae_hidden = 1024, 
@@ -210,21 +232,16 @@ def generate_random_chromosomes(population_size,
 						min_vae_latent = 2, max_vae_latent = 1024, 
 						verbose=False):
 	
+	# create blank dataframe with full SQL database required entrie
+	generation = create_blank_dataframe(geneationID, population_size)
+	
+	# Overwrite chromosome parameters to evolve with random choices
 	vae_nLayers_choices = range(min_vae_hidden_layers, max_vae_hidden_layers)
 	dnn_nLayers_choices = range(min_dnn_hidden_layers, max_dnn_hidden_layers)
 	vae_latent_choices = range(min_vae_latent, max_vae_latent)
 	vae_nUnits_choices = range(min_vae_hidden, max_vae_hidden)
 	dnn_nUnits_choices = range(min_dnn_hidden, max_dnn_hidden)
 	
-	generation = pd.DataFrame()
-	
-	zeros = np.zeros(population_size, dtype = int)
-	ones = np.ones(population_size, dtype = int)
-	arange = np.arange(population_size, dtype = int)
-
-	generation['generationID'] = zeros.copy()
-	generation['chromosomeID'] = arange.copy()
-	generation['isTrained'] = zeros.copy()
 	generation['num_vae_layers'] = np.random.choice(vae_nLayers_choices,
 														size = population_size)
 	generation['num_dnn_layers'] = np.random.choice(dnn_nLayers_choices,
@@ -235,38 +252,9 @@ def generate_random_chromosomes(population_size,
 														size = population_size)
 	generation['size_dnn_hidden'] = np.random.choice(dnn_nUnits_choices, 
 														size = population_size)
-	generation['fitness'] = np.float32(zeros.copy()) - 1.0
-
-	# Place holders for after training
-	generation['batch_size'] = zeros.copy()
-	generation['cross_prob'] = zeros.copy()
-	generation['dnn_kl_weight'] = zeros.copy()
-	generation['dnn_log_var_prior'] = zeros.copy()
-	generation['dnn_weight'] = zeros.copy()
-	generation['do_chckpt'] = np.bool8(zeros.copy())
-	generation['hostname'] = ['127.0.0.1']*population_size
-	generation['iterations'] = zeros.copy()
-	generation['kl_anneal'] = zeros.copy()
-	generation['log_dir'] = ['../data/logs']*population_size
-	generation['model_dir'] = ['../data/models']*population_size
-	generation['mutate_prob'] = zeros.copy()
-	generation['num_epochs'] = zeros.copy()
-	generation['optimizer'] = ['adam']*population_size
-	generation['patience'] = zeros.copy()
-	generation['population_size'] = zeros.copy()
-	generation['prediction_log_var_prior'] = zeros.copy()
-	generation['predictor_type'] = ['classification']*population_size
-	generation['run_name'] = ['run_name']*population_size
-	generation['table_dir'] = ['../data/tables']*population_size
-	generation['time_stamp'] = zeros.copy()
-	generation['train_file'] = ['train_file']*population_size
-	generation['vae_kl_weight'] = zeros.copy()
-	generation['vae_weight'] = zeros.copy()
-	generation['w_kl_anneal'] = zeros.copy()
-
 	return generation
 
-def get_machine(queue, bad_machines):
+def get_machine(queue):
 	machine = queue.get()
 	sp_stdout_ = subprocess.STDOUT
 	with open(os.devnull, 'wb') as devnull:
@@ -282,10 +270,6 @@ def get_machine(queue, bad_machines):
 		while check_ping != 0:
 			print('Cannot reach host {}'.format(machine['host']))
 
-			bad_machines.append(machine)
-			assert(len(bad_machines) < queue.qsize()),\
-				'Queue is empty while `bad_machines` is full'
-
 			machine = queue.get()
 
 			callnow = ("ping -c 1 " + machine['host']).split(' ')
@@ -297,7 +281,58 @@ def get_machine(queue, bad_machines):
 				print(error)
 				check_ping = -1
 
-	return machine, bad_machines
+	return machine
+
+def process_generation(generation, chromosomeID, queue, clargs):
+	for chromosome in generation.itertuples():
+		''' Chromosome has never been touched '''
+		if chromosome.isTrained == 0:# and queue.qsize() >= 0:
+			machine = get_machine(queue)
+
+			info_message("\n\nCreating Process for Chromosome "\
+						"{} on GenerationID {} on machine {}".format(
+												chromosome.chromosomeID,
+												chromosome.generationID,
+												machine['host']))
+			
+			# Find a Chromosome that is not trained yet
+			# Wait for queue to have a value, 
+			#	which is the ID of the machine that is done.
+			process = mp.Process(target=train_chromosome, 
+								args=(chromosome, machine, queue, clargs))
+			process.start()
+			
+			generation.set_value(chromosome.Index, 'isTrained', 1)
+		""" # taken care of out of this function
+		''' Check if chromosome has been updated on SQL '''
+		if chromosome.isTrained != 2:
+			sql_json = query_chromosome(chromosome.generationID, 
+										  chromosome.chromosomeID, 
+										  verbose = False)
+			
+			if isinstance(sql_json, requests.models.Response):
+				warning_message('sql_json =?= sql_json.json()')
+				try:
+					sql_json = sql_json.json()
+				except Exception as error:
+					message = '`req.json()` Failed with:\n{}'.format(error)
+					warning_message(message)
+
+			if isinstance(sql_json, dict):
+				assert(sql_json['fitness'] >= 0), \
+					"[ERROR] If ID exists in SQL, why is fitness == -1?"\
+					"\n GenerationID:{} ChromosomeID:{}".format(
+						chromosome.generationID, chromosome.chromosomeID)
+				
+				info_message('Found Generation {}, Chromosome {}'.format(
+						chromosome.generationID,chromosome.chromosomeID))
+				
+				for key, val in sql_json.items():
+					generation.set_value(chromosome.Index, key, val)
+				
+				# generation.set_value(chromosome.Index, 'isTrained', 2)
+		"""
+	return generation
 
 def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 	
@@ -310,81 +345,66 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 	generation.chromosomeID = np.int64(generation.chromosomeID)
 	
 	queue = mp.Queue()
-	bad_machines = []
 	
 	#Create Processes
 	for machine in machines: queue.put(machine)
 	
-	while True:
-		# Run until entire Generation is listed as isTrained == True
-		if all(generation.isTrained.values == 2): break
+	# Store `generationID` for easier use later
+	generationID = generation.generationID
+	count_while = 0
+	start = time()
+	# Start master process
+	while not all(generation.isTrained.values == 2):
+		# Start debug_message
+		debug_message('While Step{} took {} seconds'.format(
+									count_while, start-time()))
+
+		start = time()
+		count_while = count_while + 1
+		# End debug_message
 		
-		for chromosome in generation.itertuples():
-			chromosomeID = chromosome.chromosomeID
+		generation = process_generation(generation, queue, clargs)
+		sql_generation = query_generation(generationID, loop_until_done=False)
+		
+		# If SQL does not exist yet or is not reachable, then keep processing
+		if sql_generation is None: debug_message('sql_generation is None')
+		if sql_generation is None: continue
+
+		''' Loop over all chromosomse to check if they exist in SQL database'''
+		
+		# Set all `isTrained==2` to `isTrained==0`
+		generation['isTrained'][generation['isTrained'] == 2] = 0
+
+		# If chromosomeID exists in SQL and fitness >= 0, 
+		#	then set `isTrained` back to 2 (i.e. "fully trained")
+		#	This skips any entries with `isTrained == 1`
+		for chromosome in sql_generation.itertuples():
+			query = 'chromosomeID == {}'.format(chromosome.chromosomeID)
 			
-			if chromosome.isTrained == 0:# and queue.qsize() > 0:
-				# Chromosome has never been touched
-				machine, bad_machines = get_machine(queue, bad_machines)
+			# DEBUG: Alternative?
+			# if sql_generation.query(query)['fitness'] >= 0:
+			if sql_generation.loc[chromosome.Index, 'fitness'] >= 0:
+				generation.set_value(chromosome.chromosomeID, 'isTrained', 2)
+			else:
+				message = "sql_generation.loc[chromosome.Index, 'fitness'] < 0"
+				warning_message(message)
+	
+	'''After all chromosomes have been trained and stored in the SQL database,
+		Download full generatin and copy data from SQL to local `generations`
+	'''
+	sql_generation = query_generation(generationID, loop_until_done=True)
+	
+	assert(all(sql_generation.isTrained == 2)), \
+				'while loop should not have closed!'
 
-				info_message("\n\nCreating Process for Chromosome "\
-						"{} on GenerationID {} on machine {}".format(
-													chromosome.chromosomeID,
-													chromosome.generationID,
-													machine['host']))
-				
-				# Find a Chromosome that is not trained yet
-				# Wait for queue to have a value, 
-				#	which is the ID of the machine that is done.
-				process = mp.Process(target=train_chromosome, 
-									args=(chromosome, machine, queue, clargs))
-				process.start()
-				
-				generation.set_value(chromosome.Index, 'isTrained', 1)
-			
-			if chromosome.isTrained != 2:
-				# Check if chromosome has been updated on SQL
-				
-				sql_json = query_sql_database(chromosome.generationID, 
-											  chromosome.chromosomeID, 
-											  verbose = False)
-				
-				if isinstance(sql_json, requests.models.Response):
-					warning_message('sql_json =?= sql_json.json()')
-					sql_json = sql_json.json()
+	# Assign sql data to generation dataframe
+	# 	effectively: generation = sql_generation.copy()
+	for chromosome in sql_generation.itertuples():
+		for colname in sql_generation.columns:
+			val = sql_json.loc[chromosome.Index, colname]
+			generation.set_value(chromosome.Index, colname, val)
 
-				elif isinstance(sql_json, dict):
-					assert(sql_json['fitness'] > 0), \
-						"[ERROR] If ID exists in SQL, why is fitness == -1?"\
-						"\n GenerationID:{} ChromosomeID:{}".format(
-							chromosome.generationID, chromosome.chromosomeID)
-					
-					for key, val in sql_json.items(): 
-						generation.set_value(chromosome.Index, key, val)
-					
-					generation.set_value(chromosome.Index, 'isTrained', 2)
-
-			for bad_machine in bad_machines:
-				# This lets us check if it is "good" again
-				queue.put(bad_machine)
-
-	for chromosome in generation.itertuples():
-		assert(chromosome.isTrained), 'while loop should not have closed!'
-		
-		chromosomeID = chromosome.chromosomeID
-		generationID = chromosome.generationID
-		
-		sql_json = query_sql_database(generationID, chromosomeID, 
-										clargs=clargs, verbose=True)
-		
-		if sql_json['fitness'] is -1:
-			sql_json = query_local_csv(generationID, chromosomeID, 
-										clargs = clargs)
-		
-		if isinstance(sql_json, dict) and 'fitness' in sql_json.keys():
-			assert(sql_json['fitness'] != -1), 'while loop may have failed!'
-			
-			if 'isTrained' not in sql_json.keys(): sql_json['isTrained'] = 2
-
+		if verbose:
 			print('\n\n[INFO]')
 			print('GenerationID:{}'.format(generationID))
 			print('ChromosomeID:{}'.format(chromosomeID))
@@ -396,12 +416,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 			print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
 			print('\n\n')
 
-			for col in generation.columns:
-				generation.set_value(chromosomeID, col, sql_json[col])
-
-	# After all is done: return what you received
-	
-	return generation
+	return generation # After all is done: report back
 
 def generate_ssh_command(clargs, chromosome):
 	command = []
