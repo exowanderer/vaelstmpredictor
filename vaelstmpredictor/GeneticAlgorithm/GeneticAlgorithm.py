@@ -464,7 +464,7 @@ def generate_ssh_command(clargs, chromosome):
 	# command.append('--verbose {}'.format(int(clargs.verbose)))
 	command.append('--hostname {}'.format(clargs.hostname))
 	command.append('--port {}'.format(clargs.port))
-	command.append('--send_back {}'.format(clargs.send_back))
+	# command.append('--send_back {}'.format(clargs.send_back))
 	command.append('--num_vae_layers {}'.format(chromosome.num_vae_layers))
 	command.append('--num_dnn_layers {}'.format(chromosome.num_dnn_layers))
 	command.append('--size_vae_latent {}'.format(chromosome.size_vae_latent))
