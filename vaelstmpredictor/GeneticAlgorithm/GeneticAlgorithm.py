@@ -597,6 +597,7 @@ def cross_over(new_generation, generation, parent1, parent2,
 		for param in param_choices:
 			p1_param = generation.iloc[idx_parent1][param]
 			p2_param = generation.iloc[idx_parent2][param]
+			debug_message('cross_over+paramloop:{},{}'.format(p1_param, p2_param))
 			child_gene = random.choice([p1_param, p2_param])
 			new_generation.set_value(chromosomeID, param, child_gene)
 
@@ -607,11 +608,11 @@ def cross_over(new_generation, generation, parent1, parent2,
 		
 		p1_fitness = generation.iloc[idx_parent1]['fitness']
 		p2_fitness = generation.iloc[idx_parent2]['fitness']
-		debug_message('cross_over+no_crossover_happened:\n{}'.format(
+		debug_message('cross_over+no_crossover_happened:{}'.format(
 				new_generation.iloc[chromosomeID].dtypes))
 		idx_child = idx_parent1 if p1_fitness > p2_fitness else idx_parent1
 		new_generation.iloc[chromosomeID] = generation.iloc[idx_child]
-		debug_message('cross_over+no_crossover_happened:\n{}'.format(
+		debug_message('cross_over+no_crossover_happened:{}'.format(
 				new_generation.iloc[chromosomeID].dtypes))
 	
 	debug_message('cross_over+return:\n{}'.format(
