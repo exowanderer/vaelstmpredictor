@@ -189,40 +189,40 @@ def create_blank_dataframe(generationID, population_size):
 	ones = np.ones(population_size, dtype = int)
 	arange = np.arange(population_size, dtype = int)
 
-	generation['generationID'] = zeros.copy() + generationID
-	generation['chromosomeID'] = arange.copy()
-	generation['isTrained'] = zeros.copy()
-	generation['num_vae_layers'] = zeros.copy()
-	generation['num_dnn_layers'] = zeros.copy()
-	generation['size_vae_latent'] = zeros.copy()
-	generation['size_vae_hidden'] = zeros.copy()
-	generation['size_dnn_hidden'] = zeros.copy()
-	generation['fitness'] = np.float32(zeros.copy()) - 1.0
-	generation['batch_size'] = zeros.copy()
-	generation['cross_prob'] = zeros.copy()
-	generation['dnn_kl_weight'] = zeros.copy()
-	generation['dnn_log_var_prior'] = zeros.copy()
-	generation['dnn_weight'] = zeros.copy()
-	generation['do_chckpt'] = np.bool8(zeros.copy())
+	generation['generationID'] = zeros + generationID
+	generation['chromosomeID'] = arange
+	generation['isTrained'] = zeros
+	generation['num_vae_layers'] = zeros
+	generation['num_dnn_layers'] = zeros
+	generation['size_vae_latent'] = zeros
+	generation['size_vae_hidden'] = zeros
+	generation['size_dnn_hidden'] = zeros
+	generation['fitness'] = np.float32(zeros) - 1.0
+	generation['batch_size'] = zeros
+	generation['cross_prob'] = zeros
+	generation['dnn_kl_weight'] = zeros
+	generation['dnn_log_var_prior'] = zeros
+	generation['dnn_weight'] = zeros
+	generation['do_chckpt'] = np.bool8(zeros)
 	generation['hostname'] = ['127.0.0.1']*population_size
-	generation['iterations'] = zeros.copy()
-	generation['kl_anneal'] = zeros.copy()
+	generation['iterations'] = zeros
+	generation['kl_anneal'] = zeros
 	generation['log_dir'] = ['../data/logs']*population_size
 	generation['model_dir'] = ['../data/models']*population_size
-	generation['mutate_prob'] = zeros.copy()
-	generation['num_epochs'] = zeros.copy()
+	generation['mutate_prob'] = zeros
+	generation['num_epochs'] = zeros
 	generation['optimizer'] = ['adam']*population_size
-	generation['patience'] = zeros.copy()
-	generation['population_size'] = zeros.copy()
-	generation['prediction_log_var_prior'] = zeros.copy()
+	generation['patience'] = zeros
+	generation['population_size'] = zeros
+	generation['prediction_log_var_prior'] = zeros
 	generation['predictor_type'] = ['classification']*population_size
 	generation['run_name'] = ['run_name']*population_size
 	generation['table_dir'] = ['../data/tables']*population_size
-	generation['time_stamp'] = zeros.copy()
+	generation['time_stamp'] = zeros
 	generation['train_file'] = ['train_file']*population_size
-	generation['vae_kl_weight'] = zeros.copy()
-	generation['vae_weight'] = zeros.copy()
-	generation['w_kl_anneal'] = zeros.copy()
+	generation['vae_kl_weight'] = zeros
+	generation['vae_weight'] = zeros
+	generation['w_kl_anneal'] = zeros
 	debug_message('create_blank_dataframe+generation:\n{}'.format(
 		generation))
 	return generation
@@ -406,7 +406,7 @@ def train_generation(generation, clargs, machines,
 				'while loop should not have closed!'
 
 	# Assign sql data to generation dataframe
-	# 	effectively: generation = sql_generation.copy()
+	# 	effectively: generation = sql_generation
 	for chromosome in sql_generation.itertuples():
 		for colname in sql_generation.columns:
 			val = sql_generation.loc[chromosome.Index, colname]
