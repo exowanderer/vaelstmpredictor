@@ -395,10 +395,10 @@ def train_generation(generation, clargs, machines,
 			
 			# DEBUG: Alternative?
 			# if sql_generation.query(query)['fitness'] >= 0:
-			if sql_generation.iat[chromosome.Index, 'fitness'] >= 0:
+			if sql_generation.atchromosome.Index, 'fitness'] >= 0:
 				generation.set_value(chromosome.chromosomeID, 'isTrained', 2)
 			else:
-				message = "sql_generation.iat[chromosome.Index, 'fitness'] < 0"
+				message = "sql_generation.atchromosome.Index, 'fitness'] < 0"
 				warning_message(message)
 		debug_message('3,sql_generation:\n{}'.format(sql_generation.dtypes))
 		debug_message('3,generation:\n{}'.format(generation.dtypes))
@@ -415,7 +415,7 @@ def train_generation(generation, clargs, machines,
 	# 	effectively: generation = sql_generation
 	for chromosome in sql_generation.itertuples():
 		for colname in sql_generation.columns:
-			val = sql_generation.iat[chromosome.Index, colname]
+			val = sql_generation.atchromosome.Index, colname]
 			generation.set_value(chromosome.Index, colname, val)
 
 		if verbose:
@@ -643,11 +643,11 @@ def mutate(new_generation, generation, chromosomeID,
 
 	if verbose:
 		print('Mutating Child {} in Generation {}'.format(
-			generation.iat[chromosomeID, 'chromosomeID'], 
-			generation.iat[chromosomeID, 'generationID']))
+			generation.atchromosomeID, 'chromosomeID'], 
+			generation.atchromosomeID, 'generationID']))
 		print('Mutating Child {} in Generation {}'.format(
-			new_generation.iat[chromosomeID, 'chromosomeID'], 
-			new_generation.iat[chromosomeID, 'generationID']))
+			new_generation.atchromosomeID, 'chromosomeID'], 
+			new_generation.atchromosomeID, 'generationID']))
 	
 	mutation_happened = False
 	for param, (range_change, min_val) in param_choices.items():
@@ -658,7 +658,7 @@ def mutate(new_generation, generation, chromosomeID,
 			change_p = np.random.uniform(-range_change, range_change)
 
 			# Add delta_param to param
-			current_p = generation.iat[chromosomeID, param] + change_p
+			current_p = generation.atchromosomeID, param] + change_p
 			
 			# If param less than `min_val`, then set param to `min_val`
 			current_p = np.max([current_p, min_val])
