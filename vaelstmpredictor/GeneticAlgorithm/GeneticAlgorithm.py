@@ -412,8 +412,8 @@ def train_generation(generation, clargs, machines,
 
 		if verbose:
 			print('\n\n[INFO]')
-			print('GenerationID:{}'.format(generationID))
-			print('ChromosomeID:{}'.format(chromosomeID))
+			print('GenerationID:{}'.format(chromosome.generationID))
+			print('ChromosomeID:{}'.format(chromosome.chromosomeID))
 			print('Fitness:{}'.format(chromosome.fitness))
 			print('Num VAE Layers:{}'.format(chromosome.num_vae_layers))
 			print('Num DNN Layers:{}'.format(chromosome.num_dnn_layers))
