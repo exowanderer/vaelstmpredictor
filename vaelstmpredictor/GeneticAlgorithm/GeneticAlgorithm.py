@@ -377,7 +377,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 		
 		# Set all `isTrained==2` to `isTrained==0`
 		for chromosome in generation.itertuples():
-			if chromosomeID.isTraind == 2:
+			if chromosome.isTraind == 2:
 				generation.set_value(chromosome.chromosomeID,'isTrained', 0)
 
 		# If chromosomeID exists in SQL and fitness >= 0, 
