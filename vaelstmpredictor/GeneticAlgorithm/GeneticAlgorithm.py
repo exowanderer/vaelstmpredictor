@@ -223,7 +223,8 @@ def create_blank_dataframe(generationID, population_size):
 	generation['vae_kl_weight'] = zeros.copy()
 	generation['vae_weight'] = zeros.copy()
 	generation['w_kl_anneal'] = zeros.copy()
-
+	debug_message('create_blank_dataframe+generation:\n{}'.format(
+		generation))
 	return generation
 
 def generate_random_chromosomes(population_size, geneationID = 0,
