@@ -263,8 +263,8 @@ if __name__ == '__main__':
 			
 			debug_message('__main__+for+new_generation"\n{}'.format(
 				new_generation))
-			info_message('Adding Chromosome:\n{}'.format(child))
-			# new_generation.iloc[chromosomeID] = child
+			info_message('Adding Chromosome:\n{}'.format(
+					new_generation.iloc[chromosomeID]))
 		
 		# Re-sort by chromosomeID
 		new_generation = new_generation.sort_values('chromosomeID')
