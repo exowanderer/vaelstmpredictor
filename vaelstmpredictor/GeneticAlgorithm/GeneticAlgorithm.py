@@ -114,11 +114,7 @@ def query_generation(generationID, loop_until_done=False):
 		except Exception as error:
 			message = 'Full query failed with error:\n{}'.format(error)
 			warning_message(message)
-			# start DEBUG
-			debug_message(req)
-			return req
-			# end DEBUG
-
+		
 		# Only triggers if requests+dataframe fails and not `loop_until_done`
 		if not loop_until_done: return None
 
