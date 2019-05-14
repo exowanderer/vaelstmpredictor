@@ -337,7 +337,8 @@ def process_generation(generation, queue, clargs):
 		"""
 	return generation
 
-def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
+def train_generation(generation, clargs, machines, 
+					private_key='id_ecdsa', verbose = False):
 	
 	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)

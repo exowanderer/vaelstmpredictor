@@ -149,7 +149,7 @@ if __name__ == '__main__':
 				]
 	
 	machines = machines[:clargs.population_size]
-	
+
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
 	hostname = s.getsockname()[0]
@@ -196,7 +196,7 @@ if __name__ == '__main__':
 						verbose = clargs.verbose)
 	
 	generationID = 0
-	generation = train_generation(generation, clargs, machines)
+	generation = train_generation(generation, clargs, machines,verbose=verbose)
 	
 	best_fitness = []
 	fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
