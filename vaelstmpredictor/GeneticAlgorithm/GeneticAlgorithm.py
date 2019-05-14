@@ -373,7 +373,7 @@ def train_generation(generation, clargs, machines,
 		sql_generation = query_generation(generationID, loop_until_done=False)
 		
 		# If SQL does not exist yet or is not reachable, then keep processing
-		if sql_generation is None: # debug_message('sql_generation is None')
+		# if sql_generation is None: # debug_message('sql_generation is None')
 		if sql_generation is None: continue
 		# debug_message('1,sql_generation:\n{}'.format(sql_generation.dtypes))
 		# debug_message('1,generation:\n{}'.format(generation.dtypes))
