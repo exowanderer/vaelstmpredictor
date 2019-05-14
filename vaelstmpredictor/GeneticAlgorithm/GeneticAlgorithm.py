@@ -83,8 +83,8 @@ def query_full_sql(loop_until_done=False):
 	getDatabase = getDatabase + 'GetDatabase'
 
 	while True: # maybe use `for _ in range(iterations)` instead?
+		req = requests.get(getDatabase)
 		try:
-			req = requests.get(getDatabase).json()
 			sql_full_json = pd.DataFrame(req.json())
 			
 			# Toggle triggers if request+dataframe are successful
@@ -102,9 +102,10 @@ def query_generation(generationID, loop_until_done=False):
 	getGeneration = getGeneration + 'GetGeneration'
 
 	while True: # maybe use `for _ in range(iterations)` instead?
+		json_ID = {'generationID':generationID}
+		req = requests.get(getGeneration, params=json_ID)
+			
 		try:
-			json_ID = {'generationID':generationID}
-			req = requests.get(getGeneration, params=json_ID).json()
 			sql_generation = pd.DataFrame(req.json())
 			
 			# Toggle triggers if request+dataframe are successful
@@ -113,13 +114,17 @@ def query_generation(generationID, loop_until_done=False):
 		except Exception as error:
 			message = 'Full query failed with error:\n{}'.format(error)
 			warning_message(message)
+			# start DEBUG
+			debug_message(req)
+			return req
+			# end DEBUG
 
 		# Only triggers if requests+dataframe fails and not `loop_until_done`
 		if not loop_until_done: return None
 
 def query_chromosome(generationID, chromosomeID, verbose=True):
 	getChromosome = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	getChromosome = getChromosome + 'GetChrom'
+	getChromosome = getChromosome + 'GetChromosome'
 	
 	json_ID = {'generationID':generationID, 'chromosomeID':chromosomeID}
 	
@@ -167,7 +172,8 @@ def save_sql_to_csv(clargs):
 	import pandas as pd
 	import requests
 
-	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
+	getDatabase = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
+	getDatabase = getDatabase + 'GetDatabase'
 
 	table_dir = clargs.table_dir
 	table_name = '{}/{}_fitness_table_{}.csv'
@@ -176,7 +182,7 @@ def save_sql_to_csv(clargs):
 									clargs.time_stamp)
 
 
-	req = requests.get(getChrom)
+	req = requests.get(getDatabase)
 	sql_table = pd.DataFrame(req.json())
 	sql_table.to_csv(table_name)
 
