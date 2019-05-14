@@ -235,25 +235,30 @@ if __name__ == '__main__':
 		
 		for chromosomeID in tqdm(range(population_size)):
 			parent1, parent2 = select_parents(generation)
-			
-			child, crossover_happened = cross_over(new_generation, generation,
+			debug_message('__main__+for+new_generation"\n{}'.format(
+				new_generation))
+			new_generation, crossover_happened = cross_over(
+											new_generation, generation,
 											parent1, parent2, chromosomeID,
 											param_choices.keys(), cross_prob, 
 											verbose = verbose)
-			
+			debug_message('__main__+for+new_generation"\n{}'.format(
+				new_generation))
 			new_generation, mutation_happened = mutate(
 											new_generation, generation,
 											chromosomeID, mutate_prob, 
 											param_choices, verbose = verbose)
-			
+			debug_message('__main__+for+new_generation"\n{}'.format(
+				new_generation))
 			isTrained = mutation_happened*crossover_happened
 			if isTrained: isTrained = 2
-
+			
 			new_generation.set_value(chromosomeID, 'isTrained', isTrained)
 			new_generation.set_value(chromosomeID, 'generationID',generationID)
 			new_generation.set_value(chromosomeID, 'chromosomeID',chromosomeID)
-			new_generation.set_value(chromosomeID, 'fitness', -1)
-			
+			new_generation.set_value(chromosomeID, 'fitness', -1.0)
+			debug_message('__main__+for+new_generation"\n{}'.format(
+				new_generation))
 			info_message('Adding Chromosome:\n{}'.format(child))
 			# new_generation.iloc[chromosomeID] = child
 		
