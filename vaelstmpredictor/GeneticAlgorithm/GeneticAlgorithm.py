@@ -223,8 +223,8 @@ def create_blank_dataframe(generationID, population_size):
 	generation['vae_kl_weight'] = zeros
 	generation['vae_weight'] = zeros
 	generation['w_kl_anneal'] = zeros
-	debug_message('create_blank_dataframe+generation:\n{}'.format(
-		generation))
+
+	debug_message('create_blank_dataframe+generation:\n{}'.format(generation.dtypes))
 	return generation
 
 def generate_random_chromosomes(population_size, geneationID = 0,
@@ -255,8 +255,7 @@ def generate_random_chromosomes(population_size, geneationID = 0,
 														size = population_size)
 	generation['size_dnn_hidden'] = np.random.choice(dnn_nUnits_choices, 
 														size = population_size)
-	debug_message('generate_random_chromosomes+generation:\n{}'.format(
-		generation.dtypes))
+	debug_message('create_blank_dataframe+generation:\n{}'.format(generation.dtypes))
 	return generation
 
 def get_machine(queue):
