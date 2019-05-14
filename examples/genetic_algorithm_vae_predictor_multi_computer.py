@@ -252,13 +252,14 @@ if __name__ == '__main__':
 											param_choices, verbose = verbose)
 			debug_message('__main__+for+new_generation:\n{}'.format(
 				new_generation.dtypes))
-			isTrained = mutation_happened*crossover_happened
+			
+			isTrained = not (mutation_happened and crossover_happened)
 			
 			if not isTrained:
 				new_generation.set_value(chromosomeID, 'fitness', -1.0)
 
-			if isTrained: isTrained = 2
-
+			isTrained = 2 if isTrained else 0
+			
 			new_generation.set_value(chromosomeID, 'isTrained', isTrained)
 			new_generation.set_value(chromosomeID, 'generationID',generationID)
 			new_generation.set_value(chromosomeID, 'chromosomeID',chromosomeID)
