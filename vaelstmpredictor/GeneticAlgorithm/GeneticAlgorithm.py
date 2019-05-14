@@ -585,13 +585,14 @@ def select_parents(generation):
 	return parent1, parent2
 
 def cross_over(new_generation, generation, parent1, parent2, 
-				chromosomeID, param_choices, prob, verbose=False):
-	if verbose: info_message('Crossing over with probability: {}'.format(prob))
-
+				chromosomeID, param_choices, cross_prob, verbose=False):
+	if verbose: info_message('Crossing over with probability: {}'.format(cross_prob))
+	debug_message('cross_over+input+generation:\n{}'.format(generation))
+	debug_message('cross_over+input+new_generation:\n{}'.format(new_generation))
 	idx_parent1 = parent1.Index
 	idx_parent2 = parent2.Index
-	debug_message('random.random():{}, prob:{}'.format(random.random(), prob))
-	if random.random() <= prob:
+	debug_message('random.random():{}, cross_prob:{}'.format(random.random(), cross_prob))
+	if random.random() <= cross_prob:
 		crossover_happened = True
 		debug_message('cross_over+before_crossover_happened:\n{}'.format(
 				new_generation.iloc[chromosomeID].dtypes))
@@ -625,7 +626,7 @@ def cross_over(new_generation, generation, parent1, parent2,
 	return new_generation, crossover_happened
 
 def mutate(new_generation, generation, chromosomeID, 
-			prob, param_choices, verbose = False):
+			mutate_prob, param_choices, verbose = False):
 	
 	# explicit declaration
 	zero = 0 
@@ -640,7 +641,7 @@ def mutate(new_generation, generation, chromosomeID,
 	
 	mutation_happened = False
 	for param, (range_change, min_val) in param_choices.items():
-		if(random.random() <= prob):
+		if(random.random() <= mutate_prob):
 			mutation_happened = True
 
 			# Compute delta_param step
