@@ -406,7 +406,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa'):
 	# 	effectively: generation = sql_generation.copy()
 	for chromosome in sql_generation.itertuples():
 		for colname in sql_generation.columns:
-			val = sql_json.loc[chromosome.Index, colname]
+			val = sql_generation.loc[chromosome.Index, colname]
 			generation.set_value(chromosome.Index, colname, val)
 
 		if verbose:
