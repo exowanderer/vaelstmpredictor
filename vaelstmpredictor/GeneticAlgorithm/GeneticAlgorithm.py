@@ -89,7 +89,7 @@ def query_full_sql(loop_until_done=False):
 			# Toggle triggers if request+dataframe are successful
 			return sql_full_json
 		except Exception as error:
-			message = 'Full query failed with error:\n{}'.format(error)
+			message = '`query_full_sql` failed with error:\n{}'.format(error)
 			warning_message(message)
 
 		# Only triggers if requests+dataframe fails and not `loop_until_done`
@@ -111,7 +111,7 @@ def query_generation(generationID, loop_until_done=False):
 			# FINDME: Should probably sort `sql_generation` by `chromosomeID`
 			return sql_generation
 		except Exception as error:
-			message = 'Full query failed with error:\n{}'.format(error)
+			message = '`query_generation` failed with error:\n{}'.format(error)
 			warning_message(message)
 
 		# Only triggers if requests+dataframe fails and not `loop_until_done`
