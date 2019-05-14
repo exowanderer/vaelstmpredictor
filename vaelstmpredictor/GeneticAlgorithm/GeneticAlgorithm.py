@@ -256,7 +256,7 @@ def generate_random_chromosomes(population_size, geneationID = 0,
 	generation['size_dnn_hidden'] = np.random.choice(dnn_nUnits_choices, 
 														size = population_size)
 	debug_message('generate_random_chromosomes+generation:\n{}'.format(
-		generation))
+		generation.dtypes))
 	return generation
 
 def get_machine(queue):
@@ -594,7 +594,7 @@ def cross_over(new_generation, generation, parent1, parent2,
 	if random.random() >= prob:
 		crossover_happened = True
 		debug_message('cross_over+before_crossover_happened:\n{}'.format(
-				new_generation.iloc[chromosomeID]))
+				new_generation.iloc[chromosomeID].dtypes))
 		for param in param_choices:
 			p1_param = generation.iloc[idx_parent1][param]
 			p2_param = generation.iloc[idx_parent2][param]
@@ -602,21 +602,21 @@ def cross_over(new_generation, generation, parent1, parent2,
 			new_generation.set_value(chromosomeID, param, child_gene)
 
 		debug_message('cross_over+after_crossover_happened:\n{}'.format(
-				new_generation.iloc[chromosomeID]))
+				new_generation.iloc[chromosomeID].dtypes))
 	else: 
 		crossover_happened = False
 		
 		p1_fitness = generation.iloc[idx_parent1]['fitness']
 		p2_fitness = generation.iloc[idx_parent2]['fitness']
 		debug_message('cross_over+no_crossover_happened:\n{}'.format(
-				new_generation.iloc[chromosomeID]))
+				new_generation.iloc[chromosomeID].dtypes))
 		idx_child = idx_parent1 if p1_fitness > p2_fitness else idx_parent1
 		new_generation.iloc[chromosomeID] = generation.iloc[idx_child]
 		debug_message('cross_over+no_crossover_happened:\n{}'.format(
-				new_generation.iloc[chromosomeID]))
+				new_generation.iloc[chromosomeID].dtypes))
 	
 	debug_message('cross_over+return:\n{}'.format(
-				new_generation.iloc[chromosomeID]))
+				new_generation.iloc[chromosomeID].dtypes))
 
 	return new_generation, crossover_happened
 

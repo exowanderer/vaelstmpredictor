@@ -236,20 +236,20 @@ if __name__ == '__main__':
 		for chromosomeID in tqdm(range(population_size)):
 			parent1, parent2 = select_parents(generation)
 			debug_message('__main__+for+new_generation"\n{}'.format(
-				new_generation))
+				new_generation.dtypes))
 			new_generation, crossover_happened = cross_over(
 											new_generation, generation,
 											parent1, parent2, chromosomeID,
 											param_choices.keys(), cross_prob, 
 											verbose = verbose)
 			debug_message('__main__+for+new_generation"\n{}'.format(
-				new_generation))
+				new_generation.dtypes))
 			new_generation, mutation_happened = mutate(
 											new_generation, generation,
 											chromosomeID, mutate_prob, 
 											param_choices, verbose = verbose)
 			debug_message('__main__+for+new_generation"\n{}'.format(
-				new_generation))
+				new_generation.dtypes))
 			isTrained = mutation_happened*crossover_happened
 			
 			if not isTrained:
@@ -262,7 +262,7 @@ if __name__ == '__main__':
 			new_generation.set_value(chromosomeID, 'chromosomeID',chromosomeID)
 			
 			debug_message('__main__+for+new_generation"\n{}'.format(
-				new_generation))
+				new_generation.dtypes))
 			info_message('Adding Chromosome:\n{}'.format(
 					new_generation.iloc[chromosomeID]))
 		
