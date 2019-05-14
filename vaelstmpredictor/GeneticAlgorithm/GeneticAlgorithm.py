@@ -599,9 +599,9 @@ def cross_over(new_generation, generation, parent1, parent2,
 			p1_param = generation.iloc[idx_parent1][param]
 			p2_param = generation.iloc[idx_parent2][param]
 			debug_message('cross_over+paramloop+p1_param:{}'.format(p1_param))
-			debug_message('cross_over+paramloop+generation.iloc[idx_parent1][param]:{}'.format(generation.iloc[idx_parent1][param]))
+			debug_message('cross_over+paramloop+generation.iloc[idx_parent1][param]:{}'.format(generation[param]))
 			debug_message('cross_over+paramloop+p2_param:{}'.format(p2_param))
-			debug_message('cross_over+paramloop+generation.iloc[idx_parent2][param]:{}'.format(generation.iloc[idx_parent2][param]))
+			debug_message('cross_over+paramloop+generation.iloc[idx_parent2][param]:{}'.format(generation[param]))
 			child_gene = random.choice([p1_param, p2_param])
 			new_generation.set_value(chromosomeID, param, child_gene)
 
