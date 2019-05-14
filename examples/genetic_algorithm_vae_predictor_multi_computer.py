@@ -237,8 +237,8 @@ if __name__ == '__main__':
 				new_generation.dtypes))
 		for chromosomeID in tqdm(range(population_size)):
 			parent1, parent2 = select_parents(generation)
-			debug_message('__main__+for+new_generation:\n{}'.format(
-				new_generation.dtypes))
+			debug_message('__main__+for+beforecross-over+new_generation:\n{}'.format(new_generation.dtypes))
+			debug_message('__main__+for+beforecross-over+generation:\n{}'.format(generation.dtypes))
 			new_generation, crossover_happened = cross_over(
 											new_generation, generation,
 											parent1, parent2, chromosomeID,
@@ -259,7 +259,7 @@ if __name__ == '__main__':
 				new_generation.set_value(chromosomeID, 'fitness', -1.0)
 
 			isTrained = 2 if isTrained else 0
-			
+
 			new_generation.set_value(chromosomeID, 'isTrained', isTrained)
 			new_generation.set_value(chromosomeID, 'generationID',generationID)
 			new_generation.set_value(chromosomeID, 'chromosomeID',chromosomeID)

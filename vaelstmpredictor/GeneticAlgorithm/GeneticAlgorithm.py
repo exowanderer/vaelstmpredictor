@@ -587,8 +587,8 @@ def select_parents(generation):
 def cross_over(new_generation, generation, parent1, parent2, 
 				chromosomeID, param_choices, cross_prob, verbose=False):
 	if verbose: info_message('Crossing over with probability: {}'.format(cross_prob))
-	debug_message('cross_over+input+generation:\n{}'.format(generation))
-	debug_message('cross_over+input+new_generation:\n{}'.format(new_generation))
+	debug_message('cross_over+input+generation:\n{}'.format(generation.dtypes))
+	debug_message('cross_over+input+new_generation:\n{}'.format(new_generation.dtypes))
 	idx_parent1 = parent1.Index
 	idx_parent2 = parent2.Index
 	debug_message('random.random():{}, cross_prob:{}'.format(random.random(), cross_prob))
