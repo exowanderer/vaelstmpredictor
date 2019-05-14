@@ -590,7 +590,7 @@ def cross_over(new_generation, generation, parent1, parent2,
 
 	idx_parent1 = parent1.Index
 	idx_parent2 = parent2.Index
-
+	debug_message('random.random():{}, prob:{}'.format(random.random(), prob))
 	if random.random() >= prob:
 		crossover_happened = True
 		debug_message('cross_over+before_crossover_happened:\n{}'.format(
