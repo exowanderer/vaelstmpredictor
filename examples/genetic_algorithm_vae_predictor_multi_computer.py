@@ -251,12 +251,16 @@ if __name__ == '__main__':
 			debug_message('__main__+for+new_generation"\n{}'.format(
 				new_generation))
 			isTrained = mutation_happened*crossover_happened
-			if isTrained: isTrained = 2
 			
+			if not isTrained:
+				new_generation.set_value(chromosomeID, 'fitness', -1.0)
+
+			if isTrained: isTrained = 2
+
 			new_generation.set_value(chromosomeID, 'isTrained', isTrained)
 			new_generation.set_value(chromosomeID, 'generationID',generationID)
 			new_generation.set_value(chromosomeID, 'chromosomeID',chromosomeID)
-			new_generation.set_value(chromosomeID, 'fitness', -1.0)
+			
 			debug_message('__main__+for+new_generation"\n{}'.format(
 				new_generation))
 			info_message('Adding Chromosome:\n{}'.format(child))

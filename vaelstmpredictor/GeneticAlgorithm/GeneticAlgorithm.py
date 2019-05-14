@@ -43,8 +43,7 @@ from vaelstmpredictor.utils.weightnorm import data_based_init
 from vaelstmpredictor.vae_predictor.dense_model import VAEPredictor
 from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
-from .Chromosome import Chromosome
-
+# from .Chromosome import Chromosome
 
 def debug_message(message, end = '\n'):
 	print('[DEBUG] {}'.format(message), end = end)
