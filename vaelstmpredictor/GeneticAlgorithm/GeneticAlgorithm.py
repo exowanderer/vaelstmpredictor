@@ -45,7 +45,7 @@ from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
 from .Chromosome import Chromosome
 
-def # debug_message(message, end = '\n'):
+def debug_message(message, end = '\n'):
 	print('[DEBUG] {}'.format(message), end = end)
 
 def warning_message(message, end = '\n'):
