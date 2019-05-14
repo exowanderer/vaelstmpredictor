@@ -255,6 +255,8 @@ def generate_random_chromosomes(population_size, geneationID = 0,
 														size = population_size)
 	generation['size_dnn_hidden'] = np.random.choice(dnn_nUnits_choices, 
 														size = population_size)
+	debug_message('generate_random_chromosomes+generation:\n{}'.format(
+		generation))
 	return generation
 
 def get_machine(queue):
