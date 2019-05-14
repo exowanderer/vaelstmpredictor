@@ -374,13 +374,17 @@ def train_generation(generation, clargs, machines,
 		# If SQL does not exist yet or is not reachable, then keep processing
 		if sql_generation is None: debug_message('sql_generation is None')
 		if sql_generation is None: continue
-
+		debug_message('1,sql_generation:\n{}'.format(sql_generation.dtypes))
+		debug_message('1,generation:\n{}'.format(generation.dtypes))
 		''' Loop over all chromosomse to check if they exist in SQL database'''
 		
 		# Set all `isTrained==2` to `isTrained==0`
 		for chromosome in generation.itertuples():
 			if chromosome.isTrained == 2:
 				generation.set_value(chromosome.chromosomeID,'isTrained', 0)
+
+		debug_message('2,sql_generation:\n{}'.format(sql_generation.dtypes))
+		debug_message('2,generation:\n{}'.format(generation.dtypes))
 
 		# If chromosomeID exists in SQL and fitness >= 0, 
 		#	then set `isTrained` back to 2 (i.e. "fully trained")
@@ -395,12 +399,14 @@ def train_generation(generation, clargs, machines,
 			else:
 				message = "sql_generation.loc[chromosome.Index, 'fitness'] < 0"
 				warning_message(message)
-	
+		debug_message('3,sql_generation:\n{}'.format(sql_generation.dtypes))
+		debug_message('3,generation:\n{}'.format(generation.dtypes))
 	'''After all chromosomes have been trained and stored in the SQL database,
 		Download full generatin and copy data from SQL to local `generations`
 	'''
 	sql_generation = query_generation(generationID, loop_until_done=True)
-	
+	debug_message('4,sql_generation:\n{}'.format(sql_generation.dtypes))
+	debug_message('4,generation:\n{}'.format(generation.dtypes))
 	assert(all(sql_generation.isTrained == 2)), \
 				'while loop should not have closed!'
 
@@ -422,7 +428,8 @@ def train_generation(generation, clargs, machines,
 			print('Size VAE Hidden:{}'.format(chromosome.size_vae_hidden))
 			print('Size DNN Hidden:{}'.format(chromosome.size_dnn_hidden))
 			print('\n\n')
-
+	debug_message('5,sql_generation:\n{}'.format(sql_generation.dtypes))
+	debug_message('5,generation:\n{}'.format(generation.dtypes))
 	return generation # After all is done: report back
 
 def generate_ssh_command(clargs, chromosome):
