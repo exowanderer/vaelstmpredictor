@@ -396,7 +396,7 @@ def train_generation(generation, clargs, machines,
 	'''
 	sql_generation = query_generation(generationID, loop_until_done=True)
 	
-	assert(isinstance(sql_generation, pd.Dataframe)), \
+	assert(isinstance(sql_generation, pd.DataFrame)), \
 			'`sql_generation` must be a dict'
 	
 	# assert(all(sql_generation.isTrained == 2)), \
