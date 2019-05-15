@@ -354,17 +354,11 @@ def train_generation(generation, clargs, machines,
 
 	# Start master process
 	while not all(generation.isTrained.values == 2):
-		# Start # debug_message
-		debug_message('While Step{} took {} seconds'.format(
-									count_while, start-time()))
-
-		start = time()
-		count_while = count_while + 1
-		# End # debug_message
-
 		generation = process_generation(generation, queue, clargs)
 		while True:
 			try:
+				info_message('Querying Generation {} from SQL'.format(
+									generationID))
 				sql_generation = query_generation(generationID, 
 												loop_until_done=False)
 				break
@@ -400,6 +394,8 @@ def train_generation(generation, clargs, machines,
 	'''
 	while True:
 		try:
+			info_message('Querying Generation {} from SQL'.format(
+								generationID))
 			sql_generation = query_generation(generationID, 
 											loop_until_done=True)
 			break
