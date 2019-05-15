@@ -96,7 +96,7 @@ def query_full_sql(loop_until_done=False, sleep_time = 1):
 		if not loop_until_done: return None
 		sleep(sleep_time)
 
-def query_generation(generationID, loop_until_done=False, sleep_time = 1)::
+def query_generation(generationID, loop_until_done=False, sleep_time = 1):
 	# could add time_stamp,  to args and RESTful API call
 	getGeneration = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
 	getGeneration = getGeneration + 'GetGeneration'
