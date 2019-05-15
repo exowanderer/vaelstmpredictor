@@ -110,10 +110,10 @@ def process_genetic_algorithm(clargs, machines):
 											param_choices, verbose = verbose)
 			
 			isTrained = not (mutation_happened and crossover_happened)
-			debug_message('isTrained:{}'.format(isTrained))
-			debug_message('mutation_happened:{}'.format(mutation_happened))
-			debug_message('crossover_happened:{}'.format(crossover_happened))
-			
+			debug_message('process_genetic_algorithm+isTrained:{}'.format(isTrained))
+			debug_message('process_genetic_algorithm+mutation_happened:{}'.format(mutation_happened))
+			debug_message('process_genetic_algorithm+crossover_happened:{}'.format(crossover_happened))
+
 			if not isTrained:
 				new_generation.set_value(chromosomeID, 'fitness', -1.0)
 
