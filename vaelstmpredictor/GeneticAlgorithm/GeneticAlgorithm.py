@@ -628,6 +628,8 @@ def cross_over(new_generation, generation, parent1, parent2,
 		idx_child = idx_parent1 if p1_fitness > p2_fitness else idx_parent1
 		new_generation.iloc[chromosomeID] = generation.iloc[idx_child].copy()
 	
+	debug_message('cross_over+generation.dtypes'.format(generation.dtypes))
+	debug_message('cross_over+new_generation.dtypes'.format(new_generation.dtypes))
 	return new_generation.astype(generation.dtypes), crossover_happened
 
 def mutate(new_generation, generation, chromosomeID, 
