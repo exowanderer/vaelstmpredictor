@@ -192,10 +192,10 @@ if __name__ == '__main__':
 			help='relative weight on prediction loss')
 	parser.add_argument('--prediction_log_var_prior', type=float, default=0.0,
 			help='w log var prior')
-	# parser.add_argument("--do_log", action="store_true", 
-	# 		help="save log files")
-	# parser.add_argument("--do_ckpt", action="store_true",
-	# 		help="save model checkpoints")
+	parser.add_argument("--do_log", action="store_true", 
+			help="save log files")
+	parser.add_argument("--do_ckpt", action="store_true",
+			help="save model checkpoints")
 	parser.add_argument('--patience', type=int, default=10,
 			help='# of epochs, for early stopping')
 	parser.add_argument("--kl_anneal", type=int, default=0, 

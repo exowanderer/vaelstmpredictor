@@ -112,8 +112,6 @@ if __name__ == '__main__':
 			help='number of generations for genetic algorithm')
 	parser.add_argument('--verbose', action='store_true',
 			help='print more [INFO] and [DEBUG] statements')
-	# parser.add_argument('--make_plots', action='store_true',
-	# 		help='make plots of growth in the best_loss over generations')
 	parser.add_argument('--port', type=int, default=22,
 			help='IP port over which to ssh')
 	parser.add_argument('--send_back', action='store_true', 
@@ -165,7 +163,6 @@ if __name__ == '__main__':
 	population_size = clargs.population_size
 	num_generations = clargs.num_generations
 	verbose = clargs.verbose
-	# make_plots = clargs.make_plots
 	
 	clargs.data_type = 'MNIST'
 	data_instance = MNISTData(batch_size = clargs.batch_size)
@@ -210,10 +207,6 @@ if __name__ == '__main__':
 				generationID, new_best_fitness))
 	
 	best_fitness.append(new_best_fitness)
-	
-	# if make_plots:
-	# 	fig = plt.gcf()
-	# 	fig.show()
 	
 	param_choices = {'num_vae_layers': (1,1), 
 					 'num_dnn_layers': (1,1), 
@@ -289,8 +282,3 @@ if __name__ == '__main__':
 					generationID, new_best_fitness))
 		
 		best_fitness.append(new_best_fitness)
-		
-		# if make_plots:
-		# 	plt.plot(best_fitness, color="c")
-		# 	plt.xlim([0, num_generations])
-		# 	fig.canvas.draw()
