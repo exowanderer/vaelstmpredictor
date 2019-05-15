@@ -369,7 +369,7 @@ def train_generation(generation, clargs, machines,
 												loop_until_done=False)
 				break
 			except Exception as error:
-				message = 'tg+query_generation failed because:{}'.format(error)
+				message= 'tg1+query_generation failed because:{}'.format(error)
 				warning_message(message)
 		
 		# If SQL does not exist yet or is not reachable, then keep processing
@@ -404,9 +404,8 @@ def train_generation(generation, clargs, machines,
 											loop_until_done=True)
 			break
 		except Exception as error:
-			message = 'tg+query_generation failed because:{}'.format(error)
+			message= 'tg2+query_generation failed because:{}'.format(error)
 			warning_message(message)
-
 	
 	assert(isinstance(sql_generation, pd.DataFrame)), \
 			'`sql_generation` must be a dict'
