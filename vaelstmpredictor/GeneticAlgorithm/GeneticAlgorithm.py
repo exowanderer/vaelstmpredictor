@@ -558,10 +558,14 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
 	
-	info_message('Printing `stdout` in Train Chromosome')
+	info_message('Printing `stdout` in Train Chromosome on '
+					'{}'.format(machine['host']))
+	
 	for line in stdout.readlines(): print(line)
 
-	info_message('Printing `stderr` in Train Chromosome')
+	info_message('Printing `stderr` in Train Chromosome'
+					'{}'.format(machine['host']))
+
 	for line in stderr.readlines(): print(line)
 
 	queue.put(machine)
