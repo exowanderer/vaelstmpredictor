@@ -574,13 +574,15 @@ def select_parents(generation):
 		not including total_fitness'''
 	debug_message('process_GA+generation:\n{}'.format(generation))
 	debug_message('process_GA+generation[fitness]:\n{}'.format(generation['fitness']))
-
-	total_fitness = sum(chrom.fitness for chrom in generation.itertuples())
-	total_fitness1 = sum(chrom.fitness for _, chrom in generation.iterrows())
+	
+	total_fitness = generation.fitness.sum()
+	total_fitness1 = sum(chrom.fitness for chrom in generation.itertuples())
+	total_fitness2 = sum(chrom.fitness for _, chrom in generation.iterrows())
 	
 	debug_message('total_fitness:{}'.format(total_fitness))
 	debug_message('total_fitness1:{}'.format(total_fitness1))
-
+	debug_message('total_fitness2:{}'.format(total_fitness2))
+	
 	assert(total_fitness >= 0), '`total_fitness` should not be negative'
 	
 	rand_parent1 = random.random()*total_fitness

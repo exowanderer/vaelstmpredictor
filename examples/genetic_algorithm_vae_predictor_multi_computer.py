@@ -58,11 +58,12 @@ def process_genetic_algorithm(clargs, machines):
 	generation = train_generation(generation, clargs, machines,verbose=verbose)
 	
 	best_fitness = []
-	fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
+	# fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
+	fitnesses = generation.fitness.values
 	
-	new_best_fitness = max(fitnesses)
-	debug_message('process_genetic_algorithm+fitnesses:{}'.format(fitnesses))
-	debug_message('process_genetic_algorithm+new_best_fitness:{}'.format(
+	new_best_fitness = generation.fitness.values.max()
+	debug_message('1,process_genetic_algorithm+fitnesses:{}'.format(generation.fitness))
+	debug_message('2,process_genetic_algorithm+new_best_fitness:{}'.format(
 						new_best_fitness))
 	
 	if verbose:
@@ -94,6 +95,7 @@ def process_genetic_algorithm(clargs, machines):
 		for chromosomeID in tqdm(range(population_size)):
 			debug_message('process_GA+generation:\n{}'.format(generation))
 			debug_message('process_GA+generation[fitness]:\n{}'.format(generation['fitness']))
+
 			parent1, parent2 = select_parents(generation)
 			
 			new_generation, crossover_happened = cross_over(
@@ -134,9 +136,12 @@ def process_genetic_algorithm(clargs, machines):
 		info_message('Time for Generation{}: {} minutes'.format(generationID, 
 											(time() - start_while)//60))
 		
-		fitnesses = [chrom.fitness for _, chrom in generation.iterrows()]
-		
-		new_best_fitness = max(fitnesses)
+		# fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
+		fitnesses = generation.fitness.values
+		new_best_fitness = generation.fitness.values.max()
+		debug_message('process_genetic_algorithm+fitnesses:{}'.format(generation.fitness))
+		debug_message('process_genetic_algorithm+new_best_fitness:{}'.format(
+							new_best_fitness))
 		
 		if verbose:
 			info_message('For Generation: {}, the best fitness was {}'.format(
