@@ -363,7 +363,14 @@ def train_generation(generation, clargs, machines,
 		# End # debug_message
 
 		generation = process_generation(generation, queue, clargs)
-		sql_generation = query_generation(generationID, loop_until_done=False)
+		while True:
+			try:
+				sql_generation = query_generation(generationID, 
+												loop_until_done=False)
+				break
+			except Exception as error:
+				message = 'tg+query_generation failed because:{}'.format(error)
+				warning_message(message)
 		
 		# If SQL does not exist yet or is not reachable, then keep processing
 		if sql_generation is None: debug_message('sql_generation is None')
@@ -391,7 +398,15 @@ def train_generation(generation, clargs, machines,
 	'''After all chromosomes have been trained and stored in the SQL database,
 		Download full generatin and copy data from SQL to local `generations`
 	'''
-	sql_generation = query_generation(generationID, loop_until_done=True)
+	while True:
+		try:
+			sql_generation = query_generation(generationID, 
+											loop_until_done=True)
+			break
+		except Exception as error:
+			message = 'tg+query_generation failed because:{}'.format(error)
+			warning_message(message)
+
 	
 	assert(isinstance(sql_generation, pd.DataFrame)), \
 			'`sql_generation` must be a dict'
