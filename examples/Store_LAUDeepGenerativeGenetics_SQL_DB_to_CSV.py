@@ -7,8 +7,8 @@ from time import time
 def info_message(message, end='\n'):
 	print('[INFO] {}'.format(message), end = end)
 
-def save_sql_to_csv(table_dir, run_name):
-	
+def save_sql_to_csv(table_dir):
+
 	getDatabase = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
 	getDatabase = getDatabase + 'GetDatabase'
 
@@ -18,6 +18,7 @@ def save_sql_to_csv(table_dir, run_name):
 	sql_table = pd.DataFrame(req.json())
 
 	time_stamp = sql_table['time_stamp'][0]
+	run_name = sql_table['run_name'][0]
 
 	info_message('Found table with time_stamp SQL {}'.format(time_stamp))
 	
@@ -30,11 +31,9 @@ def save_sql_to_csv(table_dir, run_name):
 	sql_table.to_csv(table_name)
 
 parser = ArgumentParser()
-parser.add_argument('-r', '--run_name', type=str, default='ga_vae_nn',
-	help='/path/to/and/name of the table to store the sql database')
 parser.add_argument('-t', '--table_dir', type=str, default='../data/tables',
 	help='/path/to/and/name of the table to store the sql database')
 
 clargs = parser.parse_args()
 
-save_sql_to_csv(clargs.table_dir, clargs.run_name)
+save_sql_to_csv(clargs.table_dir)
