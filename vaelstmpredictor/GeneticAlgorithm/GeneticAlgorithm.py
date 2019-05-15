@@ -570,8 +570,9 @@ def train_chromosome(chromosome, machine, queue, clargs,
 def select_parents(generation):
 	'''Generate two random numbers between 0 and total_fitness 
 		not including total_fitness'''
+
 	debug_message('process_GA+generation:\n{}'.format(generation))
-	debug_message('process_GA+generation[fitness]:\n{}'.format(generation['fitness']))
+	debug_message('process_GA+generation[generationID,fitness]:\n{}'.format(generation[['generationID','fitness']]))
 	
 	total_fitness = generation.fitness.sum()
 	total_fitness1 = sum(chrom.fitness for chrom in generation.itertuples())

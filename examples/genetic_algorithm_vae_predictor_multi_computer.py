@@ -94,7 +94,7 @@ def process_genetic_algorithm(clargs, machines):
 		
 		for chromosomeID in tqdm(range(population_size)):
 			debug_message('process_GA+generation:\n{}'.format(generation))
-			debug_message('process_GA+generation[fitness]:\n{}'.format(generation['fitness']))
+			debug_message('process_GA+generation[generationID,fitness]:\n{}'.format(generation[['generationID','fitness']]))
 
 			parent1, parent2 = select_parents(generation)
 			
