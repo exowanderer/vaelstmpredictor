@@ -33,6 +33,7 @@ def make_sql_output(clargs, chromosome):
 	output['cross_prob'] = clargs.cross_prob
 	output['do_ckpt'] = clargs.do_ckpt
 	output['do_log'] = clargs.do_log
+	output['send_back'] = clargs.send_back
 	output['hostname'] = clargs.hostname
 	output['iterations'] = clargs.num_generations
 	output['kl_anneal'] = clargs.kl_anneal
@@ -235,17 +236,16 @@ if __name__ == '__main__':
 			help='Size of the DNN Hidden Layer')
 	parser.add_argument('--verbose', action='store_true',
 			help='print more [INFO] and [DEBUG] statements')
-	
+
 	clargs = parser.parse_args()
 	
-	clargs.do_log = True
-	clargs.do_ckpt = True
+	# clargs.do_log = True
+	# clargs.do_ckpt = True
 	# clargs.verbose = True
 	clargs.cross_prob = 0.7
 	clargs.mutate_prob = 0.01
 	clargs.num_generations = 100
 	clargs.population_size = 100
-	clargs.make_plots = False
 
 	for key,val in clargs.__dict__.items(): 
 		if 'dir' in key: 
@@ -346,6 +346,7 @@ if __name__ == '__main__':
 	# DEBUG: For some reason the RESTful API does not like these 3 pieces
 	remove_question_marks = True
 	if remove_question_marks:
+		del put_sql_dict['send_back']
 		del put_sql_dict['do_log']
 		del put_sql_dict['make_plots']
 		del put_sql_dict['verbose']
