@@ -233,12 +233,14 @@ if __name__ == '__main__':
 			help='Size of the VAE Hidden Layer')
 	parser.add_argument('--size_dnn_hidden', type=int, default=16,
 			help='Size of the DNN Hidden Layer')
-
+	parser.add_argument('--verbose', action='store_true',
+			help='print more [INFO] and [DEBUG] statements')
+	
 	clargs = parser.parse_args()
 	
 	clargs.do_log = True
 	clargs.do_ckpt = True
-	clargs.verbose = True
+	# clargs.verbose = True
 	clargs.cross_prob = 0.7
 	clargs.mutate_prob = 0.01
 	clargs.num_generations = 100
