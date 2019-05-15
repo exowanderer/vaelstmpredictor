@@ -477,6 +477,7 @@ def generate_ssh_command(clargs, chromosome):
 	if clargs.do_ckpt: command.append('--do_ckpt')
 	if clargs.verbose: command.append('--verbose')
 	if clargs.send_back: command.append('--send_back')
+	if clargs.save_model: command.append('--save_model')
 	
 	return " ".join(command)
 

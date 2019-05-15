@@ -30,9 +30,10 @@ class Chromosome(VAEPredictor):
                 generationID = 0, chromosomeID = 0, 
                 vae_kl_weight = 1.0, vae_weight = 1.0, 
                 dnn_weight = 1.0, dnn_kl_weight = 1.0, 
-                verbose = False):
+                save_model = True, verbose = False):
 
         self.verbose = verbose
+        self.save_model = save_model
         self.clargs = clargs
         self.data_instance = data_instance
         self.generationID = generationID
@@ -177,6 +178,9 @@ class Chromosome(VAEPredictor):
             print('\nFitness: {}'.format(self.fitness))
             print('\n\n')
         
+        if self.save_model: self.save()
+
+    def save(self):
         joblib_save_loc ='{}/{}_{}_{}_trained_model_output_{}.joblib.save'
         self.joblib_save_loc = joblib_save_loc.format(self.model_dir, 
                                         self.run_name, self.generationID, 

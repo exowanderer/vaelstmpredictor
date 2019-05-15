@@ -233,6 +233,8 @@ if __name__ == '__main__':
 			help='Size of the VAE Hidden Layer')
 	parser.add_argument('--size_dnn_hidden', type=int, default=16,
 			help='Size of the DNN Hidden Layer')
+	parser.add_argument('--save_model', action='store_true',
+			help='Save model ckpt.s and other stored values')
 	parser.add_argument('--verbose', action='store_true',
 			help='print more [INFO] and [DEBUG] statements')
 
@@ -256,6 +258,7 @@ if __name__ == '__main__':
 
 	chrom_params = {}
 	chrom_params['verbose'] = clargs.verbose
+	chrom_params['save_model'] = clargs.save_model
 	chrom_params['vae_hidden_dims'] = vae_hidden_dims
 	chrom_params['dnn_hidden_dims'] = dnn_hidden_dims
 	chrom_params['vae_latent_dim'] = clargs.size_vae_latent

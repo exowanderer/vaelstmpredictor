@@ -226,6 +226,9 @@ if __name__ == '__main__':
 			help='Time to pause in between repetitive sql queries')
 	parser.add_argument('--send_back', action='store_true', 
 			help='Toggle whether to send the ckpt file + population local csv')
+	parser.add_argument('--save_model', action='store_true',
+			help='Save model ckpt.s and other stored values')
+	
 	clargs = parser.parse_args()
 	
 	for key,val in clargs.__dict__.items(): 
@@ -235,16 +238,16 @@ if __name__ == '__main__':
 
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
 
-	machines = [{"host": "172.16.50.181", "username": "acc", 
+	machines = [{"host": "172.16.50.163", "username": "acc", 
+					"key_filename": key_filename},
+				{"host": "172.16.50.181", "username": "acc", 
 					"key_filename": key_filename},
 				{"host": "172.16.50.176", "username": "acc", 
 					"key_filename": key_filename},
 				{"host": "172.16.50.177", "username": "acc", 
 					"key_filename": key_filename},
-				{"host": "172.16.50.163", "username": "acc", 
-					"key_filename": key_filename},
 				{"host": "172.16.50.182", "username": "acc", 
-					"key_filename": key_filename},# not operation today
+					"key_filename": key_filename},
 				{"host": "172.16.50.218", "username": "acc", 
 					"key_filename": key_filename},
 				{"host": "172.16.50.159", "username": "acc", 
