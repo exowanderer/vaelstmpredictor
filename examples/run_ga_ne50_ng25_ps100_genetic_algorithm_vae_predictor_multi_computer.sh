@@ -7,7 +7,7 @@ python Store_LAUDeepGenerativeGenetics_SQL_DB_to_CSV.py
 python Reset_LAU_DeepGenerativeGenetics_SQL_Database.py --code 11235813213455
 
 python genetic_algorithm_vae_predictor_multi_computer.py \
-	--num_epochs 1 \
+	--num_epochs 50 \
 	--num_generations 25 \
 	--population_size 100 \
 	--verbose \
