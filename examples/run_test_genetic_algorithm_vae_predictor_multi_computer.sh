@@ -11,6 +11,7 @@ python genetic_algorithm_vae_predictor_multi_computer.py \
 	--verbose \
 	--do_log \
 	--do_ckpt \
-	--send_back| tee output.file
+	--send_back | ssh 172.16.50.163 "tee -a /home/acc/github/vaelstmpredictor/examples/output_ga_run_172.16.50.187.txt"
 
-rsync -Pvua output.file 172.16.50.163:/home/acc/github/vaelstmpredictor/examples/
+# | tee output.file
+# rsync -Pvua output.file 172.16.50.163:/home/acc/github/vaelstmpredictor/examples/
