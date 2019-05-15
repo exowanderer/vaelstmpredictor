@@ -422,6 +422,8 @@ def train_generation(generation, clargs, machines,
 			print('\n\n')
 	
 	# After all is done: report back
+	debug_message('train_generation+sql_generation.dtypes:{}'.format(sql_generation.dtypes))
+	debug_message('train_generation+generation.dtypes:{}'.format(generation.dtypes))
 	return generation.astype(sql_generation.dtypes)
 
 def generate_ssh_command(clargs, chromosome):
