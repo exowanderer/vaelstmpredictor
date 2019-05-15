@@ -36,6 +36,113 @@ def warning_message(message, end = '\n'):
 def info_message(message, end = '\n'):
 	print('[INFO] {}'.format(message), end = end)
 
+def process_genetic_algorithm(clargs, machines):
+	generation = generate_random_chromosomes(
+						population_size = clargs.population_size,
+						min_vae_hidden_layers = clargs.min_vae_hidden_layers,
+						min_dnn_hidden_layers = clargs.min_dnn_hidden_layers,
+						max_vae_hidden_layers = clargs.max_vae_hidden_layers,
+						max_dnn_hidden_layers = clargs.max_dnn_hidden_layers,
+						min_vae_hidden = clargs.min_vae_hidden,
+						max_vae_hidden = clargs.max_vae_hidden,
+						min_dnn_hidden = clargs.min_dnn_hidden,
+						max_dnn_hidden = clargs.max_dnn_hidden,
+						min_vae_latent = clargs.min_vae_latent,
+						max_vae_latent = clargs.max_vae_latent,
+						verbose = clargs.verbose)
+	
+	verbose = clargs.verbose
+	
+	generationID = 0
+	
+	generation = train_generation(generation, clargs, machines,verbose=verbose)
+	
+	best_fitness = []
+	fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
+	
+	new_best_fitness = max(fitnesses)
+	debug_message('process_genetic_algorithm+fitnesses:{}'.format(fitnesses))
+	debug_message('process_genetic_algorithm+new_best_fitness:{}'.format(
+						new_best_fitness))
+	
+	if verbose:
+		info_message('For Generation: {}, the best fitness was {}'.format(
+				generationID, new_best_fitness))
+	
+	best_fitness.append(new_best_fitness)
+	
+	param_choices = {'num_vae_layers': (1,1), 
+					 'num_dnn_layers': (1,1), 
+					 'size_vae_latent': (10,1), 
+					 'size_vae_hidden': (50,1), 
+					 'size_dnn_hidden': (50,1)}
+	
+	start = time()
+	# while gen_num < num_generations:
+	for generationID in range(1,num_generations):
+		
+		try:
+			save_sql_to_csv(clargs)
+		except Exception as error:
+			warning_message('`save_sql_to_csv` failed because:\n{}'.format(
+								error))
+		
+		start_while = time()
+		# Create new generation
+		new_generation = create_blank_dataframe(generationID, population_size)
+		
+		for chromosomeID in tqdm(range(population_size)):
+			debug_message('generation')
+			parent1, parent2 = select_parents(generation)
+			
+			new_generation, crossover_happened = cross_over(
+											new_generation, generation,
+											parent1, parent2, chromosomeID,
+											param_choices.keys(), cross_prob, 
+											verbose = verbose)
+			
+			new_generation, mutation_happened = mutate(
+											new_generation, generation,
+											chromosomeID, mutate_prob, 
+											param_choices, verbose = verbose)
+			
+			isTrained = not (mutation_happened and crossover_happened)
+			
+			if not isTrained:
+				new_generation.set_value(chromosomeID, 'fitness', -1.0)
+
+			isTrained = 2 if isTrained else 0
+
+			new_generation.set_value(chromosomeID, 'isTrained', isTrained)
+			new_generation.set_value(chromosomeID, 'generationID',generationID)
+			new_generation.set_value(chromosomeID, 'chromosomeID',chromosomeID)
+			
+			info_message('Adding Chromosome:\n{}'.format(
+					new_generation.iloc[chromosomeID]))
+		
+		# Re-sort by chromosomeID
+		new_generation = new_generation.sort_values('chromosomeID')
+		new_generation.index = np.arange(population_size)
+		
+		assert((new_generation['generationID'].mean() == generationID)).all(),\
+			"The GenerationID did not update: should be {}; but is {}".format(
+				generationID, new_generation['generationID'].mean())
+		
+		generation = train_generation(new_generation, clargs, machines)
+		
+		info_message('Time for Generation{}: {} minutes'.format(generationID, 
+											(time() - start_while)//60))
+		
+		fitnesses = [chrom.fitness for _, chrom in generation.iterrows()]
+		
+		new_best_fitness = max(fitnesses)
+		
+		if verbose:
+			info_message('For Generation: {}, the best fitness was {}'.format(
+					generationID, new_best_fitness))
+		
+		best_fitness.append(new_best_fitness)
+
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--run_name', type=str, default='deleteme',
@@ -179,102 +286,7 @@ if __name__ == '__main__':
 	if verbose: print('\n\n[INFO] Run Base Name: {}\n'.format(clargs.run_name))
 	
 	clargs.n_labels = len(np.unique(data_instance.train_labels))
-	
-	generation = generate_random_chromosomes(population_size = population_size,
-						min_vae_hidden_layers = clargs.min_vae_hidden_layers,
-						min_dnn_hidden_layers = clargs.min_dnn_hidden_layers,
-						max_vae_hidden_layers = clargs.max_vae_hidden_layers,
-						max_dnn_hidden_layers = clargs.max_dnn_hidden_layers,
-						min_vae_hidden = clargs.min_vae_hidden,
-						max_vae_hidden = clargs.max_vae_hidden,
-						min_dnn_hidden = clargs.min_dnn_hidden,
-						max_dnn_hidden = clargs.max_dnn_hidden,
-						min_vae_latent = clargs.min_vae_latent,
-						max_vae_latent = clargs.max_vae_latent,
-						verbose = clargs.verbose)
-	
-	generationID = 0
-	
-	generation = train_generation(generation, clargs, machines,verbose=verbose)
-	
-	best_fitness = []
-	fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
-	
-	new_best_fitness = max(fitnesses)
-	
-	if clargs.verbose:
-		info_message('For Generation: {}, the best fitness was {}'.format(
-				generationID, new_best_fitness))
-	
-	best_fitness.append(new_best_fitness)
-	
-	param_choices = {'num_vae_layers': (1,1), 
-					 'num_dnn_layers': (1,1), 
-					 'size_vae_latent': (10,1), 
-					 'size_vae_hidden': (50,1), 
-					 'size_dnn_hidden': (50,1)}
-	
-	start = time()
-	# while gen_num < num_generations:
-	for generationID in range(1,num_generations):
-		
-		try:
-			save_sql_to_csv(clargs)
-		except Exception as error:
-			warning_message('`save_sql_to_csv` failed because:\n{}'.format(
-								error))
-		
-		start_while = time()
-		# Create new generation
-		new_generation = create_blank_dataframe(generationID, population_size)
-		
-		for chromosomeID in tqdm(range(population_size)):
-			parent1, parent2 = select_parents(generation)
-			
-			new_generation, crossover_happened = cross_over(
-											new_generation, generation,
-											parent1, parent2, chromosomeID,
-											param_choices.keys(), cross_prob, 
-											verbose = verbose)
-			
-			new_generation, mutation_happened = mutate(
-											new_generation, generation,
-											chromosomeID, mutate_prob, 
-											param_choices, verbose = verbose)
-			
-			isTrained = not (mutation_happened and crossover_happened)
-			
-			if not isTrained:
-				new_generation.set_value(chromosomeID, 'fitness', -1.0)
 
-			isTrained = 2 if isTrained else 0
+	# Run master pipeline function
+	process_genetic_algorithm(clargs, machines)
 
-			new_generation.set_value(chromosomeID, 'isTrained', isTrained)
-			new_generation.set_value(chromosomeID, 'generationID',generationID)
-			new_generation.set_value(chromosomeID, 'chromosomeID',chromosomeID)
-			
-			info_message('Adding Chromosome:\n{}'.format(
-					new_generation.iloc[chromosomeID]))
-		
-		# Re-sort by chromosomeID
-		new_generation = new_generation.sort_values('chromosomeID')
-		new_generation.index = np.arange(population_size)
-		
-		assert((new_generation['generationID'].mean() == generationID)).all(),\
-			"The GenerationID did not update: should be {}; but is {}".format(
-				generationID, new_generation['generationID'].mean())
-		
-		generation = train_generation(new_generation, clargs, machines)
-		
-		info_message('Time for Generation{}: {} minutes'.format(generationID, 
-											(time() - start_while)//60))
-		
-		fitnesses = [chrom.fitness for _, chrom in generation.iterrows()]
-		
-		new_best_fitness = max(fitnesses)
-		
-		if clargs.verbose:
-			info_message('For Generation: {}, the best fitness was {}'.format(
-					generationID, new_best_fitness))
-		
-		best_fitness.append(new_best_fitness)
