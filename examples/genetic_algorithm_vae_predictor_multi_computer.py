@@ -93,7 +93,7 @@ def process_genetic_algorithm(clargs, machines):
 		
 		for chromosomeID in tqdm(range(population_size)):
 			debug_message('process_GA+generation:\n{}'.format(generation))
-			debug_message('process_GA+generation[fitness]:\n{}'.format(generation['Fitness']))
+			debug_message('process_GA+generation[fitness]:\n{}'.format(generation['fitness']))
 			parent1, parent2 = select_parents(generation)
 			
 			new_generation, crossover_happened = cross_over(
