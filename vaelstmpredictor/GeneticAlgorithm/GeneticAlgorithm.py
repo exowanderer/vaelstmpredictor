@@ -424,7 +424,7 @@ def train_generation(generation, clargs, machines,
 	# After all is done: report back
 	debug_message('train_generation+sql_generation.dtypes:{}'.format(sql_generation.dtypes))
 	debug_message('train_generation+generation.dtypes:{}'.format(generation.dtypes))
-	return generation.astype(sql_generation.dtypes)
+	return generation#.astype(sql_generation.dtypes)
 
 def generate_ssh_command(clargs, chromosome):
 	command = []
@@ -582,7 +582,7 @@ def select_parents(generation):
 	debug_message('total_fitness:{}'.format(total_fitness))
 	debug_message('total_fitness1:{}'.format(total_fitness1))
 	debug_message('total_fitness2:{}'.format(total_fitness2))
-	
+
 	assert(total_fitness >= 0), '`total_fitness` should not be negative'
 	
 	rand_parent1 = random.random()*total_fitness

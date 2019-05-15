@@ -131,7 +131,8 @@ def process_genetic_algorithm(clargs, machines):
 			"The GenerationID did not update: should be {}; but is {}".format(
 				generationID, new_generation['generationID'].mean())
 		
-		generation = train_generation(new_generation, clargs, machines)
+		generation = train_generation(new_generation, clargs, machines, 
+										verbose=verbose)
 		
 		info_message('Time for Generation{}: {} minutes'.format(generationID, 
 											(time() - start_while)//60))
@@ -139,8 +140,8 @@ def process_genetic_algorithm(clargs, machines):
 		# fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
 		fitnesses = generation.fitness.values
 		new_best_fitness = generation.fitness.values.max()
-		debug_message('process_genetic_algorithm+fitnesses:{}'.format(generation.fitness))
-		debug_message('process_genetic_algorithm+new_best_fitness:{}'.format(
+		debug_message('2,process_genetic_algorithm+fitnesses:{}'.format(generation.fitness))
+		debug_message('2,process_genetic_algorithm+new_best_fitness:{}'.format(
 							new_best_fitness))
 		
 		if verbose:
