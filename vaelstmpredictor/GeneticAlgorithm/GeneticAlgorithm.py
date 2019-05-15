@@ -572,6 +572,8 @@ def select_parents(generation):
 		not including total_fitness'''
 	
 	total_fitness = sum(chrom.fitness for chrom in generation.itertuples())
+
+	assert(total_fitness >= 0), '`total_fitness` should not be negative'
 	
 	rand_parent1 = random.random()*total_fitness
 	rand_parent2 = random.random()*total_fitness
@@ -588,6 +590,10 @@ def select_parents(generation):
 			parent2 = chromosome
 		if(parent1 is not None and parent2 is not None):
 			break
+	
+	assert(None not in [parent1, parent2]),\
+		'parent1 and parent2 must not be None:'\
+		'Currently parent1:{}\tparent2:{}'.format(parent1, parent2)
 
 	return parent1, parent2
 

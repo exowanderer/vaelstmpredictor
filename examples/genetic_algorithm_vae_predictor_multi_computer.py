@@ -231,10 +231,6 @@ if __name__ == '__main__':
 		for chromosomeID in tqdm(range(population_size)):
 			parent1, parent2 = select_parents(generation)
 			
-			assert(None not in [parent1, parent2]),\
-				'parent1 and parent2 must not be None:'\
-				'Currently parent1:{}\tparent2:{}'.format(parent1, parent2)
-
 			new_generation, crossover_happened = cross_over(
 											new_generation, generation,
 											parent1, parent2, chromosomeID,
