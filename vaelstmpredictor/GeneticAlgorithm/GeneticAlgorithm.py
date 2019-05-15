@@ -413,7 +413,7 @@ def train_generation(generation, clargs, machines,
 			print('\n\n[INFO]')
 			print('GenerationID:{}'.format(chromosome.generationID))
 			print('ChromosomeID:{}'.format(chromosome.chromosomeID))
-			print('Fitness:{}'.format(chromosome.fitness))
+			print('fitness:{}'.format(chromosome.fitness))
 			print('Num VAE Layers:{}'.format(chromosome.num_vae_layers))
 			print('Num DNN Layers:{}'.format(chromosome.num_dnn_layers))
 			print('Size VAE Latent:{}'.format(chromosome.size_vae_latent))
@@ -571,7 +571,7 @@ def select_parents(generation):
 	'''Generate two random numbers between 0 and total_fitness 
 		not including total_fitness'''
 	debug_message('process_GA+generation:\n{}'.format(generation))
-	debug_message('process_GA+generation[fitness]:\n{}'.format(generation['Fitness']))
+	debug_message('process_GA+generation[fitness]:\n{}'.format(generation['fitness']))
 
 	total_fitness = sum(chrom.fitness for chrom in generation.itertuples())
 	total_fitness1 = sum(chrom.fitness for _, chrom in generation.iterrows())
