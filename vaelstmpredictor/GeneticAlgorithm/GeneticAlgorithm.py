@@ -341,20 +341,17 @@ def train_generation(generation, clargs, machines,
 	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	
+	# Store `generationID` for easier use later
 	generationID = generation.generationID.values[0]
-	
-	generation.generationID = np.int64(generation.generationID)
-	generation.chromosomeID = np.int64(generation.chromosomeID)
 	
 	queue = mp.Queue()
 	
 	#Create Processes
 	for machine in machines: queue.put(machine)
 	
-	# Store `generationID` for easier use later
-	generationID = generation.generationID
 	count_while = 0
 	start = time()
+
 	# Start master process
 	while not all(generation.isTrained.values == 2):
 		# Start # debug_message
@@ -367,11 +364,12 @@ def train_generation(generation, clargs, machines,
 
 		generation = process_generation(generation, queue, clargs)
 		sql_generation = query_generation(generationID, loop_until_done=False)
+		debug_message('train_generation+sql_generation:\n{}'.format(sql_generation))
 		
 		# If SQL does not exist yet or is not reachable, then keep processing
 		if sql_generation is None: debug_message('sql_generation is None')
 		if sql_generation is None: continue
-		
+		debug_message('train_generation+sql_generation:\n{}'.format(sql_generation))
 		# Set all `isTrained==2` to `isTrained==0`
 		for chromosome in generation.itertuples():
 			if chromosome.isTrained == 2:
