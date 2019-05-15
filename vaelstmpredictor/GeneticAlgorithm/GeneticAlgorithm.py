@@ -570,8 +570,13 @@ def train_chromosome(chromosome, machine, queue, clargs,
 def select_parents(generation):
 	'''Generate two random numbers between 0 and total_fitness 
 		not including total_fitness'''
+	debug_message('process_GA+generation:\n{}'.format(generation))
 	
 	total_fitness = sum(chrom.fitness for chrom in generation.itertuples())
+	total_fitness1 = sum(chrom.fitness for chrom in generation.itertuples())
+	
+	debug_message('total_fitness:{}'.format(total_fitness))
+	debug_message('total_fitness1:{}'.format(total_fitness1))
 
 	assert(total_fitness >= 0), '`total_fitness` should not be negative'
 	
