@@ -80,18 +80,20 @@ class Chromosome(VAEPredictor):
         self.model_topology_savefile = self.model_topology_savefile.format(self.model_dir, self.run_name, self.generationID, self.chromosomeID,
             self.time_stamp)
 
-        with open(self.model_topology_savefile, 'w') as f:
-            with redirect_stdout(f):
-                self.neural_net.summary()
+        joblib_save_loc ='{}/{}_{}_{}_trained_model_output_{}.joblib.save'
+        self.joblib_save_loc = joblib_save_loc.format(self.model_dir, 
+                                        self.run_name, self.generationID, 
+                                        self.chromosomeID, self.time_stamp)
 
-        yaml_filename = self.model_topology_savefile.replace('.save', '.yaml')
-        with open(yaml_filename, 'w') as yaml_fileout:
-            yaml_fileout.write(self.neural_net.to_yaml())
+        wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
+        self.wghts_save_loc = wghts_save_loc.format(self.model_dir, 
+                                        self.run_name, self.generationID, 
+                                        self.chromosomeID, self.time_stamp)
         
-        # save model args
-        json_filename = self.model_topology_savefile.replace('.save', '.json')
-        with open(json_filename, 'w') as json_fileout:
-            json_fileout.write(self.neural_net.to_json())
+        model_save_loc = '{}/{}_{}_{}_trained_model_full_{}.save'
+        self.model_save_loc = model_save_loc.format(self.model_dir, 
+                                        self.run_name, self.generationID, 
+                                        self.chromosomeID, self.time_stamp)
 
         if verbose: self.neural_net.summary()
 
@@ -181,24 +183,27 @@ class Chromosome(VAEPredictor):
         if self.save_model: self.save()
 
     def save(self):
-        joblib_save_loc ='{}/{}_{}_{}_trained_model_output_{}.joblib.save'
-        self.joblib_save_loc = joblib_save_loc.format(self.model_dir, 
-                                        self.run_name, self.generationID, 
-                                        self.chromosomeID, self.time_stamp)
+        # Save network topology
+        with open(self.model_topology_savefile, 'w') as f:
+            with redirect_stdout(f):
+                self.neural_net.summary()
 
-        wghts_save_loc = '{}/{}_{}_{}_trained_model_weights_{}.save'
-        self.wghts_save_loc = wghts_save_loc.format(self.model_dir, 
-                                        self.run_name, self.generationID, 
-                                        self.chromosomeID, self.time_stamp)
+        yaml_filename = self.model_topology_savefile.replace('.save', '.yaml')
+        with open(yaml_filename, 'w') as yaml_fileout:
+            yaml_fileout.write(self.neural_net.to_yaml())
         
-        model_save_loc = '{}/{}_{}_{}_trained_model_full_{}.save'
-        self.model_save_loc = model_save_loc.format(self.model_dir, 
-                                        self.run_name, self.generationID, 
-                                        self.chromosomeID, self.time_stamp)
-        
+        # save model args
+        json_filename = self.model_topology_savefile.replace('.save', '.json')
+        with open(json_filename, 'w') as json_fileout:
+            json_fileout.write(self.neural_net.to_json())
+
+        # Save network weights
         self.neural_net.save_weights(self.wghts_save_loc, overwrite=True)
+
+        # Save network entirely
         self.neural_net.save(self.model_save_loc, overwrite=True)
 
+        # Save class object in its entirety
         try:
             joblib.dump({'best_loss':self.best_loss,
                             'history':self.history}, 
