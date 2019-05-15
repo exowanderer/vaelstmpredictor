@@ -112,8 +112,8 @@ if __name__ == '__main__':
 			help='number of generations for genetic algorithm')
 	parser.add_argument('--verbose', action='store_true',
 			help='print more [INFO] and [DEBUG] statements')
-	parser.add_argument('--make_plots', action='store_true',
-			help='make plots of growth in the best_loss over generations')
+	# parser.add_argument('--make_plots', action='store_true',
+	# 		help='make plots of growth in the best_loss over generations')
 	parser.add_argument('--port', type=int, default=22,
 			help='IP port over which to ssh')
 	parser.add_argument('--send_back', action='store_true', 
@@ -165,7 +165,7 @@ if __name__ == '__main__':
 	population_size = clargs.population_size
 	num_generations = clargs.num_generations
 	verbose = clargs.verbose
-	make_plots = clargs.make_plots
+	# make_plots = clargs.make_plots
 	
 	clargs.data_type = 'MNIST'
 	data_instance = MNISTData(batch_size = clargs.batch_size)
@@ -197,11 +197,9 @@ if __name__ == '__main__':
 						verbose = clargs.verbose)
 	
 	generationID = 0
-	# debug_message('__main__+before_train_generation:\n{}'.format(
-				# generation.dtypes))
+	
 	generation = train_generation(generation, clargs, machines,verbose=verbose)
-	# debug_message('__main__+after_train_generation:\n{}'.format(
-				# generation.dtypes))
+	
 	best_fitness = []
 	fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
 	
@@ -213,22 +211,20 @@ if __name__ == '__main__':
 	
 	best_fitness.append(new_best_fitness)
 	
-	if make_plots:
-		fig = plt.gcf()
-		fig.show()
+	# if make_plots:
+	# 	fig = plt.gcf()
+	# 	fig.show()
 	
 	param_choices = {'num_vae_layers': (1,1), 
 					 'num_dnn_layers': (1,1), 
 					 'size_vae_latent': (10,1), 
 					 'size_vae_hidden': (50,1), 
 					 'size_dnn_hidden': (50,1)}
-	# debug_message('__main__+generation:\n{}'.format(
-				# generation.dtypes))
+	
 	start = time()
 	# while gen_num < num_generations:
 	for generationID in range(1,num_generations):
-		# debug_message('1,__main__+forGenID+generation:\n{}'.format(
-				# generation.dtypes))
+		
 		try:
 			save_sql_to_csv(clargs)
 		except Exception as error:
@@ -238,27 +234,24 @@ if __name__ == '__main__':
 		start_while = time()
 		# Create new generation
 		new_generation = create_blank_dataframe(generationID, population_size)
-		# debug_message('2,__main__+forGenID+new_generation:\n{}'.format(
-				# new_generation.dtypes))
-		# debug_message('2,__main__+forGenID+generation:\n{}'.format(
-				# generation.dtypes))
+		
 		for chromosomeID in tqdm(range(population_size)):
 			parent1, parent2 = select_parents(generation)
-			# debug_message('__main__+for+beforecross-over+new_generation:\n{}'.format(new_generation.dtypes))
-			# debug_message('__main__+for+beforecross-over+generation:\n{}'.format(generation.dtypes))
+			
+			assert(None not in [parent1, parent2]),\
+				'parent1 and parent2 must not be None:'\
+				'Currently parent1:{}\tparent2:{}'.format(parent1, parent2)
+
 			new_generation, crossover_happened = cross_over(
 											new_generation, generation,
 											parent1, parent2, chromosomeID,
 											param_choices.keys(), cross_prob, 
 											verbose = verbose)
-			# debug_message('__main__+for+new_generation:\n{}'.format(
-				# new_generation.dtypes))
+			
 			new_generation, mutation_happened = mutate(
 											new_generation, generation,
 											chromosomeID, mutate_prob, 
 											param_choices, verbose = verbose)
-			# debug_message('__main__+for+new_generation:\n{}'.format(
-				# new_generation.dtypes))
 			
 			isTrained = not (mutation_happened and crossover_happened)
 			
@@ -271,8 +264,6 @@ if __name__ == '__main__':
 			new_generation.set_value(chromosomeID, 'generationID',generationID)
 			new_generation.set_value(chromosomeID, 'chromosomeID',chromosomeID)
 			
-			# debug_message('__main__+for+new_generation:\n{}'.format(
-				# new_generation.dtypes))
 			info_message('Adding Chromosome:\n{}'.format(
 					new_generation.iloc[chromosomeID]))
 		
@@ -299,7 +290,7 @@ if __name__ == '__main__':
 		
 		best_fitness.append(new_best_fitness)
 		
-		if make_plots:
-			plt.plot(best_fitness, color="c")
-			plt.xlim([0, num_generations])
-			fig.canvas.draw()
+		# if make_plots:
+		# 	plt.plot(best_fitness, color="c")
+		# 	plt.xlim([0, num_generations])
+		# 	fig.canvas.draw()
