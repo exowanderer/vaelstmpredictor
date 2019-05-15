@@ -8,11 +8,13 @@ def info_message(message, end='\n'):
 	print('[INFO] {}'.format(message), end = end)
 
 def save_sql_to_csv(table_dir, run_name):
-	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
+	
+	getDatabase = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
+	getDatabase = getDatabase + 'GetDatabase'
 
-	info_message('Accessing SQL from {}'.format(getChrom))
+	info_message('Accessing SQL from {}'.format(getDatabase))
 
-	req = requests.get(getChrom)
+	req = requests.get(getDatabase)
 	sql_table = pd.DataFrame(req.json())
 
 	time_stamp = sql_table['time_stamp'][0]
