@@ -38,7 +38,6 @@ def make_sql_output(clargs, chromosome):
 	output['iterations'] = clargs.num_generations
 	output['kl_anneal'] = clargs.kl_anneal
 	output['log_dir'] = clargs.log_dir
-	output['make_plots'] = clargs.make_plots
 	output['model_dir'] = clargs.model_dir
 	output['mutate_prob'] = clargs.mutate_prob
 	output['num_epochs'] = clargs.num_epochs
@@ -348,7 +347,6 @@ if __name__ == '__main__':
 	if remove_question_marks:
 		del put_sql_dict['send_back']
 		del put_sql_dict['do_log']
-		del put_sql_dict['make_plots']
 		del put_sql_dict['verbose']
 	
 	req = requests.get(url = putURL, params = put_sql_dict)
