@@ -290,7 +290,7 @@ def process_generation(generation, queue, clargs):
 		if chromosome.isTrained == 0:# and queue.qsize() >= 0:
 			machine = get_machine(queue)
 
-			info_message("\n\nCreating Process for Chromosome "\
+			info_message("Creating Process for Chromosome "\
 						"{} on GenerationID {} on machine {}".format(
 												chromosome.chromosomeID,
 												chromosome.generationID,
@@ -571,9 +571,10 @@ def select_parents(generation):
 	'''Generate two random numbers between 0 and total_fitness 
 		not including total_fitness'''
 	debug_message('process_GA+generation:\n{}'.format(generation))
-	
+	debug_message('process_GA+generation[fitness]:\n{}'.format(generation['Fitness']))
+
 	total_fitness = sum(chrom.fitness for chrom in generation.itertuples())
-	total_fitness1 = sum(chrom.fitness for chrom in generation.itertuples())
+	total_fitness1 = sum(chrom.fitness for _, chrom in generation.iterrows())
 	
 	debug_message('total_fitness:{}'.format(total_fitness))
 	debug_message('total_fitness1:{}'.format(total_fitness1))
