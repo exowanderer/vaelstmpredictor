@@ -62,9 +62,6 @@ def process_genetic_algorithm(clargs, machines):
 	fitnesses = generation.fitness.values
 	
 	new_best_fitness = generation.fitness.values.max()
-	debug_message('1,process_genetic_algorithm+fitnesses:{}'.format(generation.fitness))
-	debug_message('2,process_genetic_algorithm+new_best_fitness:{}'.format(
-						new_best_fitness))
 	
 	if verbose:
 		info_message('For Generation: {}, the best fitness was {}'.format(
@@ -93,9 +90,7 @@ def process_genetic_algorithm(clargs, machines):
 		new_generation = create_blank_dataframe(generationID, population_size)
 		
 		for chromosomeID in tqdm(range(population_size)):
-			debug_message('process_GA+generation:\n{}'.format(generation))
-			debug_message('process_GA+generation[generationID,fitness]:\n{}'.format(generation[['generationID','fitness']]))
-
+			
 			parent1, parent2 = select_parents(generation)
 			
 			new_generation, crossover_happened = cross_over(
@@ -110,10 +105,6 @@ def process_genetic_algorithm(clargs, machines):
 											param_choices, verbose = verbose)
 			
 			isTrained = not (mutation_happened or crossover_happened)
-			
-			debug_message('process_genetic_algorithm+isTrained:{}'.format(isTrained))
-			debug_message('process_genetic_algorithm+mutation_happened:{}'.format(mutation_happened))
-			debug_message('process_genetic_algorithm+crossover_happened:{}'.format(crossover_happened))
 
 			if not isTrained:
 				new_generation.set_value(chromosomeID, 'fitness', -1.0)
@@ -144,9 +135,6 @@ def process_genetic_algorithm(clargs, machines):
 		# fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
 		fitnesses = generation.fitness.values
 		new_best_fitness = generation.fitness.values.max()
-		debug_message('2,process_genetic_algorithm+fitnesses:{}'.format(generation.fitness))
-		debug_message('2,process_genetic_algorithm+new_best_fitness:{}'.format(
-							new_best_fitness))
 		
 		if verbose:
 			info_message('For Generation: {}, the best fitness was {}'.format(

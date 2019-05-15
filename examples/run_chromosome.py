@@ -329,7 +329,6 @@ if __name__ == '__main__':
 												chromosome.chromosomeID, 
 												clargs.time_stamp)
 	
-	debug_message('run_chromosome+put_sql_dict:{}'.format(put_sql_dict))
 
 	joblib.dump(put_sql_dict, output_table_name)
 

@@ -364,12 +364,11 @@ def train_generation(generation, clargs, machines,
 
 		generation = process_generation(generation, queue, clargs)
 		sql_generation = query_generation(generationID, loop_until_done=False)
-		debug_message('train_generation+sql_generation:\n{}'.format(sql_generation))
 		
 		# If SQL does not exist yet or is not reachable, then keep processing
 		if sql_generation is None: debug_message('sql_generation is None')
 		if sql_generation is None: continue
-		debug_message('train_generation+sql_generation:\n{}'.format(sql_generation))
+		
 		# Set all `isTrained==2` to `isTrained==0`
 		for chromosome in generation.itertuples():
 			if chromosome.isTrained == 2:
@@ -420,8 +419,7 @@ def train_generation(generation, clargs, machines,
 			print('\n\n')
 	
 	# After all is done: report back
-	debug_message('train_generation+sql_generation.dtypes:{}'.format(sql_generation.dtypes))
-	debug_message('train_generation+generation.dtypes:{}'.format(generation.dtypes))
+	
 	return generation#.astype(sql_generation.dtypes)
 
 def generate_ssh_command(clargs, chromosome):
@@ -571,17 +569,7 @@ def select_parents(generation):
 	'''Generate two random numbers between 0 and total_fitness 
 		not including total_fitness'''
 
-	debug_message('process_GA+generation:\n{}'.format(generation))
-	debug_message('process_GA+generation[generationID,fitness]:\n{}'.format(generation[['generationID','fitness']]))
-	
 	total_fitness = generation.fitness.sum()
-	total_fitness1 = sum(chrom.fitness for chrom in generation.itertuples())
-	total_fitness2 = sum(chrom.fitness for _, chrom in generation.iterrows())
-	
-	debug_message('total_fitness:{}'.format(total_fitness))
-	debug_message('total_fitness1:{}'.format(total_fitness1))
-	debug_message('total_fitness2:{}'.format(total_fitness2))
-
 	assert(total_fitness >= 0), '`total_fitness` should not be negative'
 	
 	rand_parent1 = random.random()*total_fitness
@@ -631,8 +619,6 @@ def cross_over(new_generation, generation, parent1, parent2,
 		idx_child = idx_parent1 if p1_fitness > p2_fitness else idx_parent1
 		new_generation.iloc[chromosomeID] = generation.iloc[idx_child].copy()
 	
-	debug_message('cross_over+generation.dtypes:{}'.format(generation.dtypes))
-	debug_message('cross_over+new_generation.dtypes:{}'.format(new_generation.dtypes))
 	return new_generation.astype(generation.dtypes), crossover_happened
 
 def mutate(new_generation, generation, chromosomeID, 
