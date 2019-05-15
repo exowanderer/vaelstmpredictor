@@ -52,10 +52,12 @@ def process_genetic_algorithm(clargs, machines):
 						verbose = clargs.verbose)
 	
 	verbose = clargs.verbose
-	
+	sleep_time = clargs.sleep_time
+
 	generationID = 0
 	
-	generation = train_generation(generation, clargs, machines,verbose=verbose)
+	generation = train_generation(generation, clargs, machines,
+						verbose=verbose,sleep_time=sleep_time)
 	
 	best_fitness = []
 	# fitnesses = [chromosome.fitness for _, chromosome in generation.iterrows()]
@@ -127,7 +129,7 @@ def process_genetic_algorithm(clargs, machines):
 				generationID, new_generation['generationID'].mean())
 		
 		generation = train_generation(new_generation, clargs, machines, 
-										verbose=verbose)
+										verbose=verbose,sleep_time=sleep_time)
 		
 		info_message('Time for Generation{}: {} minutes'.format(generationID, 
 											(time() - start_while)//60))
@@ -220,6 +222,8 @@ if __name__ == '__main__':
 			help='print more [INFO] and [DEBUG] statements')
 	parser.add_argument('--port', type=int, default=22,
 			help='IP port over which to ssh')
+	parser.add_argument('--sleep_time', type=float, default=1.0,
+			help='Time to pause in between repetitive sql queries')
 	parser.add_argument('--send_back', action='store_true', 
 			help='Toggle whether to send the ckpt file + population local csv')
 	clargs = parser.parse_args()

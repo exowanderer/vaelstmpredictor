@@ -32,7 +32,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from sklearn.externals import joblib
-from time import time
+from time import time, sleep
 from tqdm import tqdm
 
 from vaelstmpredictor.utils.model_utils import get_callbacks, init_adam_wn
@@ -77,7 +77,7 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 
 	return hidden_dims
 
-def query_full_sql(loop_until_done=False):
+def query_full_sql(loop_until_done=False, sleep_time = 1):
 	getDatabase = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
 	getDatabase = getDatabase + 'GetDatabase'
 
@@ -94,8 +94,9 @@ def query_full_sql(loop_until_done=False):
 
 		# Only triggers if requests+dataframe fails and not `loop_until_done`
 		if not loop_until_done: return None
+		sleep(sleep_time)
 
-def query_generation(generationID, loop_until_done=False):
+def query_generation(generationID, loop_until_done=False, sleep_time = 1)::
 	# could add time_stamp,  to args and RESTful API call
 	getGeneration = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
 	getGeneration = getGeneration + 'GetGeneration'
@@ -116,6 +117,7 @@ def query_generation(generationID, loop_until_done=False):
 
 		# Only triggers if requests+dataframe fails and not `loop_until_done`
 		if not loop_until_done: return None
+		sleep(sleep_time)
 
 def query_chromosome(generationID, chromosomeID, verbose=True):
 	getChromosome = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
@@ -335,8 +337,8 @@ def process_generation(generation, queue, clargs):
 		"""
 	return generation
 
-def train_generation(generation, clargs, machines, 
-					private_key='id_ecdsa', verbose = False):
+def train_generation(generation, clargs, machines, private_key='id_ecdsa', 
+						verbose = False, sleep_time = 1):
 	
 	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
@@ -360,11 +362,13 @@ def train_generation(generation, clargs, machines,
 				info_message('Querying Generation {} from SQL'.format(
 									generationID))
 				sql_generation = query_generation(generationID, 
-												loop_until_done=False)
+												loop_until_done=False,
+												sleep_time = sleep_time)
 				break
 			except Exception as error:
 				message= 'tg1+query_generation failed because:{}'.format(error)
 				warning_message(message)
+				sleep(sleep_time)
 		
 		# If SQL does not exist yet or is not reachable, then keep processing
 		if sql_generation is None: debug_message('sql_generation is None')
@@ -397,11 +401,13 @@ def train_generation(generation, clargs, machines,
 			info_message('Querying Generation {} from SQL'.format(
 								generationID))
 			sql_generation = query_generation(generationID, 
-											loop_until_done=True)
+											loop_until_done=True,
+											sleep_time = sleep_time)
 			break
 		except Exception as error:
 			message= 'tg2+query_generation failed because:{}'.format(error)
 			warning_message(message)
+			sleep(sleep_time)
 	
 	assert(isinstance(sql_generation, pd.DataFrame)), \
 			'`sql_generation` must be a dict'
