@@ -7,10 +7,8 @@ from time import time
 def info_message(message, end='\n'):
 	print('[INFO] {}'.format(message), end = end)
 
-def save_sql_to_csv(table_dir):
-
-	getDatabase = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	getDatabase = getDatabase + 'GetDatabase'
+def save_sql_to_csv(table_dir, hostname='172.16.50.176', sqlport=5000):
+	getDatabase = 'http://{}:{}/GetDatabase'.format(hostname, sqlport)
 
 	info_message('Accessing SQL from {}'.format(getDatabase))
 
@@ -33,7 +31,11 @@ def save_sql_to_csv(table_dir):
 parser = ArgumentParser()
 parser.add_argument('-t', '--table_dir', type=str, default='../data/tables',
 	help='/path/to/and/name of the table to store the sql database')
+parser.add_argument('-h', '--hostname', type=str, default='127.0.0.1',
+	help='/path/to/and/name of the table to store the sql database')
+parser.add_argument('-p', '--sqlport', type=int, default=5000,
+	help='/path/to/and/name of the table to store the sql database')
 
 clargs = parser.parse_args()
 
-save_sql_to_csv(clargs.table_dir)
+save_sql_to_csv(clargs.table_dir, clargs.hostname, clargs.sqlport)

@@ -77,9 +77,12 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 
 	return hidden_dims
 
-def query_full_sql(loop_until_done=False, sleep_time = 1):
-	getDatabase = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	getDatabase = getDatabase + 'GetDatabase'
+def query_full_sql(loop_until_done=False, hostname ='172.16.50.176', 
+					sqlport=5000, sleep_time = 1):
+	
+	getDatabase = 'http://{}:{}/getDatabase'.format(hostname, sqlport)
+	# getDatabase = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
+	# getDatabase = getDatabase + 'GetDatabase'
 
 	while True: # maybe use `for _ in range(iterations)` instead?
 		req = requests.get(getDatabase)
@@ -96,10 +99,14 @@ def query_full_sql(loop_until_done=False, sleep_time = 1):
 		if not loop_until_done: return None
 		sleep(sleep_time)
 
-def query_generation(generationID, loop_until_done=False, sleep_time = 1):
+def query_generation(generationID, loop_until_done=False, 
+					hostname ='172.16.50.176', sqlport=5000, 
+					sleep_time = 1):
+	
 	# could add time_stamp,  to args and RESTful API call
-	getGeneration = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	getGeneration = getGeneration + 'GetGeneration'
+	getDatabase = 'http://{}:{}/getDatabase'.format(hostname, sqlport)
+	# getGeneration = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
+	# getGeneration = getGeneration + 'GetGeneration'
 
 	while True: # maybe use `for _ in range(iterations)` instead?
 		json_ID = {'generationID':generationID}
@@ -119,9 +126,11 @@ def query_generation(generationID, loop_until_done=False, sleep_time = 1):
 		if not loop_until_done: return None
 		sleep(sleep_time)
 
-def query_chromosome(generationID, chromosomeID, verbose=True):
-	getChromosome = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	getChromosome = getChromosome + 'GetChromosome'
+def query_chromosome(generationID, chromosomeID, verbose=True,
+						hostname='172.16.50.176', sqlport=5000):
+	getChromosome = 'http://{}:{}/GetChromosome'.format(hostname, sqlport)
+	# getChromosome = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
+	# getChromosome = getChromosome + 'GetChromosome'
 	
 	json_ID = {'generationID':generationID, 'chromosomeID':chromosomeID}
 	
@@ -167,8 +176,12 @@ def save_sql_to_csv(clargs):
 	import pandas as pd
 	import requests
 
-	getDatabase = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	getDatabase = getDatabase + 'GetDatabase'
+	hostname = clargs.hostname
+	sqlport = clargs.sqlport
+
+	getDatabase = 'http://{}:{}/getDatabase'.format(hostname, sqlport)
+	# getDatabase = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
+	# getDatabase = getDatabase + 'GetDatabase'
 
 	table_dir = clargs.table_dir
 	table_name = '{}/{}_fitness_table_{}.csv'
@@ -340,7 +353,6 @@ def process_generation(generation, queue, clargs):
 def train_generation(generation, clargs, machines, private_key='id_ecdsa', 
 						verbose = False, sleep_time = 1):
 	
-	getChrom = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/GetChrom'
 	key_filename = os.environ['HOME'] + '/.ssh/{}'.format(private_key)
 	
 	# Store `generationID` for easier use later

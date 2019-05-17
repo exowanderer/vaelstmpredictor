@@ -215,7 +215,9 @@ if __name__ == '__main__':
 			help='Keeps track of runs and re-runs')
 	parser.add_argument('--hostname', type=str, default='127.0.0.1',
 			help='The hostname of the computer to send results back to.')
-	parser.add_argument('--port', type=int, default=22,
+	parser.add_argument('--sshport', type=int, default=22,
+			help='The port on the work computer to send ssh over.')
+	parser.add_argument('--sqlport', type=int, default=5000,
 			help='The port on the work computer to send ssh over.')
 	parser.add_argument('--send_back', action='store_true', 
 			help='Toggle whether to send the ckpt file + population local csv')
@@ -306,7 +308,7 @@ if __name__ == '__main__':
 		sftp_send(local_file = local_wghts, 
 					remote_file = remote_wghts,
 					hostname = clargs.hostname, 
-					port = clargs.port, 
+					port = clargs.sshport, 
 					key_filename = key_filename, 
 					verbose = clargs.verbose)
 
@@ -318,7 +320,8 @@ if __name__ == '__main__':
 	print('ChromosomeID: {}'.format(chromosome.chromosomeID), end=" ")
 	print('Fitness: {}\n'.format(chromosome.fitness))
 	
-	putURL = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/AddChrom'
+	# putURL = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/AddChrom'
+	putURL = 'http://{}:{}/AddChrom'.format(clargs.hostname, clargs.sqlport)
 	
 	info_message('Storing to SQL db at {}'.format(putURL))
 	
@@ -338,13 +341,13 @@ if __name__ == '__main__':
 	local_output_table = output_table_name
 	remote_output_table = 'vaelstmpredictor/{}'.format(output_table_name)
 	remote_output_table = remote_output_table.replace('../','')
-
-	sftp_send(local_file = local_output_table, 
-				remote_file = remote_output_table,
-				hostname = clargs.hostname, 
-				port = clargs.port, 
-				key_filename = key_filename, 
-				verbose = clargs.verbose)
+	if clargs.send_back:
+		sftp_send(local_file = local_output_table, 
+					remote_file = remote_output_table,
+					hostname = clargs.hostname, 
+					port = clargs.sshport, 
+					key_filename = key_filename, 
+					verbose = clargs.verbose)
 	
 	# DEBUG: For some reason the RESTful API does not like these 3 pieces
 	remove_question_marks = True
