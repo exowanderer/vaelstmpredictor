@@ -220,7 +220,7 @@ if __name__ == '__main__':
 			help='number of generations for genetic algorithm')
 	parser.add_argument('--verbose', action='store_true',
 			help='print more [INFO] and [DEBUG] statements')
-	parser.add_argument('--port', type=int, default=22,
+	parser.add_argument('--sshport', type=int, default=22,
 			help='IP port over which to ssh')
 	parser.add_argument('--sleep_time', type=float, default=1.0,
 			help='Time to pause in between repetitive sql queries')

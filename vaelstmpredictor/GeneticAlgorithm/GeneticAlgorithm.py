@@ -100,18 +100,16 @@ def query_full_sql(loop_until_done=False, hostname ='172.16.50.176',
 		sleep(sleep_time)
 
 def query_generation(generationID, loop_until_done=False, 
-					hostname ='172.16.50.176', sqlport=5000, 
-					sleep_time = 1):
+		hostname ='172.16.50.176', sqlport=5000, sleep_time = 1):
 	
 	# could add time_stamp,  to args and RESTful API call
 	getGeneration = 'http://{}:{}/getGeneration'.format(hostname, sqlport)
-	# getGeneration = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	# getGeneration = getGeneration + 'GetGeneration'
-
+	
 	while True: # maybe use `for _ in range(iterations)` instead?
 		json_ID = {'generationID':generationID}
 		req = requests.get(getGeneration, params=json_ID)
-			
+		print(req)
+		print(req.json())
 		try:
 			sql_generation = pd.DataFrame(req.json())
 			
@@ -475,7 +473,7 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--train_file {}'.format(clargs.train_file))
 	command.append('--time_stamp {}'.format(int(clargs.time_stamp)))
 	command.append('--hostname {}'.format(clargs.hostname))
-	command.append('--port {}'.format(clargs.port))
+	command.append('--sshport {}'.format(clargs.sshport))
 	command.append('--num_vae_layers {}'.format(chromosome.num_vae_layers))
 	command.append('--num_dnn_layers {}'.format(chromosome.num_dnn_layers))
 	command.append('--size_vae_latent {}'.format(chromosome.size_vae_latent))

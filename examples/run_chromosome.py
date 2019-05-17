@@ -71,7 +71,7 @@ def make_sql_output(clargs, chromosome):
 def sftp_send(local_file, remote_file, hostname, port, key_filename, 
 				verbose = False):
 	
-	transport = Transport((clargs.hostname, clargs.port))
+	transport = Transport((clargs.hostname, clargs.sshport))
 	pk = ECDSAKey.from_private_key(open(key_filename))
 	transport.connect(username = 'acc', pkey=pk)
 
