@@ -104,7 +104,7 @@ def query_generation(generationID, loop_until_done=False,
 					sleep_time = 1):
 	
 	# could add time_stamp,  to args and RESTful API call
-	getDatabase = 'http://{}:{}/getDatabase'.format(hostname, sqlport)
+	getGeneration = 'http://{}:{}/getGeneration'.format(hostname, sqlport)
 	# getGeneration = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
 	# getGeneration = getGeneration + 'GetGeneration'
 
