@@ -33,11 +33,11 @@ def make_sql_output(clargs, chromosome):
 	output['cross_prob'] = clargs.cross_prob
 	output['do_ckpt'] = clargs.do_ckpt
 	output['do_log'] = clargs.do_log
+	output['send_back'] = clargs.send_back
 	output['hostname'] = clargs.hostname
 	output['iterations'] = clargs.num_generations
 	output['kl_anneal'] = clargs.kl_anneal
 	output['log_dir'] = clargs.log_dir
-	output['make_plots'] = clargs.make_plots
 	output['model_dir'] = clargs.model_dir
 	output['mutate_prob'] = clargs.mutate_prob
 	output['num_epochs'] = clargs.num_epochs
@@ -71,7 +71,7 @@ def make_sql_output(clargs, chromosome):
 def sftp_send(local_file, remote_file, hostname, port, key_filename, 
 				verbose = False):
 	
-	transport = Transport((clargs.hostname, clargs.port))
+	transport = Transport((clargs.hostname, clargs.sshport))
 	pk = ECDSAKey.from_private_key(open(key_filename))
 	transport.connect(username = 'acc', pkey=pk)
 
@@ -172,76 +172,83 @@ def ssh_out_table_entry(clargs, chromosome):
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--run_name', type=str, default='ga_test',
-				help='tag for current run')
+			help='tag for current run')
 	parser.add_argument('--predictor_type', type=str, default="classification",
-				help='select `classification` or `regression`')
+			help='select `classification` or `regression`')
 	parser.add_argument('--batch_size', type=int, default=128,
-				help='batch size')
+			help='batch size')
 	parser.add_argument('--optimizer', type=str, default='adam',
-				help='optimizer name') 
+			help='optimizer name') 
 	parser.add_argument('--num_epochs', type=int, default=200,
-				help='number of epochs')
+			help='number of epochs')
 	parser.add_argument('--dnn_weight', type=float, default=1.0,
-				help='relative weight on prediction loss')
+			help='relative weight on prediction loss')
 	parser.add_argument('--vae_weight', type=float, default=1.0,
-				help='relative weight on prediction loss')
+			help='relative weight on prediction loss')
 	parser.add_argument('--vae_kl_weight', type=float, default=1.0,
-				help='relative weight on prediction loss')
+			help='relative weight on prediction loss')
 	parser.add_argument('--dnn_kl_weight', type=float, default=1.0,
-				help='relative weight on prediction loss')
+			help='relative weight on prediction loss')
 	parser.add_argument('--prediction_log_var_prior', type=float, default=0.0,
-				help='w log var prior')
-	# parser.add_argument("--do_log", action="store_true", 
-	# 			help="save log files")
-	# parser.add_argument("--do_ckpt", action="store_true",
-	# 			help="save model checkpoints")
+			help='w log var prior')
+	parser.add_argument("--do_log", action="store_true", 
+			help="save log files")
+	parser.add_argument("--do_ckpt", action="store_true",
+			help="save model checkpoints")
 	parser.add_argument('--patience', type=int, default=10,
-				help='# of epochs, for early stopping')
+			help='# of epochs, for early stopping')
 	parser.add_argument("--kl_anneal", type=int, default=0, 
-				help="number of epochs before kl loss term is 1.0")
+			help="number of epochs before kl loss term is 1.0")
 	parser.add_argument("--w_kl_anneal", type=int, default=0, 
-				help="number of epochs before w's kl loss term is 1.0")
+			help="number of epochs before w's kl loss term is 1.0")
 	parser.add_argument('--dnn_log_var_prior', type=float, default=0.0,
-				help='Prior on the log variance for the DNN predictor')
+			help='Prior on the log variance for the DNN predictor')
 	parser.add_argument('--log_dir', type=str, default='../data/logs',
-				help='basedir for saving log files')
+			help='basedir for saving log files')
 	parser.add_argument('--model_dir', type=str, default='../data/models',
-				help='basedir for saving model weights')
+			help='basedir for saving model weights')
 	parser.add_argument('--table_dir', type=str, default='../data/tables',
-				help='basedir for storing the table of params and fitnesses.')
+			help='basedir for storing the table of params and fitnesses.')
 	parser.add_argument('--train_file', type=str, default='MNIST',
-				help='file of training data (.pickle)')
+			help='file of training data (.pickle)')
 	parser.add_argument('--time_stamp', type=int, default=0,
-				help='Keeps track of runs and re-runs')
+			help='Keeps track of runs and re-runs')
 	parser.add_argument('--hostname', type=str, default='127.0.0.1',
-				help='The hostname of the computer to send results back to.')
-	parser.add_argument('--port', type=int, default=22,
-				help='The port on the work computer to send ssh over.')
+			help='The hostname of the computer to send results back to.')
+	parser.add_argument('--sshport', type=int, default=22,
+			help='The port on the work computer to send ssh over.')
+	parser.add_argument('--sqlport', type=int, default=5000,
+			help='The port on the work computer to send ssh over.')
+	parser.add_argument('--send_back', action='store_true', 
+			help='Toggle whether to send the ckpt file + population local csv')
 	parser.add_argument('--generationID', type=int, default=-1,
-				help='Chromosome Generation ID')
+			help='Chromosome Generation ID')
 	parser.add_argument('--chromosomeID', type=int, default=-1,
-				help='Chromosome Chromosome ID')
+			help='Chromosome Chromosome ID')
 	parser.add_argument('--num_vae_layers', type=int, default=1,
-				help='Depth of the VAE')
+			help='Depth of the VAE')
 	parser.add_argument('--num_dnn_layers', type=int, default=1,
-				help='Depth of the DNN')
+			help='Depth of the DNN')
 	parser.add_argument('--size_vae_latent', type=int, default=16,
-				help='Size of the VAE Latent Layer')
+			help='Size of the VAE Latent Layer')
 	parser.add_argument('--size_vae_hidden', type=int, default=16,
-				help='Size of the VAE Hidden Layer')
+			help='Size of the VAE Hidden Layer')
 	parser.add_argument('--size_dnn_hidden', type=int, default=16,
-				help='Size of the DNN Hidden Layer')
+			help='Size of the DNN Hidden Layer')
+	parser.add_argument('--save_model', action='store_true',
+			help='Save model ckpt.s and other stored values')
+	parser.add_argument('--verbose', action='store_true',
+			help='print more [INFO] and [DEBUG] statements')
 
 	clargs = parser.parse_args()
 	
-	clargs.do_log = True
-	clargs.do_ckpt = True
-	clargs.verbose = True
+	# clargs.do_log = True
+	# clargs.do_ckpt = True
+	# clargs.verbose = True
 	clargs.cross_prob = 0.7
 	clargs.mutate_prob = 0.01
 	clargs.num_generations = 100
 	clargs.population_size = 100
-	clargs.make_plots = False
 
 	for key,val in clargs.__dict__.items(): 
 		if 'dir' in key: 
@@ -253,6 +260,7 @@ if __name__ == '__main__':
 
 	chrom_params = {}
 	chrom_params['verbose'] = clargs.verbose
+	chrom_params['save_model'] = clargs.save_model
 	chrom_params['vae_hidden_dims'] = vae_hidden_dims
 	chrom_params['dnn_hidden_dims'] = dnn_hidden_dims
 	chrom_params['vae_latent_dim'] = clargs.size_vae_latent
@@ -296,22 +304,24 @@ if __name__ == '__main__':
 	remote_wghts = 'vaelstmpredictor/{}'.format(local_wghts)
 	remote_wghts = remote_wghts.replace('../','')
 	
-	sftp_send(local_file = local_wghts, 
-				remote_file = remote_wghts,
-				hostname = clargs.hostname, 
-				port = clargs.port, 
-				key_filename = key_filename, 
-				verbose = clargs.verbose)
+	if clargs.send_back:
+		sftp_send(local_file = local_wghts, 
+					remote_file = remote_wghts,
+					hostname = clargs.hostname, 
+					port = clargs.sshport, 
+					key_filename = key_filename, 
+					verbose = clargs.verbose)
 
-	ssh_out_table_entry(clargs, chromosome)
-
+		ssh_out_table_entry(clargs, chromosome)
+	
 	print('\n[INFO]')
 	print('Result: ', end=" ")
 	print('GenerationID: {}'.format(chromosome.generationID), end=" ")
 	print('ChromosomeID: {}'.format(chromosome.chromosomeID), end=" ")
 	print('Fitness: {}\n'.format(chromosome.fitness))
 	
-	putURL = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/AddChrom'
+	# putURL = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/AddChrom'
+	putURL = 'http://{}:{}/AddChrom'.format(clargs.hostname, clargs.sqlport)
 	
 	info_message('Storing to SQL db at {}'.format(putURL))
 	
@@ -325,39 +335,33 @@ if __name__ == '__main__':
 												chromosome.chromosomeID, 
 												clargs.time_stamp)
 	
+
 	joblib.dump(put_sql_dict, output_table_name)
 
 	local_output_table = output_table_name
 	remote_output_table = 'vaelstmpredictor/{}'.format(output_table_name)
 	remote_output_table = remote_output_table.replace('../','')
-
-	sftp_send(local_file = local_output_table, 
-				remote_file = remote_output_table,
-				hostname = clargs.hostname, 
-				port = clargs.port, 
-				key_filename = key_filename, 
-				verbose = clargs.verbose)
+	if clargs.send_back:
+		sftp_send(local_file = local_output_table, 
+					remote_file = remote_output_table,
+					hostname = clargs.hostname, 
+					port = clargs.sshport, 
+					key_filename = key_filename, 
+					verbose = clargs.verbose)
 	
 	# DEBUG: For some reason the RESTful API does not like these 3 pieces
 	remove_question_marks = True
 	if remove_question_marks:
+		del put_sql_dict['send_back']
 		del put_sql_dict['do_log']
-		del put_sql_dict['make_plots']
 		del put_sql_dict['verbose']
-	debug_message('\n\nRUN_CHROMOSOME before purURL: genID, chromID:{}'.format(
-						generationID, chromosomeID))
-	req = requests.get(url = putURL, params = put_sql_dict)
-	debug_message('\n\nRUN_CHROMOSOME after purURL: genID, chromID:{}'.format(
-						generationID, chromosomeID))
 	
-	# try:
-	debug_message(req)
-	debug_message(req.json())
-	if req.json() == 1:
-		info_message('Remote SQL Entry Added Successfully')
-	else:
-		warning_message('\n\n!! The World Has Ended !!\n\n')
-	# except json.decoder.JSONDecodeError as error: warning_message(error)
-
-	debug_message('\n\nRUN_CHROMOSOME FINISHED: generationID:'
-					'{}, chromomosomeID:{}'.format(generationID, chromosomeID))
+	req = requests.get(url = putURL, params = put_sql_dict)
+	
+	try:
+		if req.json() == 1:
+			info_message('Remote SQL Entry Added Successfully')
+		else:
+			warning_message('\n\n!! The World Has Ended !!\n\n')
+	except json.decoder.JSONDecodeError as error: 
+		warning_message(error)
