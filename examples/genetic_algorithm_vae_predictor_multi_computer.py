@@ -289,7 +289,7 @@ if __name__ == '__main__':
 	clargs.run_name = '{}_{}_{}'.format(clargs.run_name, 
 								clargs.data_type, clargs.time_stamp)
 	
-	if verbose: print('\n\n[INFO] Run Base Name: {}\n'.format(clargs.run_name))
+	if verbose: info_message('\n\nRun Base Name: {}\n'.format(clargs.run_name))
 	
 	clargs.n_labels = len(np.unique(data_instance.train_labels))
 

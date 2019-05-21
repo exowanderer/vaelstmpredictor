@@ -161,8 +161,8 @@ def ssh_out_table_entry(clargs, chromosome):
 	command = ' '.join(command)
 	
 	if chromosome.verbose:
-		print('\n\n')
-		info_message('Remotely entry storing ON {}'.format(clargs.hostname))
+		info_message('\n')
+		print('Remotely entry storing ON {}'.format(clargs.hostname))
 		print('\n\n{}'.format(entry))
 		print('\n\nAT vaelstmpredictor/{} '.format(remote_table_name))
 		print('\n\nWITH \n\n{}'.format(command))
@@ -288,7 +288,7 @@ if __name__ == '__main__':
 	hostname = s.getsockname()[0]
 	s.close()
 
-	print('\n\nParams for this VAE_NN:')
+	info_message('\n\nParams for this VAE_NN:')
 	for key,val in clargs.__dict__.items():
 		print('{:20}{}'.format(key,val))
 
@@ -315,7 +315,7 @@ if __name__ == '__main__':
 
 		ssh_out_table_entry(clargs, chromosome)
 	
-	print('\n[INFO]')
+	info_message('\n')
 	print('Result: ', end=" ")
 	print('GenerationID: {}'.format(chromosome.generationID), end=" ")
 	print('ChromosomeID: {}'.format(chromosome.chromosomeID), end=" ")
