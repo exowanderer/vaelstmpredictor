@@ -476,14 +476,14 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--hostname {}'.format(clargs.hostname))
 	command.append('--sshport {}'.format(clargs.sshport))
 
-	num_vae_layers = chromosome.num_vae_layers
-	num_dnn_layers = chromosome.num_dnn_layers
-	size_vae_latent = chromosome.size_vae_latent
-	size_vae_hidden = chromosome.size_vae_hidden
-	size_dnn_hidden = chromosome.size_dnn_hidden
-	generationID = chromosome.generationID
-	chromosomeID = chromosome.chromosomeID
-	
+	num_vae_layers = int(chromosome.num_vae_layers)
+	num_dnn_layers = int(chromosome.num_dnn_layers)
+	size_vae_latent = int(chromosome.size_vae_latent)
+	size_vae_hidden = int(chromosome.size_vae_hidden)
+	size_dnn_hidden = int(chromosome.size_dnn_hidden)
+	generationID = int(chromosome.generationID)
+	chromosomeID = int(chromosome.chromosomeID)
+
 	command.append('--num_vae_layers {}'.format(num_vae_layers))
 	command.append('--num_dnn_layers {}'.format(num_dnn_layers))
 	command.append('--size_vae_latent {}'.format(size_vae_latent))
