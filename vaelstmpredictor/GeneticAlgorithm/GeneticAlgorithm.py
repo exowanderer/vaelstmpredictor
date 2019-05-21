@@ -283,7 +283,7 @@ def get_machine(queue):
 			check_ping = -1
 
 		while check_ping != 0:
-			print('Cannot reach host {}'.format(machine['host']))
+			warning_message('Cannot reach host {}'.format(machine['host']))
 
 			machine = queue.get()
 
@@ -533,9 +533,6 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 	info_message('SSH Closed on Git Clone')
 	print("Git Clone Executed Successfully")
 
-# def print_ssh_output(ssh_output):
-# 	for line in ssh_output.readlines(): print(line)
-
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
 					git_dir = 'vaelstmpredictor',
@@ -571,19 +568,20 @@ def train_chromosome(chromosome, machine, queue, clargs,
 
 	command = generate_ssh_command(clargs, chromosome)
 
-	print("\n\nExecuting Train Chromosome Command:\n\t{}".format(command))
+	info_message("\n\nExecuting Train Chromosome Command:\n\t{}".format(
+																	command))
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
 	
-	info_message('Printing `stdout` in Train Chromosome on '
-					'{}'.format(machine['host']))
+	# info_message('Printing `stdout` in Train Chromosome on '
+	# 				'{}'.format(machine['host']))
 	
-	for line in stdout.readlines(): print(line)
+	# for line in stdout.readlines(): print(line)
 
-	info_message('Printing `stderr` in Train Chromosome'
-					'{}'.format(machine['host']))
+	# info_message('Printing `stderr` in Train Chromosome'
+	# 				'{}'.format(machine['host']))
 
-	for line in stderr.readlines(): print(line)
+	# for line in stderr.readlines(): print(line)
 
 	queue.put(machine)
 	
