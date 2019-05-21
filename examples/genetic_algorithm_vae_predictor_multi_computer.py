@@ -224,6 +224,8 @@ if __name__ == '__main__':
 			help='IP port over which to ssh')
 	parser.add_argument('--sleep_time', type=float, default=1.0,
 			help='Time to pause in between repetitive sql queries')
+	parser.add_argument('--sql_host', type = str, 
+			default = 'LAUDeepGenerativeGenetics.pythonanywhere.com')
 	parser.add_argument('--send_back', action='store_true', 
 			help='Toggle whether to send the ckpt file + population local csv')
 	parser.add_argument('--save_model', action='store_true',

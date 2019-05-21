@@ -213,8 +213,10 @@ if __name__ == '__main__':
 			help='file of training data (.pickle)')
 	parser.add_argument('--time_stamp', type=int, default=0,
 			help='Keeps track of runs and re-runs')
-	parser.add_argument('--hostname', type=str, 
+	parser.add_argument('--sql_host', type=str, 
 			default='LAUDeepGenerativeGenetics.pythonanywhere.com',
+			help='SQL Server Location')
+	parser.add_argument('--hostname', type=str, default='127.0.0.1',
 			help='The hostname of the computer to send results back to.')
 	parser.add_argument('--sshport', type=int, default=22,
 			help='The port on the work computer to send ssh over.')
@@ -353,8 +355,8 @@ if __name__ == '__main__':
 		del put_sql_dict['verbose']
 	
 	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
-	AddChrom = 'http://{}/AddChrom'.format(clargs.hostname)
-	# AddChrom= 'http://{}:{}/AddChrom'.format(clargs.hostname, clargs.sqlport)
+	AddChrom = 'http://{}/AddChrom'.format(clargs.sql_host)
+	# AddChrom= 'http://{}:{}/AddChrom'.format(clargs.sql_host, clargs.sqlport)
 	
 	info_message('Storing to SQL db at {}'.format(AddChrom))
 	

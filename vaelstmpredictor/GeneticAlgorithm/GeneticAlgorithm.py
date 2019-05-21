@@ -180,7 +180,7 @@ def save_sql_to_csv(clargs):
 	# sqlport = clargs.sqlport
 	# getDatabase = 'http://{}:{}/GetDatabase'.format(hostname, sqlport)
 	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
-	GetDatabase = 'http://{}/GetDatabase'.format(clargs.hostname)
+	GetDatabase = 'http://{}/GetDatabase'.format(clargs.sql_host)
 	
 	table_dir = clargs.table_dir
 	table_name = '{}/{}_fitness_table_{}.csv'
