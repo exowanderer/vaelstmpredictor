@@ -293,7 +293,7 @@ def get_machine(queue):
 				check_ping = subprocess.check_call(callnow, 
 							stdout=devnull, stderr=sp_stdout_)
 			except Exception as error:
-				print(error)
+				warning_message(error)
 				check_ping = -1
 
 	return machine
@@ -434,7 +434,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa',
 			generation.set_value(chromosome.Index, colname, val)
 
 		if verbose:
-			print('\n\n[INFO]')
+			info_message('\n')
 			print('GenerationID:{}'.format(chromosome.generationID))
 			print('ChromosomeID:{}'.format(chromosome.chromosomeID))
 			print('fitness:{}'.format(chromosome.fitness))
@@ -523,15 +523,15 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 		ssh.close()
 		return
 
-	# info_message('Printing `stdout` in Git Clone')
-	# for line in stdout.readlines(): print(line)
+	info_message('Printing `stdout` in Git Clone')
+	for line in stdout.readlines(): print(line)
 
-	# info_message('Printing `stderr` in Git Clone')
-	# for line in stderr.readlines(): print(line)
+	info_message('Printing `stderr` in Git Clone')
+	for line in stderr.readlines(): print(line)
 	
 	ssh.close()
 	info_message('SSH Closed on Git Clone')
-	print("Git Clone Executed Successfully")
+	info_message("Git Clone Executed Successfully")
 
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
@@ -573,15 +573,15 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
 	
-	# info_message('Printing `stdout` in Train Chromosome on '
-	# 				'{}'.format(machine['host']))
+	info_message('Printing `stdout` in Train Chromosome on '
+					'{}'.format(machine['host']))
 	
-	# for line in stdout.readlines(): print(line)
+	for line in stdout.readlines(): print(line)
 
-	# info_message('Printing `stderr` in Train Chromosome'
-	# 				'{}'.format(machine['host']))
+	info_message('Printing `stderr` in Train Chromosome'
+					'{}'.format(machine['host']))
 
-	# for line in stderr.readlines(): print(line)
+	for line in stderr.readlines(): print(line)
 
 	queue.put(machine)
 	
@@ -654,10 +654,10 @@ def mutate(new_generation, generation, chromosomeID,
 	zero = 0 
 
 	if verbose:
-		print('Mutating Child {} in Generation {}'.format(
+		info_message('Mutating Child {} in Generation {}'.format(
 			generation.at[chromosomeID, 'chromosomeID'], 
 			generation.at[chromosomeID, 'generationID']))
-		print('Mutating Child {} in Generation {}'.format(
+		info_message('Mutating Child {} in Generation {}'.format(
 			new_generation.at[chromosomeID, 'chromosomeID'], 
 			new_generation.at[chromosomeID, 'generationID']))
 	
