@@ -1,7 +1,5 @@
 clear
 
-rm -f output.file
-
 python Store_LAUDeepGenerativeGenetics_SQL_DB_to_CSV.py
 
 python Reset_LAU_DeepGenerativeGenetics_SQL_Database.py --code 11235813213455

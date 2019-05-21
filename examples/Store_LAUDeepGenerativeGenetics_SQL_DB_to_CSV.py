@@ -33,12 +33,12 @@ def save_sql_to_csv(table_dir,
 	sql_table.to_csv(table_name)
 
 parser = ArgumentParser()
-parser.add_argument('-t', '--table_dir', type=str, default='../data/tables',
+parser.add_argument('--table_dir', type=str, default='../data/tables',
 	help = '/path/to/and/name of the table to store the sql database')
-parser.add_argument('-h', '--sqlhost', type=str, 
+parser.add_argument('--sqlhost', type=str, 
 	default = 'LAUDeepGenerativeGenetics.pythonanywhere.com',
 	help = '/path/to/and/name of the table to store the sql database')
-parser.add_argument('-p', '--sqlport', type=int, default=5000,
+parser.add_argument('--sqlport', type=int, default=5000,
 	help = '/path/to/and/name of the table to store the sql database')
 
 clargs = parser.parse_args()
