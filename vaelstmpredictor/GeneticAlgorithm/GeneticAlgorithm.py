@@ -144,8 +144,8 @@ def query_chromosome(generationID, chromosomeID, verbose=True,
 	
 	if sql_json == 0:# not isinstance(sql_json, requests.models.Response):
 		if verbose: 
-			print('SQL Request Failed: sql_json = {} with {}'.format(sql_json, 
-																	json_ID))
+			warning_message('SQL Request Failed: sql_json = {} with {}'.format(
+											sql_json, json_ID))
 		return sql_json
 	
 	return sql_json
