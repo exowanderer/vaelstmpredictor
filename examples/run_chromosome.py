@@ -321,10 +321,6 @@ if __name__ == '__main__':
 	print('ChromosomeID: {}'.format(chromosome.chromosomeID), end=" ")
 	print('Fitness: {}\n'.format(chromosome.fitness))
 	
-	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
-	AddChrom = 'http://{}/AddChrom'.format(clargs.hostname)
-	# AddChrom= 'http://{}:{}/AddChrom'.format(clargs.hostname, clargs.sqlport)
-	
 	info_message('Storing to SQL db at {}'.format(AddChrom))
 	
 	chromosome.isTrained = 2 # Set "is fully trained"
@@ -358,7 +354,11 @@ if __name__ == '__main__':
 		del put_sql_dict['do_log']
 		del put_sql_dict['verbose']
 	
-	req = requests.get(url = putURL, params = put_sql_dict)
+	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
+	AddChrom = 'http://{}/AddChrom'.format(clargs.hostname)
+	# AddChrom= 'http://{}:{}/AddChrom'.format(clargs.hostname, clargs.sqlport)
+	
+	req = requests.get(url = AddChrom, params = put_sql_dict)
 	
 	try:
 		if req.json() == 1:
