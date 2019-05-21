@@ -7,8 +7,12 @@ from time import time
 def info_message(message, end='\n'):
 	print('[INFO] {}'.format(message), end = end)
 
-def save_sql_to_csv(table_dir, hostname='172.16.50.176', sqlport=5000):
-	getDatabase = 'http://{}:{}/GetDatabase'.format(hostname, sqlport)
+def save_sql_to_csv(table_dir, 
+				hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com', 
+				sqlport = 5000):
+	
+	# getDatabase = 'http://{}:{}/GetDatabase'.format(hostname, sqlport)
+	getDatabase = 'http://{}/GetDatabase'.format(hostname, sqlport)
 
 	info_message('Accessing SQL from {}'.format(getDatabase))
 
