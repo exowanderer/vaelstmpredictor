@@ -523,11 +523,11 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 		ssh.close()
 		return
 
-	info_message('Printing `stdout` in Git Clone')
-	for line in stdout.readlines(): print(line)
+	# info_message('Printing `stdout` in Git Clone')
+	# for line in stdout.readlines(): print(line)
 
-	info_message('Printing `stderr` in Git Clone')
-	for line in stderr.readlines(): print(line)
+	# info_message('Printing `stderr` in Git Clone')
+	# for line in stderr.readlines(): print(line)
 	
 	ssh.close()
 	info_message('SSH Closed on Git Clone')
