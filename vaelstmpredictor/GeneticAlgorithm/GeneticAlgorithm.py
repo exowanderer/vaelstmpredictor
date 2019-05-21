@@ -318,35 +318,7 @@ def process_generation(generation, queue, clargs):
 			process.start()
 			
 			generation.set_value(chromosome.Index, 'isTrained', 1)
-		""" # taken care of out of this function
-		''' Check if chromosome has been updated on SQL '''
-		if chromosome.isTrained != 2:
-			sql_json = query_chromosome(chromosome.generationID, 
-										  chromosome.chromosomeID, 
-										  verbose = False)
-			
-			if isinstance(sql_json, requests.models.Response):
-				warning_message('sql_json =?= sql_json.json()')
-				try:
-					sql_json = sql_json.json()
-				except Exception as error:
-					message = '`req.json()` Failed with:\n{}'.format(error)
-					warning_message(message)
-
-			if isinstance(sql_json, dict):
-				assert(sql_json['fitness'] >= 0), \
-					"[ERROR] If ID exists in SQL, why is fitness == -1?"\
-					"\n GenerationID:{} ChromosomeID:{}".format(
-						chromosome.generationID, chromosome.chromosomeID)
-				
-				info_message('Found Generation {}, Chromosome {}'.format(
-						chromosome.generationID,chromosome.chromosomeID))
-				
-				for key, val in sql_json.items():
-					generation.set_value(chromosome.Index, key, val)
-				
-				# generation.set_value(chromosome.Index, 'isTrained', 2)
-		"""
+	
 	return generation
 
 def train_generation(generation, clargs, machines, private_key='id_ecdsa', 
