@@ -111,8 +111,6 @@ def query_generation(generationID, loop_until_done=False,
 	while True: # maybe use `for _ in range(iterations)` instead?
 		json_ID = {'generationID':generationID}
 		req = requests.get(getGeneration, params=json_ID)
-		print(req)
-		print(req.json())
 		try:
 			sql_generation = pd.DataFrame(req.json())
 			

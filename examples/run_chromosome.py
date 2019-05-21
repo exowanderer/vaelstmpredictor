@@ -142,7 +142,7 @@ def ssh_out_table_entry(clargs, chromosome):
 
 		stdin, stdout, stderr = ssh_command(create_header, clargs)
 	elif verbose: 
-			print('[INFO] File {} exists on {}'.format(
+			info_message('File {} exists on {}'.format(
 								remote_table_name, machine['host']))
 
 	entry = []
