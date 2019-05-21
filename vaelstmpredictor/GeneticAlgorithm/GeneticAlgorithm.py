@@ -484,14 +484,6 @@ def generate_ssh_command(clargs, chromosome):
 	generationID = int(chromosome.generationID)
 	chromosomeID = int(chromosome.chromosomeID)
 
-	debug_message('num_vae_layers:{},{}'.format(num_vae_layers ,chromosome.num_vae_layers))
-	debug_message('num_dnn_layers:{},{}'.format(num_dnn_layers ,chromosome.num_dnn_layers))
-	debug_message('size_vae_latent:{},{}'.format(size_vae_latent ,chromosome.size_vae_latent))
-	debug_message('size_vae_hidden:{},{}'.format(size_vae_hidden ,chromosome.size_vae_hidden))
-	debug_message('size_dnn_hidden:{},{}'.format(size_dnn_hidden ,chromosome.size_dnn_hidden))
-	debug_message('generationID:{},{}'.format(generationID ,chromosome.generationID))
-	debug_message('chromosomeID:{},{}'.format(chromosomeID ,chromosome.chromosomeID))
-
 	command.append('--num_vae_layers {}'.format(num_vae_layers))
 	command.append('--num_dnn_layers {}'.format(num_dnn_layers))
 	command.append('--size_vae_latent {}'.format(size_vae_latent))
