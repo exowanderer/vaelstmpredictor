@@ -634,6 +634,8 @@ def cross_over(new_generation, generation, parent1, parent2,
 			p1_param = generation.loc[idx_parent1, param]
 			p2_param = generation.loc[idx_parent2, param]
 			
+			print(p1_fitness, generation.loc[idx_parent1, 'fitness'])
+			
 			child_gene = random.choice([p1_param, p2_param])
 			new_generation.set_value(chromosomeID, param, child_gene)
 	else: 
@@ -641,7 +643,7 @@ def cross_over(new_generation, generation, parent1, parent2,
 		
 		p1_fitness = generation.loc[idx_parent1, 'fitness']
 		p2_fitness = generation.loc[idx_parent2, 'fitness']
-		
+		print(p1_fitness, generation.loc[idx_parent1, 'fitness'])
 		idx_child = idx_parent1 if p1_fitness > p2_fitness else idx_parent1
 		new_generation.iloc[chromosomeID] = generation.iloc[idx_child].copy()
 	
