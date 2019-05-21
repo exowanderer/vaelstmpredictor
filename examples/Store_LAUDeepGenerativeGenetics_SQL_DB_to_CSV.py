@@ -18,6 +18,9 @@ def save_sql_to_csv(table_dir,
 
 	req = requests.get(getDatabase)
 	sql_table = pd.DataFrame(req.json())
+	if len(sql_table) == 0:
+		info_message('No Database To Save at {}'.format(getDatabase))
+		return
 
 	time_stamp = sql_table['time_stamp'][0]
 	run_name = sql_table['run_name'][0]
