@@ -77,15 +77,16 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 
 	return hidden_dims
 
-def query_full_sql(loop_until_done=False, hostname ='172.16.50.176', 
+def query_full_sql(loop_until_done=False, 
+					hostname ='LAUDeepGenerativeGenetics.pythonanywhere.com', 
 					sqlport=5000, sleep_time = 1):
 	
-	getDatabase = 'http://{}:{}/getDatabase'.format(hostname, sqlport)
-	# getDatabase = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	# getDatabase = getDatabase + 'GetDatabase'
+	# getDatabase = 'http://{}:{}/getDatabase'.format(hostname, sqlport)
+	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
+	GetDatabase = 'http://{}/GetDatabase'.format(hostname)
 
 	while True: # maybe use `for _ in range(iterations)` instead?
-		req = requests.get(getDatabase)
+		req = requests.get(GetDatabase)
 		try:
 			sql_full_json = pd.DataFrame(req.json())
 			
@@ -100,10 +101,12 @@ def query_full_sql(loop_until_done=False, hostname ='172.16.50.176',
 		sleep(sleep_time)
 
 def query_generation(generationID, loop_until_done=False, 
-		hostname ='172.16.50.176', sqlport=5000, sleep_time = 1):
+		hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com', 
+		# hostname ='172.16.50.176', 
+		sqlport=5000, sleep_time = 1):
 	
 	# could add time_stamp,  to args and RESTful API call
-	getGeneration = 'http://{}:{}/getGeneration'.format(hostname, sqlport)
+	getGeneration = 'http://{}/GetGeneration'.format(hostname, sqlport)
 	
 	while True: # maybe use `for _ in range(iterations)` instead?
 		json_ID = {'generationID':generationID}
@@ -125,10 +128,11 @@ def query_generation(generationID, loop_until_done=False,
 		sleep(sleep_time)
 
 def query_chromosome(generationID, chromosomeID, verbose=True,
-						hostname='172.16.50.176', sqlport=5000):
-	getChromosome = 'http://{}:{}/GetChromosome'.format(hostname, sqlport)
-	# getChromosome = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	# getChromosome = getChromosome + 'GetChromosome'
+					hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com', 
+					sqlport = 5000):
+	# getChromosome = 'http://{}:{}/GetChromosome'.format(hostname, sqlport)
+	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
+	getChromosome = 'http://{}/GetChromosome'.format(hostname)
 	
 	json_ID = {'generationID':generationID, 'chromosomeID':chromosomeID}
 	
@@ -174,13 +178,12 @@ def save_sql_to_csv(clargs):
 	import pandas as pd
 	import requests
 
-	hostname = clargs.hostname
-	sqlport = clargs.sqlport
-
-	getDatabase = 'http://{}:{}/getDatabase'.format(hostname, sqlport)
-	# getDatabase = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	# getDatabase = getDatabase + 'GetDatabase'
-
+	# hostname = clargs.hostname
+	# sqlport = clargs.sqlport
+	# getDatabase = 'http://{}:{}/GetDatabase'.format(hostname, sqlport)
+	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
+	GetDatabase = 'http://{}/GetDatabase'.format(clargs.hostname)
+	
 	table_dir = clargs.table_dir
 	table_name = '{}/{}_fitness_table_{}.csv'
 	table_name = table_name.format(clargs.table_dir, 
@@ -188,7 +191,7 @@ def save_sql_to_csv(clargs):
 									clargs.time_stamp)
 
 
-	req = requests.get(getDatabase)
+	req = requests.get(GetDatabase)
 	sql_table = pd.DataFrame(req.json())
 	sql_table.to_csv(table_name)
 

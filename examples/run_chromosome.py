@@ -1,4 +1,4 @@
-# from https://github.com/exowanderer/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
+3# from https://github.com/exowanderer/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
 # python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 --verbose --num_generations 500 --population_size 10 --num_epochs 200
 import argparse
 import json
@@ -213,7 +213,8 @@ if __name__ == '__main__':
 			help='file of training data (.pickle)')
 	parser.add_argument('--time_stamp', type=int, default=0,
 			help='Keeps track of runs and re-runs')
-	parser.add_argument('--hostname', type=str, default='127.0.0.1',
+	parser.add_argument('--hostname', type=str, 
+			default='LAUDeepGenerativeGenetics.pythonanywhere.com',
 			help='The hostname of the computer to send results back to.')
 	parser.add_argument('--sshport', type=int, default=22,
 			help='The port on the work computer to send ssh over.')
@@ -320,10 +321,11 @@ if __name__ == '__main__':
 	print('ChromosomeID: {}'.format(chromosome.chromosomeID), end=" ")
 	print('Fitness: {}\n'.format(chromosome.fitness))
 	
-	# putURL = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/AddChrom'
-	putURL = 'http://{}:{}/AddChrom'.format(clargs.hostname, clargs.sqlport)
+	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
+	AddChrom = 'http://{}/AddChrom'.format(clargs.hostname)
+	# AddChrom= 'http://{}:{}/AddChrom'.format(clargs.hostname, clargs.sqlport)
 	
-	info_message('Storing to SQL db at {}'.format(putURL))
+	info_message('Storing to SQL db at {}'.format(AddChrom))
 	
 	chromosome.isTrained = 2 # Set "is fully trained"
 	put_sql_dict = make_sql_output(clargs, chromosome)
