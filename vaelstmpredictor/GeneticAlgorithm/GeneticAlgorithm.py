@@ -634,20 +634,17 @@ def cross_over(new_generation, generation, parent1, parent2,
 			p1_param = generation.loc[idx_parent1, param]
 			p2_param = generation.loc[idx_parent2, param]
 			
-			print(p1_param, generation.loc[idx_parent1, 'fitness'])
-
 			child_gene = random.choice([p1_param, p2_param])
-			new_generation.set_value(chromosomeID, param, child_gene)
+			new_generation.set_value(chromosomeID, param, int(child_gene))
 	else: 
 		crossover_happened = False
-		
 		p1_fitness = generation.loc[idx_parent1, 'fitness']
 		p2_fitness = generation.loc[idx_parent2, 'fitness']
 		
 		idx_child = idx_parent1 if p1_fitness > p2_fitness else idx_parent1
 		new_generation.iloc[chromosomeID] = generation.iloc[idx_child].copy()
 	
-	return new_generation.astype(generation.dtypes), crossover_happened
+	return new_generation, crossover_happened # .astype(generation.dtypes)
 
 def mutate(new_generation, generation, chromosomeID, 
 			mutate_prob, param_choices, verbose = False):
@@ -679,6 +676,6 @@ def mutate(new_generation, generation, chromosomeID,
 			current_p = np.int(np.round(current_p))
 
 			# All params must be integer sized: round and convert
-			new_generation.set_value(chromosomeID, param, current_p)
+			new_generation.set_value(chromosomeID, param, int(current_p))
 
 	return new_generation, mutation_happened
