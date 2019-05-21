@@ -476,14 +476,6 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--hostname {}'.format(clargs.hostname))
 	command.append('--sshport {}'.format(clargs.sshport))
 
-	debug_message((num_vae_layers ,chromosome.num_vae_layers))
-	debug_message((num_dnn_layers ,chromosome.num_dnn_layers))
-	debug_message((size_vae_latent ,chromosome.size_vae_latent))
-	debug_message((size_vae_hidden ,chromosome.size_vae_hidden))
-	debug_message((size_dnn_hidden ,chromosome.size_dnn_hidden))
-	debug_message((generationID ,chromosome.generationID))
-	debug_message((chromosomeID ,chromosome.chromosomeID))
-
 	num_vae_layers = int(chromosome.num_vae_layers)
 	num_dnn_layers = int(chromosome.num_dnn_layers)
 	size_vae_latent = int(chromosome.size_vae_latent)
@@ -491,6 +483,14 @@ def generate_ssh_command(clargs, chromosome):
 	size_dnn_hidden = int(chromosome.size_dnn_hidden)
 	generationID = int(chromosome.generationID)
 	chromosomeID = int(chromosome.chromosomeID)
+
+	debug_message((num_vae_layers ,chromosome.num_vae_layers))
+	debug_message((num_dnn_layers ,chromosome.num_dnn_layers))
+	debug_message((size_vae_latent ,chromosome.size_vae_latent))
+	debug_message((size_vae_hidden ,chromosome.size_vae_hidden))
+	debug_message((size_dnn_hidden ,chromosome.size_dnn_hidden))
+	debug_message((generationID ,chromosome.generationID))
+	debug_message((chromosomeID ,chromosome.chromosomeID))
 
 	command.append('--num_vae_layers {}'.format(num_vae_layers))
 	command.append('--num_dnn_layers {}'.format(num_dnn_layers))
