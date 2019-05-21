@@ -321,8 +321,6 @@ if __name__ == '__main__':
 	print('ChromosomeID: {}'.format(chromosome.chromosomeID), end=" ")
 	print('Fitness: {}\n'.format(chromosome.fitness))
 	
-	info_message('Storing to SQL db at {}'.format(AddChrom))
-	
 	chromosome.isTrained = 2 # Set "is fully trained"
 	put_sql_dict = make_sql_output(clargs, chromosome)
 
@@ -357,6 +355,8 @@ if __name__ == '__main__':
 	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
 	AddChrom = 'http://{}/AddChrom'.format(clargs.hostname)
 	# AddChrom= 'http://{}:{}/AddChrom'.format(clargs.hostname, clargs.sqlport)
+	
+	info_message('Storing to SQL db at {}'.format(AddChrom))
 	
 	req = requests.get(url = AddChrom, params = put_sql_dict)
 	
