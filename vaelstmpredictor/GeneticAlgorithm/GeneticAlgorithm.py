@@ -475,13 +475,22 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--time_stamp {}'.format(int(clargs.time_stamp)))
 	command.append('--hostname {}'.format(clargs.hostname))
 	command.append('--sshport {}'.format(clargs.sshport))
-	command.append('--num_vae_layers {}'.format(chromosome.num_vae_layers))
-	command.append('--num_dnn_layers {}'.format(chromosome.num_dnn_layers))
-	command.append('--size_vae_latent {}'.format(chromosome.size_vae_latent))
-	command.append('--size_vae_hidden {}'.format(chromosome.size_vae_hidden))
-	command.append('--size_dnn_hidden {}'.format(chromosome.size_dnn_hidden))
-	command.append('--generationID {} '.format(chromosome.generationID))
-	command.append('--chromosomeID {} '.format(chromosome.chromosomeID))
+
+	num_vae_layers = chromosome.num_vae_layers
+	num_dnn_layers = chromosome.num_dnn_layers
+	size_vae_latent = chromosome.size_vae_latent
+	size_vae_hidden = chromosome.size_vae_hidden
+	size_dnn_hidden = chromosome.size_dnn_hidden
+	generationID = chromosome.generationID
+	chromosomeID = chromosome.chromosomeID
+	
+	command.append('--num_vae_layers {}'.format(num_vae_layers))
+	command.append('--num_dnn_layers {}'.format(num_dnn_layers))
+	command.append('--size_vae_latent {}'.format(size_vae_latent))
+	command.append('--size_vae_hidden {}'.format(size_vae_hidden))
+	command.append('--size_dnn_hidden {}'.format(size_dnn_hidden))
+	command.append('--generationID {} '.format(generationID))
+	command.append('--chromosomeID {} '.format(chromosomeID))
 
 	# Boolean command line arguments
 	if clargs.do_log: command.append('--do_log')
