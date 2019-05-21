@@ -476,6 +476,14 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--hostname {}'.format(clargs.hostname))
 	command.append('--sshport {}'.format(clargs.sshport))
 
+	debug_messages((num_vae_layers ,chromosome.num_vae_layers))
+	debug_messages((num_dnn_layers ,chromosome.num_dnn_layers))
+	debug_messages((size_vae_latent ,chromosome.size_vae_latent))
+	debug_messages((size_vae_hidden ,chromosome.size_vae_hidden))
+	debug_messages((size_dnn_hidden ,chromosome.size_dnn_hidden))
+	debug_messages((generationID ,chromosome.generationID))
+	debug_messages((chromosomeID ,chromosome.chromosomeID))
+
 	num_vae_layers = int(chromosome.num_vae_layers)
 	num_dnn_layers = int(chromosome.num_dnn_layers)
 	size_vae_latent = int(chromosome.size_vae_latent)
