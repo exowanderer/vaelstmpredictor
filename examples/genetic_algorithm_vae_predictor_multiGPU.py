@@ -514,9 +514,9 @@ if __name__ == '__main__':
                 help="number of epochs before kl loss term is 1.0")
     parser.add_argument("--w_kl_anneal", type=int, default=0, 
                 help="number of epochs before w's kl loss term is 1.0")
-    parser.add_argument('--log_dir', type=str, default='data/logs',
+    parser.add_argument('--log_dir', type=str, default='../data/logs',
                 help='basedir for saving log files')
-    parser.add_argument('--model_dir', type=str, default='data/models',
+    parser.add_argument('--model_dir', type=str, default='../data/models',
                 help='basedir for saving model weights')    
     parser.add_argument('--train_file', type=str, default='MNIST',
                 help='file of training data (.pickle)')

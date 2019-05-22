@@ -92,9 +92,11 @@ if __name__ == '__main__':
 	parser.add_argument('--step_length', type=int, default=1,
 				help = "Length of the step for overlap in song(s)")
 	parser.add_argument('--data_type', type=str, default='mnist',
-				help = "The type of data to fit ['piano', 'mnist', 'exoplanet']")
+			help = "The type of data to fit ['piano', 'mnist', 'exoplanet']")
 	parser.add_argument('--debug', action="store_true",
 				help = "if debug; then stop before model.fit")
+	parser.add_argument('--verbose', action='store_true',
+				help = "Toggle to print extra status statements")
 	
 	clargs = parser.parse_args()
 	

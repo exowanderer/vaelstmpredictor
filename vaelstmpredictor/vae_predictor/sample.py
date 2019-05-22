@@ -9,7 +9,8 @@ from keras.utils import to_categorical
 
 # from .model import load_model, generate_sample, make_decoder
 # from .model import make_w_encoder, make_z_encoder, sample_z
-from .model import VAEPredictor
+from .dense_model import VAEPredictor
+from .conv1d_model import ConvVAEPredictor
 """
 Code to load pianoroll data (.pickle)
 """

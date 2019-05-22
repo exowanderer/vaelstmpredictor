@@ -15,6 +15,6 @@ setup(name='vaelstmpredictor',
             "Ryan C. Williamson, and (Updated Code) "\
             "Jonathan Fraine (exowanderer)",
       packages=find_packages(),
-      install_requires=['tensorflow>=1.4.0', 'keras>2.0.8', 'scipy', 'numpy'],
+      install_requires=['tensorflow==1.13.1', 'keras==2.2.4', 'scipy==1.2.1', 'numpy==1.14.5'],
       extras_require={'plots':  ["matplotlib"]}
       )

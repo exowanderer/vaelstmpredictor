@@ -19,15 +19,15 @@ if __name__ == '__main__':
     parser.add_argument("--no_x_prev", action="store_true", 
                         help="override use_x_prev")
     parser.add_argument('--sample_dir', type=str,
-                        default='data/samples',
+                        default='../data/samples',
                         help='basedir for saving output midi files')
     parser.add_argument('--model_dir', type=str,
-                        default='data/models',
+                        default='../data/models',
                         help='basedir for saving model weights')
     parser.add_argument('-i', '--model_file', type=str, default='',
                         help='preload model weights (no training)')
     parser.add_argument('--train_file', type=str,
-                        default='data/input/JSB Chorales_Cs.pickle',
+                        default='../data/input/JSB Chorales_Cs.pickle',
                         help='file of training data (.pickle)')
     
     args = parser.parse_args()

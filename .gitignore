@@ -2,6 +2,8 @@
 *.pyc
 
 data/models/*
+data/tables/*
+
 !data/models/.gitkeep
 
 *.mid
