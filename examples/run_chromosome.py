@@ -31,9 +31,9 @@ def make_sql_output(clargs, chromosome):
 	output['run_name'] = clargs.run_name
 	output['batch_size'] = clargs.batch_size
 	output['cross_prob'] = clargs.cross_prob
-	output['do_ckpt'] = clargs.do_ckpt
-	output['do_log'] = clargs.do_log
-	output['send_back'] = clargs.send_back
+	# output['do_ckpt'] = clargs.do_ckpt
+	# output['do_log'] = clargs.do_log
+	# output['send_back'] = clargs.send_back
 	output['hostname'] = clargs.hostname
 	output['iterations'] = clargs.num_generations
 	output['kl_anneal'] = clargs.kl_anneal
@@ -54,7 +54,7 @@ def make_sql_output(clargs, chromosome):
 	output['dnn_weight'] = clargs.dnn_weight
 	output['vae_kl_weight'] = clargs.vae_kl_weight
 	output['vae_weight'] = clargs.vae_weight
-	output['verbose'] = clargs.verbose
+	# output['verbose'] = clargs.verbose
 	output['w_kl_anneal'] = clargs.w_kl_anneal
 	output['num_dnn_layers'] = clargs.num_dnn_layers
 	output['num_vae_layers'] = clargs.num_vae_layers
