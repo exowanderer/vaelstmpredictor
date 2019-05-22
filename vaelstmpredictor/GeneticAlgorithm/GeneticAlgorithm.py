@@ -77,15 +77,16 @@ def configure_multi_hidden_layers(num_hidden, input_size,
 
 	return hidden_dims
 
-def query_full_sql(loop_until_done=False, hostname ='172.16.50.176', 
+def query_full_sql(loop_until_done=False, 
+					hostname ='LAUDeepGenerativeGenetics.pythonanywhere.com', 
 					sqlport=5000, sleep_time = 1):
 	
-	getDatabase = 'http://{}:{}/getDatabase'.format(hostname, sqlport)
-	# getDatabase = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	# getDatabase = getDatabase + 'GetDatabase'
+	# getDatabase = 'http://{}:{}/getDatabase'.format(hostname, sqlport)
+	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
+	GetDatabase = 'http://{}/GetDatabase'.format(hostname)
 
 	while True: # maybe use `for _ in range(iterations)` instead?
-		req = requests.get(getDatabase)
+		req = requests.get(GetDatabase)
 		try:
 			sql_full_json = pd.DataFrame(req.json())
 			
@@ -100,16 +101,16 @@ def query_full_sql(loop_until_done=False, hostname ='172.16.50.176',
 		sleep(sleep_time)
 
 def query_generation(generationID, loop_until_done=False, 
-		hostname ='172.16.50.176', sqlport=5000, sleep_time = 1):
+		hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com', 
+		# hostname ='172.16.50.176', 
+		sqlport=5000, sleep_time = 1):
 	
 	# could add time_stamp,  to args and RESTful API call
-	getGeneration = 'http://{}:{}/getGeneration'.format(hostname, sqlport)
+	getGeneration = 'http://{}/GetGeneration'.format(hostname, sqlport)
 	
 	while True: # maybe use `for _ in range(iterations)` instead?
 		json_ID = {'generationID':generationID}
 		req = requests.get(getGeneration, params=json_ID)
-		print(req)
-		print(req.json())
 		try:
 			sql_generation = pd.DataFrame(req.json())
 			
@@ -125,10 +126,11 @@ def query_generation(generationID, loop_until_done=False,
 		sleep(sleep_time)
 
 def query_chromosome(generationID, chromosomeID, verbose=True,
-						hostname='172.16.50.176', sqlport=5000):
-	getChromosome = 'http://{}:{}/GetChromosome'.format(hostname, sqlport)
-	# getChromosome = 'http://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	# getChromosome = getChromosome + 'GetChromosome'
+					hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com', 
+					sqlport = 5000):
+	# getChromosome = 'http://{}:{}/GetChromosome'.format(hostname, sqlport)
+	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
+	getChromosome = 'http://{}/GetChromosome'.format(hostname)
 	
 	json_ID = {'generationID':generationID, 'chromosomeID':chromosomeID}
 	
@@ -142,8 +144,8 @@ def query_chromosome(generationID, chromosomeID, verbose=True,
 	
 	if sql_json == 0:# not isinstance(sql_json, requests.models.Response):
 		if verbose: 
-			print('SQL Request Failed: sql_json = {} with {}'.format(sql_json, 
-																	json_ID))
+			warning_message('SQL Request Failed: sql_json = {} with {}'.format(
+											sql_json, json_ID))
 		return sql_json
 	
 	return sql_json
@@ -174,13 +176,12 @@ def save_sql_to_csv(clargs):
 	import pandas as pd
 	import requests
 
-	hostname = clargs.hostname
-	sqlport = clargs.sqlport
-
-	getDatabase = 'http://{}:{}/getDatabase'.format(hostname, sqlport)
-	# getDatabase = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/'
-	# getDatabase = getDatabase + 'GetDatabase'
-
+	# hostname = clargs.hostname
+	# sqlport = clargs.sqlport
+	# getDatabase = 'http://{}:{}/GetDatabase'.format(hostname, sqlport)
+	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
+	GetDatabase = 'http://{}/GetDatabase'.format(clargs.sql_host)
+	
 	table_dir = clargs.table_dir
 	table_name = '{}/{}_fitness_table_{}.csv'
 	table_name = table_name.format(clargs.table_dir, 
@@ -188,7 +189,7 @@ def save_sql_to_csv(clargs):
 									clargs.time_stamp)
 
 
-	req = requests.get(getDatabase)
+	req = requests.get(GetDatabase)
 	sql_table = pd.DataFrame(req.json())
 	sql_table.to_csv(table_name)
 
@@ -282,7 +283,7 @@ def get_machine(queue):
 			check_ping = -1
 
 		while check_ping != 0:
-			print('Cannot reach host {}'.format(machine['host']))
+			warning_message('Cannot reach host {}'.format(machine['host']))
 
 			machine = queue.get()
 
@@ -292,7 +293,7 @@ def get_machine(queue):
 				check_ping = subprocess.check_call(callnow, 
 							stdout=devnull, stderr=sp_stdout_)
 			except Exception as error:
-				print(error)
+				warning_message(error)
 				check_ping = -1
 
 	return machine
@@ -317,35 +318,7 @@ def process_generation(generation, queue, clargs):
 			process.start()
 			
 			generation.set_value(chromosome.Index, 'isTrained', 1)
-		""" # taken care of out of this function
-		''' Check if chromosome has been updated on SQL '''
-		if chromosome.isTrained != 2:
-			sql_json = query_chromosome(chromosome.generationID, 
-										  chromosome.chromosomeID, 
-										  verbose = False)
-			
-			if isinstance(sql_json, requests.models.Response):
-				warning_message('sql_json =?= sql_json.json()')
-				try:
-					sql_json = sql_json.json()
-				except Exception as error:
-					message = '`req.json()` Failed with:\n{}'.format(error)
-					warning_message(message)
-
-			if isinstance(sql_json, dict):
-				assert(sql_json['fitness'] >= 0), \
-					"[ERROR] If ID exists in SQL, why is fitness == -1?"\
-					"\n GenerationID:{} ChromosomeID:{}".format(
-						chromosome.generationID, chromosome.chromosomeID)
-				
-				info_message('Found Generation {}, Chromosome {}'.format(
-						chromosome.generationID,chromosome.chromosomeID))
-				
-				for key, val in sql_json.items():
-					generation.set_value(chromosome.Index, key, val)
-				
-				# generation.set_value(chromosome.Index, 'isTrained', 2)
-		"""
+	
 	return generation
 
 def train_generation(generation, clargs, machines, private_key='id_ecdsa', 
@@ -433,7 +406,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa',
 			generation.set_value(chromosome.Index, colname, val)
 
 		if verbose:
-			print('\n\n[INFO]')
+			info_message('\n')
 			print('GenerationID:{}'.format(chromosome.generationID))
 			print('ChromosomeID:{}'.format(chromosome.chromosomeID))
 			print('fitness:{}'.format(chromosome.fitness))
@@ -474,13 +447,22 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--time_stamp {}'.format(int(clargs.time_stamp)))
 	command.append('--hostname {}'.format(clargs.hostname))
 	command.append('--sshport {}'.format(clargs.sshport))
-	command.append('--num_vae_layers {}'.format(chromosome.num_vae_layers))
-	command.append('--num_dnn_layers {}'.format(chromosome.num_dnn_layers))
-	command.append('--size_vae_latent {}'.format(chromosome.size_vae_latent))
-	command.append('--size_vae_hidden {}'.format(chromosome.size_vae_hidden))
-	command.append('--size_dnn_hidden {}'.format(chromosome.size_dnn_hidden))
-	command.append('--generationID {} '.format(chromosome.generationID))
-	command.append('--chromosomeID {} '.format(chromosome.chromosomeID))
+
+	num_vae_layers = int(chromosome.num_vae_layers)
+	num_dnn_layers = int(chromosome.num_dnn_layers)
+	size_vae_latent = int(chromosome.size_vae_latent)
+	size_vae_hidden = int(chromosome.size_vae_hidden)
+	size_dnn_hidden = int(chromosome.size_dnn_hidden)
+	generationID = int(chromosome.generationID)
+	chromosomeID = int(chromosome.chromosomeID)
+
+	command.append('--num_vae_layers {}'.format(num_vae_layers))
+	command.append('--num_dnn_layers {}'.format(num_dnn_layers))
+	command.append('--size_vae_latent {}'.format(size_vae_latent))
+	command.append('--size_vae_hidden {}'.format(size_vae_hidden))
+	command.append('--size_dnn_hidden {}'.format(size_dnn_hidden))
+	command.append('--generationID {} '.format(generationID))
+	command.append('--chromosomeID {} '.format(chromosomeID))
 
 	# Boolean command line arguments
 	if clargs.do_log: command.append('--do_log')
@@ -530,10 +512,7 @@ def git_clone(hostname, username = "acc", gitdir = 'vaelstmpredictor',
 	
 	ssh.close()
 	info_message('SSH Closed on Git Clone')
-	print("Git Clone Executed Successfully")
-
-# def print_ssh_output(ssh_output):
-# 	for line in ssh_output.readlines(): print(line)
+	info_message("Git Clone Executed Successfully")
 
 def train_chromosome(chromosome, machine, queue, clargs, 
 					port = 22, logdir = 'train_logs',
@@ -570,7 +549,8 @@ def train_chromosome(chromosome, machine, queue, clargs,
 
 	command = generate_ssh_command(clargs, chromosome)
 
-	print("\n\nExecuting Train Chromosome Command:\n\t{}".format(command))
+	info_message("\n\nExecuting Train Chromosome Command:\n\t{}".format(
+																	command))
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
 	
@@ -632,21 +612,20 @@ def cross_over(new_generation, generation, parent1, parent2,
 		crossover_happened = True
 		
 		for param in param_choices:
-			p1_param = generation.ix[idx_parent1, param]
-			p2_param = generation.ix[idx_parent2, param]
+			p1_param = generation.loc[idx_parent1, param]
+			p2_param = generation.loc[idx_parent2, param]
 			
 			child_gene = random.choice([p1_param, p2_param])
-			new_generation.set_value(chromosomeID, param, child_gene)
+			new_generation.set_value(chromosomeID, param, int(child_gene))
 	else: 
 		crossover_happened = False
-		
-		p1_fitness = generation.ix[idx_parent1, 'fitness']
-		p2_fitness = generation.ix[idx_parent2, 'fitness']
+		p1_fitness = generation.loc[idx_parent1, 'fitness']
+		p2_fitness = generation.loc[idx_parent2, 'fitness']
 		
 		idx_child = idx_parent1 if p1_fitness > p2_fitness else idx_parent1
 		new_generation.iloc[chromosomeID] = generation.iloc[idx_child].copy()
 	
-	return new_generation.astype(generation.dtypes), crossover_happened
+	return new_generation, crossover_happened # .astype(generation.dtypes)
 
 def mutate(new_generation, generation, chromosomeID, 
 			mutate_prob, param_choices, verbose = False):
@@ -655,10 +634,10 @@ def mutate(new_generation, generation, chromosomeID,
 	zero = 0 
 
 	if verbose:
-		print('Mutating Child {} in Generation {}'.format(
+		info_message('Mutating Child {} in Generation {}'.format(
 			generation.at[chromosomeID, 'chromosomeID'], 
 			generation.at[chromosomeID, 'generationID']))
-		print('Mutating Child {} in Generation {}'.format(
+		info_message('Mutating Child {} in Generation {}'.format(
 			new_generation.at[chromosomeID, 'chromosomeID'], 
 			new_generation.at[chromosomeID, 'generationID']))
 	
@@ -678,6 +657,6 @@ def mutate(new_generation, generation, chromosomeID,
 			current_p = np.int(np.round(current_p))
 
 			# All params must be integer sized: round and convert
-			new_generation.set_value(chromosomeID, param, current_p)
+			new_generation.set_value(chromosomeID, param, int(current_p))
 
 	return new_generation, mutation_happened

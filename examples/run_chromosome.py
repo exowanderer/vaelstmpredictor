@@ -1,4 +1,4 @@
-# from https://github.com/exowanderer/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
+3# from https://github.com/exowanderer/vaelstmpredictor/blob/GeneticAlgorithm/Genetic-Algorithm.py
 # python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 --verbose --num_generations 500 --population_size 10 --num_epochs 200
 import argparse
 import json
@@ -142,7 +142,7 @@ def ssh_out_table_entry(clargs, chromosome):
 
 		stdin, stdout, stderr = ssh_command(create_header, clargs)
 	elif verbose: 
-			print('[INFO] File {} exists on {}'.format(
+			info_message('File {} exists on {}'.format(
 								remote_table_name, machine['host']))
 
 	entry = []
@@ -161,8 +161,8 @@ def ssh_out_table_entry(clargs, chromosome):
 	command = ' '.join(command)
 	
 	if chromosome.verbose:
-		print('\n\n')
-		info_message('Remotely entry storing ON {}'.format(clargs.hostname))
+		info_message('\n')
+		print('Remotely entry storing ON {}'.format(clargs.hostname))
 		print('\n\n{}'.format(entry))
 		print('\n\nAT vaelstmpredictor/{} '.format(remote_table_name))
 		print('\n\nWITH \n\n{}'.format(command))
@@ -213,6 +213,9 @@ if __name__ == '__main__':
 			help='file of training data (.pickle)')
 	parser.add_argument('--time_stamp', type=int, default=0,
 			help='Keeps track of runs and re-runs')
+	parser.add_argument('--sql_host', type=str, 
+			default='LAUDeepGenerativeGenetics.pythonanywhere.com',
+			help='SQL Server Location')
 	parser.add_argument('--hostname', type=str, default='127.0.0.1',
 			help='The hostname of the computer to send results back to.')
 	parser.add_argument('--sshport', type=int, default=22,
@@ -287,7 +290,7 @@ if __name__ == '__main__':
 	hostname = s.getsockname()[0]
 	s.close()
 
-	print('\n\nParams for this VAE_NN:')
+	info_message('\n\nParams for this VAE_NN:')
 	for key,val in clargs.__dict__.items():
 		print('{:20}{}'.format(key,val))
 
@@ -314,16 +317,11 @@ if __name__ == '__main__':
 
 		ssh_out_table_entry(clargs, chromosome)
 	
-	print('\n[INFO]')
+	info_message('\n')
 	print('Result: ', end=" ")
 	print('GenerationID: {}'.format(chromosome.generationID), end=" ")
 	print('ChromosomeID: {}'.format(chromosome.chromosomeID), end=" ")
 	print('Fitness: {}\n'.format(chromosome.fitness))
-	
-	# putURL = 'https://LAUDeepGenerativeGenetics.pythonanywhere.com/AddChrom'
-	putURL = 'http://{}:{}/AddChrom'.format(clargs.hostname, clargs.sqlport)
-	
-	info_message('Storing to SQL db at {}'.format(putURL))
 	
 	chromosome.isTrained = 2 # Set "is fully trained"
 	put_sql_dict = make_sql_output(clargs, chromosome)
@@ -356,7 +354,13 @@ if __name__ == '__main__':
 		del put_sql_dict['do_log']
 		del put_sql_dict['verbose']
 	
-	req = requests.get(url = putURL, params = put_sql_dict)
+	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
+	AddChrom = 'http://{}/AddChrom'.format(clargs.sql_host)
+	# AddChrom= 'http://{}:{}/AddChrom'.format(clargs.sql_host, clargs.sqlport)
+	
+	info_message('Storing to SQL db at {}'.format(AddChrom))
+	
+	req = requests.get(url = AddChrom, params = put_sql_dict)
 	
 	try:
 		if req.json() == 1:
