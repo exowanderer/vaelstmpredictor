@@ -14,6 +14,14 @@ from ..utils.weightnorm import data_based_init
 
 from .dense_model import VAEPredictor
 from .conv1d_model import ConvVAEPredictor
+def info_message(message, end='\n'): 
+	print('[INFO] {}'.format(message), end=end)
+
+def debug_message(message, end='\n'): 
+	print('[DEBUG] {}'.format(message), end=end)
+
+def warning_message(message, end='\n'): 
+	print('[WARNING] {}'.format(message), end=end)
 
 def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 	"""Training control operations to create VAEPredictor instance, 
@@ -91,6 +99,7 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 	# clargs.optimizer, was_adam_wn = init_adam_wn(clargs.optimizer)
 
 	if network_type.lower() == 'dense':
+		info_message('Training Dense VAE Predictor'.format())
 		vae_dims = (clargs.vae_hidden_dim, clargs.vae_latent_dim)
 		predictor_dims = (clargs.predictor_hidden_dim, clargs.n_labels)
 		vae_predictor = VAEPredictor(original_dim = clargs.original_dim, 
@@ -101,6 +110,7 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 								dnn_latent_dim = clargs.n_labels-1, 
 								optimizer = 'adam')
 	elif network_type.lower() == 'conv1d':
+		info_message('Training Conv1D VAE Predictor'.format())
 		data_shape = (784,1) # MNIST
 		''' Configure dnn '''
 		n_dnn_layers = clargs.num_dnn_layers
