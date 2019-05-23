@@ -12,8 +12,8 @@ from ..utils.model_utils import get_callbacks, save_model_in_pieces
 from ..utils.model_utils import init_adam_wn, AnnealLossWeight
 from ..utils.weightnorm import data_based_init
 
-from .dense_model import VAEPredictor
-from .conv1d_model import ConvVAEPredictor
+from .model import VAEPredictor
+
 def info_message(message, end='\n'): 
 	print('[INFO] {}'.format(message), end=end)
 
