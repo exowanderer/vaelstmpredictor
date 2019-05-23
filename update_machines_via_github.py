@@ -14,41 +14,20 @@ from multiprocessing import Queue, Process
 from os import environ
 
 def debug_message(message): print('[DEBUG] {}'.format(message))
+def warning_message(message): print('[WARNING] {}'.format(message))
 def info_message(message): print('[INFO] {}'.format(message))
 
-def update_all_git(reinstall = False, all_machines = False):
-	machines = [['172.16.50.187',  'vaelstmpredictor/'],
-				 ['172.16.50.181', 'vaelstmpredictor/'],
-				 ['172.16.50.176', 'vaelstmpredictor/'],
-				 ['172.16.50.177', 'vaelstmpredictor/'],
-				 ['172.16.50.163', 'vaelstmpredictor/'],
-				 ['172.16.50.182', 'vaelstmpredictor/'],
-				 ['172.16.50.218', 'vaelstmpredictor/'],
-				 ['172.16.50.159', 'vaelstmpredictor/'],
-				 ['172.16.50.235', 'vaelstmpredictor/'],
-				 ['172.16.50.157', 'vaelstmpredictor/'],
-				 ['172.16.50.237',  'vaelstmpredictor/']]
-
-	if all_machines:
-		machines.extend(
-				[#['172.16.50.142',  'vaelstmpredictor/'],
-				 ['172.16.50.183', 'vaelstmpredictor/'],
-				 ['172.16.50.184', 'vaelstmpredictor/'],
-				 ['172.16.50.185', 'vaelstmpredictor/'],
-				 ['172.16.50.186', 'vaelstmpredictor/'],
-				 ['172.16.50.236', 'vaelstmpredictor/']]
-				 )
-	
+def update_all_git(reinstall = False, machines = [], branchname = 'master'):
 	for hostname, basedir in machines:
 		partial_update = partial(update_one_git, 
 					hostname = hostname, basedir = basedir,
-					reinstall = reinstall)
+					reinstall = reinstall, branchname=branchname)
 		process = Process(target=partial_update)
 		process.start()
 
 def update_one_git(hostname, username = "acc", basedir = 'vaelstmpredictor/',
-					port = 22, verbose = True, private_key='id_ecdsa',
-					reinstall=False):
+					branchname = 'master', port = 22, verbose = True, 
+					private_key = 'id_ecdsa', reinstall = False):
 	
 	key_filename = environ['HOME'] + '/.ssh/{}'.format(private_key)
 	
@@ -60,13 +39,13 @@ def update_one_git(hostname, username = "acc", basedir = 'vaelstmpredictor/',
 	command.append('cd {}'.format(basedir))
 	command.append('git branch')
 	command.append('git remote get-url origin')
+	command.append('git checkout {}'.format(branchname))
 	command.append('git pull')
 
 	if reinstall:
-		command.append(environ['HOME']+'/anaconda3/envs/tf_env/bin/python '
-							'setup.py install')
-		command.append(environ['HOME']+'/anaconda3/envs/tf_env/bin/python '
-							'setup.py develop')
+		setup_py = environ['HOME']+'/anaconda3/envs/tf_env/bin/python setup.py'
+		command.append(setup_py + ' install')
+		command.append(setup_py + ' develop')
 
 	command = '; '.join(command)
 
@@ -84,7 +63,7 @@ def update_one_git(hostname, username = "acc", basedir = 'vaelstmpredictor/',
 		stderr.channel.recv_exit_status()
 		for line in stderr.readlines(): print(line)
 	except Exception as e:
-		print('error on stderr.readlines(): {}'.format(str(e)))
+		warning_message('error on stderr.readlines(): {}'.format(str(e)))
 
 	ssh.close()
 
@@ -96,7 +75,31 @@ if __name__ == '__main__':
 				help="Install vaelstmpredictor under the tf_env environment")
 	parser.add_argument('--all_machines', action="store_true",
 				help="Copy/Install vaelstmpredictor to all machines")
+	parser.add_argument('--branchname', type=str, default='conv1d_model',
+				help="name of git branch to checkout")
 	clargs = parser.parse_args()
 
+	machines = [['172.16.50.187',  'vaelstmpredictor/'],
+				 ['172.16.50.181', 'vaelstmpredictor/'],
+				 ['172.16.50.176', 'vaelstmpredictor/'],
+				 ['172.16.50.177', 'vaelstmpredictor/'],
+				 ['172.16.50.163', 'vaelstmpredictor/'],
+				 ['172.16.50.182', 'vaelstmpredictor/'],
+				 ['172.16.50.218', 'vaelstmpredictor/'],
+				 ['172.16.50.159', 'vaelstmpredictor/'],
+				 ['172.16.50.235', 'vaelstmpredictor/'],
+				 ['172.16.50.157', 'vaelstmpredictor/'],
+				 ['172.16.50.237',  'vaelstmpredictor/']]
+
+	if clargs.all_machines:
+		machines.extend(
+				[#['172.16.50.142',  'vaelstmpredictor/'],
+				 ['172.16.50.183', 'vaelstmpredictor/'],
+				 ['172.16.50.184', 'vaelstmpredictor/'],
+				 ['172.16.50.185', 'vaelstmpredictor/'],
+				 ['172.16.50.186', 'vaelstmpredictor/'],
+				 ['172.16.50.236', 'vaelstmpredictor/']])
+	
 	update_all_git(reinstall=clargs.reinstall, 
-				all_machines=clargs.all_machines)
+					machines = machines,
+					branchname=clargs.branchname)
