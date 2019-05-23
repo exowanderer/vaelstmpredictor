@@ -348,9 +348,14 @@ if __name__ == '__main__':
 	# DEBUG: For some reason the RESTful API does not like these 3 pieces
 	remove_question_marks = True
 	if remove_question_marks:
-		del put_sql_dict['send_back']
-		del put_sql_dict['do_log']
-		del put_sql_dict['verbose']
+		if 'send_back' in put_sql_dict.keys():
+			del put_sql_dict['send_back']
+		
+		if 'do_log' in put_sql_dict.keys():
+			del put_sql_dict['do_log']
+		
+		if 'verbose' in put_sql_dict.keys():
+			del put_sql_dict['verbose']
 	
 	# hostname = 'LAUDeepGenerativeGenetics.pythonanywhere.com'
 	AddChrom = 'http://{}/AddChrom'.format(clargs.sql_host)
