@@ -10,6 +10,7 @@ from keras.utils import plot_model
 import numpy as np
 
 import keras
+import tensorflow as tf
 
 def build_hidden_conv_layers(filter_sizes, kernel_sizes, input_layer, strides,
                         base_layer_name, activation, Layer = Conv1D):

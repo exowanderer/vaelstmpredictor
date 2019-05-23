@@ -3,6 +3,7 @@
 """
 
 import numpy as np
+import tensorflow as tf
 
 from keras import backend as K
 from keras.backend.tensorflow_backend import set_session
@@ -13,6 +14,7 @@ from ..utils.model_utils import init_adam_wn, AnnealLossWeight
 from ..utils.weightnorm import data_based_init
 
 from .model import ConvVAEPredictor as VAEPredictor
+
 def info_message(message, end='\n'): 
 	print('[INFO] {}'.format(message), end=end)
 
