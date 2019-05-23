@@ -1,9 +1,9 @@
-"""
-Classifying VAE+LSTM (STORN)
-"""
+""" Classifying VAE+LSTM (STORN) """
 import argparse
 import numpy as np
+
 from keras import backend as K
+from keras.backend.tensorflow_backend import set_session
 from keras.utils import to_categorical
 
 from ..utils.data_utils import PianoData
@@ -12,7 +12,21 @@ from ..utils.model_utils import AnnealLossWeight, init_adam_wn
 from ..utils.weightnorm import data_based_init
 from .model import get_model
 
+import tensorflow as tf
+
 def train(args):
+    config = tf.ConfigProto()
+    # dynamically grow the memory used on the GPU
+    config.gpu_options.allow_growth = True  
+
+    # to log device placement (on which device the operation ran)
+    # (nothing gets printed in Jupyter, only if you run it standalone)
+    config.log_device_placement = True  
+    sess = tf.Session(config=config)
+
+    # set this TensorFlow session as the default session for Keras
+    set_session(sess)
+    
     P = PianoData(args.train_file,
         batch_size=args.batch_size,
         seq_length=args.seq_length,
@@ -36,7 +50,8 @@ def train(args):
     if args.kl_anneal > 0:
         assert(args.kl_anneal <= args.num_epochs), "invalid kl_anneal"
         kl_weight = K.variable(value=0.1)
-        callbacks += [AnnealLossWeight(kl_weight, name="kl_weight", final_value=1.0, n_epochs=args.kl_anneal)]
+        callbacks += [AnnealLossWeight(kl_weight, name="kl_weight", 
+                                final_value=1.0, n_epochs=args.kl_anneal)]
     else:
         kl_weight = 1.0
     if args.w_kl_anneal > 0:

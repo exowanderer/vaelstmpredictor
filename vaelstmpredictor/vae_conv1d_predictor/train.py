@@ -5,8 +5,8 @@
 import numpy as np
 
 from keras import backend as K
+from keras.backend.tensorflow_backend import set_session
 from keras.utils import to_categorical
-# from time import time
 
 from ..utils.model_utils import get_callbacks, save_model_in_pieces
 from ..utils.model_utils import init_adam_wn, AnnealLossWeight
@@ -65,6 +65,18 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 				history (dict): loss, val_lss, etc
 				epochs (list): list(range(num_epochs))
 	"""
+	config = tf.ConfigProto()
+    # dynamically grow the memory used on the GPU
+    config.gpu_options.allow_growth = True  
+
+    # to log device placement (on which device the operation ran)
+    # (nothing gets printed in Jupyter, only if you run it standalone)
+    config.log_device_placement = True  
+    sess = tf.Session(config=config)
+
+    # set this TensorFlow session as the default session for Keras
+    set_session(sess)
+    
 	DI = data_instance
 
 	clargs.n_labels = len(np.unique(DI.train_labels))

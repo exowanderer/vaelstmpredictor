@@ -20,6 +20,8 @@ from vaelstmpredictor.utils.weightnorm import data_based_init
 from vaelstmpredictor.vae_dense_predictor.model import VAEPredictor
 # from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
+from keras.backend.tensorflow_backend import set_session
+
 def debug_message(message): print('[DEBUG] {}'.format(message))
 def info_message(message): print('[INFO] {}'.format(message))
 
@@ -31,7 +33,19 @@ class Chromosome(VAEPredictor):
                 vae_kl_weight = 1.0, vae_weight = 1.0, 
                 dnn_weight = 1.0, dnn_kl_weight = 1.0, 
                 save_model = True, verbose = False):
+        
+        config = tf.ConfigProto()
+        # dynamically grow the memory used on the GPU
+        config.gpu_options.allow_growth = True  
 
+        # to log device placement (on which device the operation ran)
+        # (nothing gets printed in Jupyter, only if you run it standalone)
+        config.log_device_placement = True  
+        sess = tf.Session(config=config)
+
+        # set this TensorFlow session as the default session for Keras
+        set_session(sess)
+        
         self.verbose = verbose
         self.save_model = save_model
         self.clargs = clargs

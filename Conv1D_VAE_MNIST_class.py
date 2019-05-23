@@ -1,6 +1,7 @@
 from keras import layers, metrics
 from keras import backend as K
 
+from keras.backend.tensorflow_backend import set_session
 from keras.datasets import mnist
 from keras.models import Model, Sequential
 from keras.layers import Dense, Conv1D, UpSampling1D
@@ -70,6 +71,18 @@ class ConvVAE(object):
 						final_kernel_size = 3, data_shape = (784,1), 
 						batch_size = 16, run_all = False, 
 						verbose = False, plot_model = False):
+		
+        config = tf.ConfigProto()
+        # dynamically grow the memory used on the GPU
+        config.gpu_options.allow_growth = True  
+        
+        # to log device placement (on which device the operation ran)
+        # (nothing gets printed in Jupyter, only if you run it standalone)
+        config.log_device_placement = True  
+        sess = tf.Session(config=config)
+
+        # set this TensorFlow session as the default session for Keras
+        set_session(sess)
 
 		self.data_shape = data_shape
 		self.batch_size = batch_size

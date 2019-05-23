@@ -177,7 +177,7 @@ if __name__ == '__main__':
 			help='batch size')
 	parser.add_argument('--optimizer', type=str, default='adam',
 			help='optimizer name') 
-	parser.add_argument('--num_epochs', type=int, default=200,
+	parser.add_argument('--num_epochs', type=int, default=1,
 			help='number of epochs')
 	parser.add_argument('--dnn_weight', type=float, default=1.0,
 			help='relative weight on prediction loss')
@@ -331,7 +331,6 @@ if __name__ == '__main__':
 												chromosome.chromosomeID, 
 												clargs.time_stamp)
 	
-
 	joblib.dump(put_sql_dict, output_table_name)
 
 	local_output_table = output_table_name
