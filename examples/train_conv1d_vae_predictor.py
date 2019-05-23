@@ -7,7 +7,7 @@ from sklearn.externals import joblib
 from time import time
 from tqdm import tqdm
 
-from vaelstmpredictor.vae_predictor.train import train_vae_predictor
+from vaelstmpredictor.vae_dense_predictor.train import train_vae_predictor
 
 if __name__ == '__main__':
 
