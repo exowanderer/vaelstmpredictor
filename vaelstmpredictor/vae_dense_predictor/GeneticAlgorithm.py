@@ -421,7 +421,7 @@ def generate_ssh_command(clargs, chromosome):
 	which_python = os.environ['HOME'] + '/anaconda3/envs/tf_env/bin/python'
 	
 	command = []
-	command.append('cd ~/vaelstmpredictor/examples; {}')
+	command.append('cd ~/vaelstmpredictor/examples;')
 	command.append('{} run_dense_chromosome.py '.format(which_python))
 	command.append('--run_name {}'.format(clargs.run_name))
 	command.append('--predictor_type {}'.format(clargs.predictor_type))

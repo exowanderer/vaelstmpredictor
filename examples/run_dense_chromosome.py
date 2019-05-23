@@ -336,6 +336,7 @@ if __name__ == '__main__':
 	local_output_table = output_table_name
 	remote_output_table = 'vaelstmpredictor/{}'.format(output_table_name)
 	remote_output_table = remote_output_table.replace('../','')
+	
 	if clargs.send_back:
 		sftp_send(local_file = local_output_table, 
 					remote_file = remote_output_table,
