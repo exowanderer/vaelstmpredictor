@@ -1,7 +1,3 @@
-# from https://github.com/exowanderer/vaelstmpredictor/blob/
-#	GeneticAlgorithm/Genetic-Algorithm.py
-# python vaelstmpredictor/genetic_algorithm_vae_predictor.py ga_vae_nn_test_0 
-#	--verbose --num_generations 500 --population_size 10 --num_epochs 200
 import argparse
 import json
 import matplotlib.pyplot as plt
@@ -422,9 +418,11 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa',
 	return generation#.astype(sql_generation.dtypes)
 
 def generate_ssh_command(clargs, chromosome):
+	which_python = environ['HOME'] + '/anaconda3/envs/tf_env/bin/python'
+	
 	command = []
-	command.append('cd ~/vaelstmpredictor/examples; ')
-	command.append('~/anaconda3/envs/tf_env/bin/python run_chromosome.py ')
+	command.append('cd ~/vaelstmpredictor/examples; {}')
+	command.append('{} run_dense_chromosome.py '.format(which_python))
 	command.append('--run_name {}'.format(clargs.run_name))
 	command.append('--predictor_type {}'.format(clargs.predictor_type))
 	command.append('--batch_size {}'.format(clargs.batch_size))

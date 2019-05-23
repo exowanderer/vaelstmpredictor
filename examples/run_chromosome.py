@@ -6,7 +6,7 @@ import os
 import requests
 import socket
 
-from vaelstmpredictor.GeneticAlgorithm import *
+from vaelstmpredictor.vae_dense_predictor.GeneticAlgorithm import *
 
 from time import time, sleep
 from vaelstmpredictor.utils.data_utils import MNISTData

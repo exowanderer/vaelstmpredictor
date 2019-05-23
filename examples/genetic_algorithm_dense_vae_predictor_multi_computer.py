@@ -23,7 +23,7 @@ from vaelstmpredictor.utils.weightnorm import data_based_init
 from vaelstmpredictor.vae_dense_predictor.model import VAEPredictor
 from vaelstmpredictor.vae_dense_predictor.train import train_vae_predictor
 
-from vaelstmpredictor.GeneticAlgorithm import *
+from vaelstmpredictor.vae_dense_predictor.GeneticAlgorithm import *
 
 def debug_message(message, end = '\n'):
 	print('[DEBUG] {}'.format(message), end = end)
