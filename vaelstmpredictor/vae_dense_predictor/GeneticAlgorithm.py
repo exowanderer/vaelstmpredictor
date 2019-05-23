@@ -418,7 +418,7 @@ def train_generation(generation, clargs, machines, private_key='id_ecdsa',
 	return generation#.astype(sql_generation.dtypes)
 
 def generate_ssh_command(clargs, chromosome):
-	which_python = environ['HOME'] + '/anaconda3/envs/tf_env/bin/python'
+	which_python = os.environ['HOME'] + '/anaconda3/envs/tf_env/bin/python'
 	
 	command = []
 	command.append('cd ~/vaelstmpredictor/examples; {}')
