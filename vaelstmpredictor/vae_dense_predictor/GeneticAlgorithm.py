@@ -526,9 +526,6 @@ def train_chromosome(chromosome, machine, queue, clargs,
 		info_message('Checking if file {} exists on {}'.format(
 										git_dir, machine['host']))
 	
-	# sys.stdout = open('{}/output{}.txt'.format(logdir, chromosomeID),'w')
-	# sys.stderr = open('{}/error{}.txt'.format(logdir, chromosomeID), 'w')
-	
 	try:
 		ssh = SSHClient()
 		ssh.set_missing_host_key_policy(AutoAddPolicy())
@@ -547,8 +544,8 @@ def train_chromosome(chromosome, machine, queue, clargs,
 
 	command = generate_ssh_command(clargs, chromosome)
 
-	info_message("\n\nExecuting Train Chromosome Command:\n\t{}".format(
-																	command))
+	info_message("\n\nExecuting Train Chromosome Command:"
+					"\n\t{}".format(command))
 	
 	stdin, stdout, stderr = ssh.exec_command(command)
 	
@@ -557,7 +554,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	
 	for line in stdout.readlines(): print(line)
 
-	info_message('Printing `stderr` in Train Chromosome'
+	info_message('Printing `stderr` in Train Chromosome on '
 					'{}'.format(machine['host']))
 
 	for line in stderr.readlines(): print(line)
@@ -565,7 +562,7 @@ def train_chromosome(chromosome, machine, queue, clargs,
 	queue.put(machine)
 	
 	ssh.close()
-		
+	
 	info_message('SSH Closed on Train Chromosome')
 	info_message("Train Chromosome Executed Successfully: generationID:"\
 					"{}\tchromosomeID:{}".format(generationID,chromosomeID))
@@ -601,7 +598,9 @@ def select_parents(generation):
 
 def cross_over(new_generation, generation, parent1, parent2, 
 				chromosomeID, param_choices, cross_prob, verbose=False):
-	if verbose: info_message('Crossing over with probability: {}'.format(cross_prob))
+	
+	if verbose: 
+		info_message('Crossing over with probability: {}'.format(cross_prob))
 	
 	idx_parent1 = parent1.Index
 	idx_parent2 = parent2.Index
