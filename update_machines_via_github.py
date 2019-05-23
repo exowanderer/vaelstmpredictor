@@ -100,4 +100,6 @@ if __name__ == '__main__':
 				 ['172.16.50.186', 'vaelstmpredictor/'],
 				 ['172.16.50.236', 'vaelstmpredictor/']])
 	
-	update_all_git(reinstall=clargs.reinstall, branchname=clargs.branchname)
+	update_all_git(reinstall=clargs.reinstall, 
+					machines = machines,
+					branchname=clargs.branchname)
