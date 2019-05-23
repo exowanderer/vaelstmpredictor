@@ -68,17 +68,17 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 				epochs (list): list(range(num_epochs))
 	"""
 	config = tf.ConfigProto()
-    # dynamically grow the memory used on the GPU
-    config.gpu_options.allow_growth = True  
+	# dynamically grow the memory used on the GPU
+	config.gpu_options.allow_growth = True  
 
-    # to log device placement (on which device the operation ran)
-    # (nothing gets printed in Jupyter, only if you run it standalone)
-    config.log_device_placement = True  
-    sess = tf.Session(config=config)
+	# to log device placement (on which device the operation ran)
+	# (nothing gets printed in Jupyter, only if you run it standalone)
+	config.log_device_placement = True  
+	sess = tf.Session(config=config)
 
-    # set this TensorFlow session as the default session for Keras
-    set_session(sess)
-    
+	# set this TensorFlow session as the default session for Keras
+	set_session(sess)
+	
 	DI = data_instance
 
 	clargs.n_labels = len(np.unique(DI.train_labels))
