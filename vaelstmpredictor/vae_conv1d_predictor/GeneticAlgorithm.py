@@ -199,72 +199,98 @@ def create_blank_dataframe(generationID, population_size):
 	ones = np.ones(population_size, dtype = int)
 	arange = np.arange(population_size, dtype = int)
 
+	dnn_kernel_size = 3
+	vae_kernel_size = 3
+	dnn_strides = 2
+	vae_strides = 2
+	encoder_top_size = 16
+	final_kernel_size = 3
+	batch_size = 128
+	
 	generation['generationID'] = zeros + generationID
 	generation['chromosomeID'] = arange
 	generation['isTrained'] = zeros
-	generation['num_vae_layers'] = zeros
-	generation['num_dnn_layers'] = zeros
-	generation['size_vae_latent'] = zeros
-	generation['size_vae_hidden'] = zeros
-	generation['size_dnn_hidden'] = zeros
+	generation['num_vae_layers'] = ones
+	generation['num_dnn_layers'] = ones
+	generation['vae_filter_size'] = ones
+	generation['dnn_filter_size'] = ones
+	generation['vae_latent_dim'] = ones
+	generation['vae_kernel_size'] = ones * vae_kernel_size
+	generation['dnn_kernel_size'] = ones * dnn_kernel_size
+	generation['dnn_strides'] = ones * dnn_strides
+	generation['vae_strides'] = ones * vae_strides
+	generation['encoder_top_size'] = ones * encoder_top_size
+	generation['final_kernel_size'] = ones * final_kernel_size
 	generation['fitness'] = np.float32(zeros) - 1.0
-	generation['batch_size'] = zeros
-	generation['cross_prob'] = zeros
+	generation['batch_size'] = ones*batch_size
+	generation['cross_prob'] = ones
 	generation['dnn_kl_weight'] = zeros
 	generation['dnn_log_var_prior'] = zeros
 	generation['dnn_weight'] = zeros
 	generation['do_ckpt'] = np.bool8(zeros)
-	generation['hostname'] = ['127.0.0.1']*population_size
+	generation['hostname'] = ['127.0.0.1'] * population_size
 	generation['iterations'] = zeros
 	generation['kl_anneal'] = zeros
-	generation['log_dir'] = ['../data/logs']*population_size
-	generation['model_dir'] = ['../data/models']*population_size
+	generation['log_dir'] = ['../data/logs'] * population_size
+	generation['model_dir'] = ['../data/models'] * population_size
 	generation['mutate_prob'] = zeros
 	generation['num_epochs'] = zeros
-	generation['optimizer'] = ['adam']*population_size
+	generation['optimizer'] = ['adam'] * population_size
 	generation['patience'] = zeros
 	generation['population_size'] = zeros
 	generation['prediction_log_var_prior'] = zeros
-	generation['predictor_type'] = ['classification']*population_size
-	generation['run_name'] = ['run_name']*population_size
-	generation['table_dir'] = ['../data/tables']*population_size
+	generation['predictor_type'] = ['classification'] * population_size
+	generation['run_name'] = ['run_name'] * population_size
+	generation['table_dir'] = ['../data/tables'] * population_size
 	generation['time_stamp'] = zeros
-	generation['train_file'] = ['train_file']*population_size
-	generation['vae_kl_weight'] = zeros
-	generation['vae_weight'] = zeros
+	generation['train_file'] = ['train_file'] * population_size
+	generation['vae_kl_weight'] = np.float32(ones)
+	generation['vae_weight'] = np.float32(ones)
 	generation['w_kl_anneal'] = zeros
 
 	return generation
 
 def generate_random_chromosomes(population_size, geneationID = 0,
-						min_vae_hidden_layers = 1, max_vae_hidden_layers = 5, 
-						min_dnn_hidden_layers = 1, max_dnn_hidden_layers = 5, 
-						min_vae_hidden = 2, max_vae_hidden = 1024, 
-						min_dnn_hidden = 2, max_dnn_hidden = 1024, 
-						min_vae_latent = 2, max_vae_latent = 1024, 
-						verbose=False):
+						min_vae_num_layers = 1, max_vae_num_layers = 5,
+						min_dnn_num_layers = 1, max_dnn_num_layers = 5,
+						min_vae_filters = 1, max_vae_filters = 512, 
+						min_dnn_filters = 1, max_dnn_filters = 512, 
+						min_vae_kernel_size = 1, max_vae_kernel_size = 13, 
+						min_dnn_kernel_size = 1, max_dnn_kernel_size = 13, 
+						min_vae_latent = 2, max_vae_latent = 512, 
+						verbose = False):
 	
 	# create blank dataframe with full SQL database required entrie
 	generation = create_blank_dataframe(geneationID, population_size)
 	
+	info_message('Training Conv1D VAE Predictor'.format())
+	data_shape = (784,1) # MNIST
+
 	# Overwrite chromosome parameters to evolve with random choices
-	vae_nLayers_choices = range(min_vae_hidden_layers, max_vae_hidden_layers)
-	dnn_nLayers_choices = range(min_dnn_hidden_layers, max_dnn_hidden_layers)
+	vae_nLayers_choices = range(min_vae_num_layers, max_vae_num_layers)
+	dnn_nLayers_choices = range(min_dnn_num_layers, max_dnn_num_layers)
+	vae_filterSize_choices = range(min_vae_filters, max_vae_filters)
+	dnn_filterSize_choices = range(min_dnn_filters, max_dnn_filters)
 	vae_latent_choices = range(min_vae_latent, max_vae_latent)
-	vae_nUnits_choices = range(min_vae_hidden, max_vae_hidden)
-	dnn_nUnits_choices = range(min_dnn_hidden, max_dnn_hidden)
 	
 	generation['num_vae_layers'] = np.random.choice(vae_nLayers_choices,
 														size = population_size)
 	generation['num_dnn_layers'] = np.random.choice(dnn_nLayers_choices,
 														size = population_size)
-	generation['size_vae_latent'] = np.random.choice(vae_latent_choices, 
+	generation['vae_filter_size'] = np.random.choice(vae_nLayers_choices,
 														size = population_size)
-	generation['size_vae_hidden'] = np.random.choice(vae_nUnits_choices, 
+	generation['dnn_filter_size'] = np.random.choice(dnn_nLayers_choices,
 														size = population_size)
-	generation['size_dnn_hidden'] = np.random.choice(dnn_nUnits_choices, 
+	generation['vae_latent_dim'] = np.random.choice(vae_latent_choices, 
 														size = population_size)
-	
+	# generation['decoder_filter_size'] = np.random.choice(vae_nLayers_choices,
+	# 													size = population_size)
+	# generation['encoder_kernel_size'] = np.random.choice(vae_nLayers_choices,
+	# 													size = population_size)
+	# generation['decoder_kernel_size'] = np.random.choice(vae_nLayers_choices,
+	# 													size = population_size)
+	# generation['dnn_kernel_size'] = np.random.choice(dnn_nLayers_choices,
+	# 													size = population_size)
 	return generation
 
 def get_machine(queue):
@@ -447,20 +473,20 @@ def generate_ssh_command(clargs, chromosome):
 	command.append('--time_stamp {}'.format(int(clargs.time_stamp)))
 	command.append('--hostname {}'.format(clargs.hostname))
 	command.append('--sshport {}'.format(clargs.sshport))
-	
+
 	num_vae_layers = int(chromosome.num_vae_layers)
 	num_dnn_layers = int(chromosome.num_dnn_layers)
-	size_vae_latent = int(chromosome.size_vae_latent)
-	size_vae_hidden = int(chromosome.size_vae_hidden)
-	size_dnn_hidden = int(chromosome.size_dnn_hidden)
+	vae_filter_size = int(chromosome.vae_filter_size)
+	dnn_filter_size = int(chromosome.dnn_filter_size)
+	vae_latent_dim = int(chromosome.vae_latent_dim)
 	generationID = int(chromosome.generationID)
 	chromosomeID = int(chromosome.chromosomeID)
-	
+
 	command.append('--num_vae_layers {}'.format(num_vae_layers))
 	command.append('--num_dnn_layers {}'.format(num_dnn_layers))
-	command.append('--size_vae_latent {}'.format(size_vae_latent))
-	command.append('--size_vae_hidden {}'.format(size_vae_hidden))
-	command.append('--size_dnn_hidden {}'.format(size_dnn_hidden))
+	command.append('--vae_filter_size {}'.format(vae_filter_size))
+	command.append('--dnn_filter_size {}'.format(dnn_filter_size))
+	command.append('--vae_latent_dim {}'.format(vae_latent_dim))
 	command.append('--generationID {} '.format(generationID))
 	command.append('--chromosomeID {} '.format(chromosomeID))
 

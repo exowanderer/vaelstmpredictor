@@ -7,7 +7,7 @@ import requests
 import socket
 import tensorflow as tf
 
-from vaelstmpredictor.vae_dense_predictor.GeneticAlgorithm import *
+from vaelstmpredictor.vae_conv1d_predictor.GeneticAlgorithm import *
 
 from time import time, sleep
 from vaelstmpredictor.utils.data_utils import MNISTData
@@ -57,14 +57,14 @@ def make_sql_output(clargs, chromosome):
 	output['w_kl_anneal'] = clargs.w_kl_anneal
 	output['num_dnn_layers'] = clargs.num_dnn_layers
 	output['num_vae_layers'] = clargs.num_vae_layers
-	output['size_dnn_hidden'] = clargs.size_dnn_hidden
-	output['size_vae_hidden'] = clargs.size_vae_hidden
-	output['size_vae_latent'] = clargs.size_vae_latent
+	output['dnn_filter_size'] = clargs.size_dnn_hidden
+	output['vae_filter_size'] = clargs.size_vae_hidden
+	output['vae_latent_dim'] = clargs.vae_latent_dim
 	output['generationID'] = chromosome.generationID
 	output['chromosomeID'] = chromosome.chromosomeID
 	output['isTrained'] = chromosome.isTrained
 	output['fitness'] = chromosome.fitness
-	
+
 	return output
 
 def sftp_send(local_file, remote_file, hostname, port, key_filename, 
@@ -231,11 +231,11 @@ if __name__ == '__main__':
 			help='Depth of the VAE')
 	parser.add_argument('--num_dnn_layers', type=int, default=1,
 			help='Depth of the DNN')
-	parser.add_argument('--size_vae_latent', type=int, default=16,
+	parser.add_argument('--vae_latent_dim', type=int, default=16,
 			help='Size of the VAE Latent Layer')
-	parser.add_argument('--size_vae_hidden', type=int, default=16,
+	parser.add_argument('--vae_filter_size', type=int, default=16,
 			help='Size of the VAE Hidden Layer')
-	parser.add_argument('--size_dnn_hidden', type=int, default=16,
+	parser.add_argument('--dnn_filter_size', type=int, default=16,
 			help='Size of the DNN Hidden Layer')
 	parser.add_argument('--save_model', action='store_true',
 			help='Save model ckpt.s and other stored values')
@@ -249,7 +249,7 @@ if __name__ == '__main__':
 			help='Number of generations to process: for SQL storage')
 	parser.add_argument('--population_size', type=float, default = 100,
 			help='Number of members per generation: for SQL storage')
-
+	
 	clargs = parser.parse_args()
 	
 	# clargs.do_log = True
@@ -265,23 +265,23 @@ if __name__ == '__main__':
 			if not os.path.exists(val): 
 				os.mkdir(val)
 
-	vae_hidden_dims = [clargs.size_vae_hidden]*clargs.num_vae_layers
-	dnn_hidden_dims = [clargs.size_dnn_hidden]*clargs.num_dnn_layers
-
 	chrom_params = {}
 	chrom_params['verbose'] = clargs.verbose
 	chrom_params['save_model'] = clargs.save_model
-	chrom_params['vae_hidden_dims'] = vae_hidden_dims
-	chrom_params['dnn_hidden_dims'] = dnn_hidden_dims
-	chrom_params['vae_latent_dim'] = clargs.size_vae_latent
-	chrom_params['clargs'] = clargs
+	chrom_params['num_vae_layers'] = clargs.num_vae_layers
+	chrom_params['num_dnn_layers'] = clargs.num_dnn_layers
+	chrom_params['dnn_filter_size'] = clargs.dnn_filter_size
+	chrom_params['vae_filter_size'] = clargs.vae_filter_size
+	chrom_params['dnn_filter_size'] = clargs.dnn_filter_size
+	chrom_params['vae_latent_dim'] = clargs.vae_latent_dim
 	chrom_params['generationID'] = clargs.generationID
 	chrom_params['chromosomeID'] = clargs.chromosomeID
 	chrom_params['vae_weight'] = clargs.vae_weight
 	chrom_params['vae_kl_weight'] = clargs.vae_kl_weight
 	chrom_params['dnn_weight'] = clargs.dnn_weight
 	chrom_params['dnn_kl_weight'] = clargs.dnn_kl_weight
-
+	chrom_params['clargs'] = clargs
+	
 	data_instance = MNISTData(batch_size = clargs.batch_size)
 	
 	n_train, n_features = data_instance.data_train.shape
@@ -303,7 +303,7 @@ if __name__ == '__main__':
 
 	chromosome = Chromosome(**chrom_params)
 	chromosome.verbose = True
-	chromosome.train(verbose=True)
+	chromosome.train(verbose = True)
 	
 	generationID = chromosome.generationID
 	chromosomeID = chromosome.chromosomeID

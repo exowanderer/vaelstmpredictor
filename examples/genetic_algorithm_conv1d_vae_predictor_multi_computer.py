@@ -24,7 +24,7 @@ from vaelstmpredictor.utils.weightnorm import data_based_init
 from vaelstmpredictor.vae_conv1d_predictor.model import VAEPredictor
 from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
-from vaelstmpredictor.vae_dense_predictor.GeneticAlgorithm import *
+from vaelstmpredictor.vae_conv1d_predictor.GeneticAlgorithm import *
 
 def debug_message(message, end = '\n'):
 	print('[DEBUG] {}'.format(message), end = end)
@@ -38,16 +38,20 @@ def info_message(message, end = '\n'):
 def process_genetic_algorithm(clargs, machines):
 	generation = generate_random_chromosomes(
 						population_size = clargs.population_size,
-						min_vae_hidden_layers = clargs.min_vae_hidden_layers,
-						min_dnn_hidden_layers = clargs.min_dnn_hidden_layers,
-						max_vae_hidden_layers = clargs.max_vae_hidden_layers,
-						max_dnn_hidden_layers = clargs.max_dnn_hidden_layers,
-						min_vae_hidden = clargs.min_vae_hidden,
-						max_vae_hidden = clargs.max_vae_hidden,
-						min_dnn_hidden = clargs.min_dnn_hidden,
-						max_dnn_hidden = clargs.max_dnn_hidden,
-						min_vae_latent = clargs.min_vae_latent,
-						max_vae_latent = clargs.max_vae_latent,
+						min_vae_num_layers = clargs.min_vae_num_layers, 
+						max_vae_num_layers = clargs.max_vae_num_layers,
+						min_dnn_num_layers = clargs.min_dnn_num_layers, 
+						max_dnn_num_layers = clargs.max_dnn_num_layers,
+						min_vae_filters = clargs.min_vae_filters, 
+						max_vae_filters = clargs.max_vae_filters, 
+						min_dnn_filters = clargs.min_dnn_filters, 
+						max_dnn_filters = clargs.max_dnn_filters, 
+						min_vae_kernel_size = clargs.min_vae_kernel_size, 
+						max_vae_kernel_size = clargs.max_vae_kernel_size, 
+						min_dnn_kernel_size = clargs.min_dnn_kernel_size, 
+						max_dnn_kernel_size = clargs.max_dnn_kernel_size, 
+						min_vae_latent = clargs.min_vae_latent, 
+						max_vae_latent = clargs.max_vae_latent, 
 						verbose = clargs.verbose)
 	
 	verbose = clargs.verbose
@@ -155,30 +159,38 @@ if __name__ == '__main__':
 			help='optimizer name') 
 	parser.add_argument('--num_epochs', type=int, default=1,
 			help='number of epochs')
-	parser.add_argument('--max_vae_hidden_layers', type=int, default=5, 
-			help='Maximum number of VAE hidden layers')
+	parser.add_argument('--min_vae_num_layers', type=int, default=1, 
+					help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--max_vae_num_layers', type=int, default=5,
+			help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--min_dnn_num_layers', type=int, default=1,
+			help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--max_dnn_num_layers', type=int, default=5,
+			help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--min_vae_filters', type=int, default=1,
+			help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--max_vae_filters', type=int, default=5,
+			help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--min_dnn_filters', type=int, default=1,
+			help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--max_dnn_filters', type=int, default=5,
+			help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--min_vae_kernel_size', type=int, default=1,
+			help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--max_vae_kernel_size', type=int, default=5,
+			help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--min_dnn_kernel_size', type=int, default=1,
+			help='Maximum number of VAE neurons per layer')
+	parser.add_argument('--max_dnn_kernel_size', type=int, default=5,
+			help='Maximum number of VAE neurons per layer')
 	parser.add_argument('--max_vae_latent', type=int, default=512, 
 			help='Maximum number of VAE neurons per layer')
 	parser.add_argument('--max_dnn_latent', type=int, default=512, 
 			help='Maximum number of DNN neurons per layer')
-	parser.add_argument('--max_vae_hidden', type=int, default=512, 
-			help='Maximum number of VAE neurons per layer')
-	parser.add_argument('--max_dnn_hidden', type=int, default=512, 
-			help='Maximum number of VAE neurons per layer')
-	parser.add_argument('--max_dnn_hidden_layers', type=int, default=5,
-			help='Maximum number of DNN hidden layers')
-	parser.add_argument('--min_vae_hidden_layers', type=int, default=1, 
-			help='minimum number of VAE hidden layers')
 	parser.add_argument('--min_vae_latent', type=int, default=2, 
 			help='minimum number of VAE neurons per layer')
 	parser.add_argument('--min_dnn_latent', type=int, default=2, 
 			help='minimum number of DNN neurons per layer')
-	parser.add_argument('--min_vae_hidden', type=int, default=2, 
-			help='Maximum number of VAE neurons per layer')
-	parser.add_argument('--min_dnn_hidden', type=int, default=2, 
-			help='Maximum number of VAE neurons per layer')
-	parser.add_argument('--min_dnn_hidden_layers', type=int, default=1,
-			help='minimum number of DNN hidden layers')	
 	parser.add_argument('--dnn_weight', type=float, default=1.0,
 			help='relative weight on prediction loss')
 	parser.add_argument('--vae_weight', type=float, default=1.0,#30.53,
