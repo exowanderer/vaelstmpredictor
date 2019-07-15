@@ -59,7 +59,8 @@ if __name__ == '__main__':
 			clargs.isTrained = params["isTrained"]
 			clargs.kl_anneal = params["kl_anneal"]
 			clargs.log_dir = params["log_dir"]
-			clargs.model_dir = params["model_dir"]
+			#clargs.model_dir = params["model_dir"]
+			clargs.model_dir = "data/models"
 			clargs.mutate_prob = params["mutate_prob"]
 			clargs.num_dnn_layers = params["num_dnn_layers"]
 			clargs.num_epochs = params["num_epochs"]
@@ -88,16 +89,20 @@ if __name__ == '__main__':
 			vae_hidden_dims = [clargs.size_vae_hidden]*clargs.num_vae_layers
 			dnn_hidden_dims = [clargs.size_dnn_hidden]*clargs.num_dnn_layers
 			
-			data_instance = MNISTData(batch_size = clargs.batch_size)
+			#data_instance = MNISTData(batch_size = clargs.batch_size)
 			
-			n_train, n_features = data_instance.data_train.shape
-			n_test, n_features = data_instance.data_valid.shape
+			#n_train, n_features = data_instance.data_train.shape
+			#n_test, n_features = data_instance.data_valid.shape
 
-			clargs.original_dim = n_features
-			clargs.n_labels = len(np.unique(data_instance.train_labels))
+			#clargs.original_dim = n_features
+			#clargs.n_labels = len(np.unique(data_instance.train_labels))
+
+			clargs.original_dim = 1
+			clargs.n_labels = 1
 			
 			chrom_params = {}
-			chrom_params['data_instance'] = data_instance
+			#chrom_params['data_instance'] = data_instance
+			chrom_params['data_instance'] = 1
 			chrom_params['verbose'] = True
 			chrom_params['save_model'] = clargs.save_model
 			chrom_params['vae_hidden_dims'] = vae_hidden_dims
@@ -117,7 +122,7 @@ if __name__ == '__main__':
 
 			chromosome = Chromosome(**chrom_params)
 			chromosome.verbose = True
-			chromosome.train(verbose=True)
+			#chromosome.train(verbose=True)
 
 			info_message('\n')
 			print('Result: ', end=" ")
