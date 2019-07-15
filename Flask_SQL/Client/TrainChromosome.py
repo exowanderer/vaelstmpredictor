@@ -43,7 +43,7 @@ if __name__ == '__main__':
 		except:
 			chromosome = None
 		if(chromosome != None and chromosome.text == "0"):
-			print("No more Chromosomes to train")
+			info_message("No more Chromosomes to train")
 			sleep(30)
 		elif(chromosome != None):
 			params = chromosome.json()
@@ -59,7 +59,10 @@ if __name__ == '__main__':
 			clargs.isTrained = params["isTrained"]
 			clargs.kl_anneal = params["kl_anneal"]
 			clargs.log_dir = params["log_dir"]
-			clargs.model_dir = params["model_dir"]
+			clargs.do_log = True
+			clargs.do_ckpt = False
+			#clargs.model_dir = params["model_dir"]
+			clargs.model_dir = "data/models"
 			clargs.mutate_prob = params["mutate_prob"]
 			clargs.num_dnn_layers = params["num_dnn_layers"]
 			clargs.num_epochs = params["num_epochs"]
@@ -115,9 +118,16 @@ if __name__ == '__main__':
 			for key,val in clargs.__dict__.items():
 				print('{:20}{}'.format(key,val))
 
-			chromosome = Chromosome(**chrom_params)
-			chromosome.verbose = True
-			chromosome.train(verbose=True)
+			info_message("Training Chromosome "+str(clargs.chromosomeID)+" Generation "+str(clargs.generationID))
+			try:
+				chromosome = Chromosome(**chrom_params)
+				chromosome.verbose = True
+				chromosome.train(verbose=True)
+			except Exception as e:
+				warning_message("Error has occured while training")
+				print(e)
+				chromosome = None
+				continue
 
 			info_message('\n')
 			print('Result: ', end=" ")
