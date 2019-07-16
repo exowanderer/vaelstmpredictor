@@ -257,27 +257,28 @@ if __name__ == '__main__':
 
     key_filename = os.environ['HOME'] + '/.ssh/{}'.format('id_ecdsa')
 
-    machines = [{"host": "172.16.50.163", "username": "acc",
+    machines = [
+        #{"host": "172.16.50.163", "username": "acc",
+        # "key_filename": key_filename},
+        {"host": "172.16.50.181", "username": "acc",
                  "key_filename": key_filename},
-                {"host": "172.16.50.181", "username": "acc",
+        {"host": "172.16.50.176", "username": "acc",
                  "key_filename": key_filename},
-                {"host": "172.16.50.176", "username": "acc",
+        # {"host": "172.16.50.177", "username": "acc",
+        # "key_filename": key_filename},
+        {"host": "172.16.50.182", "username": "acc",
                  "key_filename": key_filename},
-                {"host": "172.16.50.177", "username": "acc",
+        {"host": "172.16.50.218", "username": "acc",
                  "key_filename": key_filename},
-                {"host": "172.16.50.182", "username": "acc",
+        {"host": "172.16.50.159", "username": "acc",
                  "key_filename": key_filename},
-                {"host": "172.16.50.218", "username": "acc",
+        {"host": "172.16.50.235", "username": "acc",
                  "key_filename": key_filename},
-                {"host": "172.16.50.159", "username": "acc",
+        {"host": "172.16.50.142", "username": "acc",
                  "key_filename": key_filename},
-                {"host": "172.16.50.235", "username": "acc",
-                 "key_filename": key_filename},
-                {"host": "172.16.50.142", "username": "acc",
-                 "key_filename": key_filename},
-                {"host": "172.16.50.237", "username": "acc",
+        {"host": "172.16.50.237", "username": "acc",
                  "key_filename": key_filename}
-                ]
+    ]
 
     machines = machines[:clargs.population_size]
 
