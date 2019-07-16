@@ -7,7 +7,7 @@ from contextlib import redirect_stdout
 from keras import backend as K
 from keras.utils import to_categorical
 
-from sklearn.externals import joblib
+import joblib
 from time import time
 
 from vaelstmpredictor.utils.model_utils import get_callbacks, init_adam_wn

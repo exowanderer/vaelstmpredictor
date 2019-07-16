@@ -29,7 +29,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # warnings.simplefilter(action='ignore', category=DeprecationWarning)
 # warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from sklearn.externals import joblib
+import joblib
 from time import time, sleep
 from tqdm import tqdm
 

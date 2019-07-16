@@ -7,7 +7,7 @@ from contextlib import redirect_stdout
 from keras import backend as K
 from keras.utils import to_categorical
 
-from sklearn.externals import joblib
+import joblib
 from time import time
 
 from vaelstmpredictor.utils.model_utils import get_callbacks, init_adam_wn
@@ -37,7 +37,7 @@ class Chromosome(ConvVAEPredictor):
 				dnn_weight = 1.0, dnn_kl_weight = 1.0,
 				dnn_latent_dim = None, batch_size = 128, 
 				dnn_log_var_prior = 0.0, save_model = True, 
-				verbose = False):
+				n_channels = 1, verbose = False):
 
 		''' Configure dnn '''
 		dnn_filters = np.array([dnn_filter_size]*num_dnn_layers)
@@ -70,6 +70,8 @@ class Chromosome(ConvVAEPredictor):
 
 		"""FINDME: Why is this dnn_out_dim-1(??)"""
 		if dnn_latent_dim is not None: 
+			self.dnn_latent_dim = dnn_latent_dim
+		else:
 			self.dnn_latent_dim = clargs.n_labels - 1
 
 		self.dnn_log_var_prior = dnn_log_var_prior
@@ -87,6 +89,7 @@ class Chromosome(ConvVAEPredictor):
 		set_session(sess)
 		
 		self.verbose = verbose
+		self.n_channels = n_channels # default for 1D Time-series
 		self.save_model = save_model
 		self.clargs = clargs
 		self.data_instance = data_instance
@@ -169,11 +172,20 @@ class Chromosome(ConvVAEPredictor):
 		verbose = verbose or self.verbose
 		
 		DI = self.data_instance
-
+		
 		predictor_train = to_categorical(DI.train_labels, self.clargs.n_labels)
 		predictor_validation = to_categorical(DI.valid_labels,
 											self.clargs.n_labels)
 
+		# Need to expand dimensions to follow Conv1D syntax
+		DI.data_train = np.expand_dims(DI.data_train, axis=2)
+		DI.data_test = np.expand_dims(DI.data_test, axis=2)
+		DI.data_valid = np.expand_dims(DI.data_valid, axis=2)
+		DI.labels_train = np.expand_dims(DI.labels_train, axis=2)
+		DI.labels_valid = np.expand_dims(DI.labels_valid, axis=2)
+		predictor_train = np.expand_dims(predictor_train, axis=2)
+		predictor_validation = np.expand_dims(predictor_validation, axis=2)
+		
 		min_epoch = max(self.clargs.kl_anneal, self.clargs.w_kl_anneal)+1
 		callbacks = get_callbacks(self.clargs, patience=self.clargs.patience, 
 					min_epoch = min_epoch, do_log = self.clargs.do_log, 

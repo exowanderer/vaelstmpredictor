@@ -3,7 +3,7 @@ import os
 
 from glob import glob
 from numpy import array, arange, vstack, reshape, loadtxt, zeros
-from sklearn.externals import joblib
+import joblib
 from time import time
 from tqdm import tqdm
 

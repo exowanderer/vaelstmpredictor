@@ -1,4 +1,8 @@
+from warnings import simplefilter
+simplefilter('ignore', category=DeprecationWarning)
+
 import argparse
+import joblib
 import json
 import matplotlib.pyplot as plt
 import numpy as np
@@ -57,8 +61,8 @@ def make_sql_output(clargs, chromosome):
 	output['w_kl_anneal'] = clargs.w_kl_anneal
 	output['num_dnn_layers'] = clargs.num_dnn_layers
 	output['num_vae_layers'] = clargs.num_vae_layers
-	output['dnn_filter_size'] = clargs.size_dnn_hidden
-	output['vae_filter_size'] = clargs.size_vae_hidden
+	output['dnn_filter_size'] = clargs.dnn_filter_size
+	output['vae_filter_size'] = clargs.vae_filter_size
 	output['vae_latent_dim'] = clargs.vae_latent_dim
 	output['generationID'] = chromosome.generationID
 	output['chromosomeID'] = chromosome.chromosomeID

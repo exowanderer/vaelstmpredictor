@@ -1,3 +1,4 @@
+import joblib
 import json
 import numpy as np
 import scipy.stats
@@ -310,7 +311,9 @@ class ConvVAEPredictor(object):
 		return reconstruction_loss
 
 	def build_model(self, batch_size = None, hidden_activation = 'relu', 
-				  output_activation = 'sigmoid'):
+				  output_activation = 'sigmoid',
+				  dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
+				  dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
 
 		batch_shape = (self.batch_size, self.original_dim, 1)
 		self.input_layer = Input(batch_shape = batch_shape, name='input_layer')
@@ -343,8 +346,8 @@ class ConvVAEPredictor(object):
 
 		self.model = Model([self.input_layer], output_stack)
 
-	def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
-				  dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
+		# def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
+		# 			  dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
 		metrics_ = {'dnn_prediction': ['acc', 'mse'],
 					'dnn_latent_layer': ['acc', 'mse'],
 					'vae_reconstruction': ['mse']}

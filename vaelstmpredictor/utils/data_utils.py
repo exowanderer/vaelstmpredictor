@@ -3,7 +3,7 @@ Code to load pianoroll data (.pickle)
 """
 import numpy as np
 import os
-from sklearn.externals import joblib
+import joblib
 
 from numpy import array, arange, vstack, reshape, loadtxt, zeros
 

@@ -8,7 +8,7 @@ import json
 import requests
 import sys
 
-from sklearn.externals import joblib
+import joblib
 from contextlib import redirect_stdout
 
 from keras import backend as K
