@@ -1,3 +1,4 @@
+import joblib
 import json
 import numpy as np
 import scipy.stats
@@ -188,39 +189,6 @@ class ConvVAEPredictor(object):
 		
 		self.dnn_latent_mod = dnn_latent_mod(self.dnn_latent_layer)
 
-		# dnn_latent_shape = K.int_shape(self.dnn_latent_mod)[1:-1]
-		# self.dnn_latent_mod = Reshape(dnn_latent_shape, 
-		# 						name = 'dnn_latent_mod')(self.dnn_latent_mod)
-
-	""" # Previous Try
-	def orig_build_predictor(self):
-		if bool(sum(self.dnn_filter_sizes)):
-			''' Establish dnn Encoder layer structure '''
-			dnn_enc_hid_layer = build_hidden_conv_layers(
-									filter_sizes = self.dnn_filter_sizes,
-									kernel_sizes = self.dnn_kernel_sizes,
-									input_layer = self.input_layer, 
-									strides = self.dnn_strides,
-									base_layer_name = 'dnn_enc_hidden_layer',
-									activation  = self.hidden_activation,
-									Layer = self.layer_type)
-		else:
-			'''if there are no hidden layers, then the input to the 
-				dnn latent layers is the input_w_pred layer'''
-			dnn_enc_hid_layer = self.input_w_pred
-		
-		self.dnn_latent_mean = Dense(self.dnn_latent_dim,
-									name='dnn_latent_mean')(dnn_enc_hid_layer)
-		self.dnn_latent_log_var =Dense(self.dnn_latent_dim,
-								name = 'dnn_latent_log_var')(dnn_enc_hid_layer)
-		
-		dnn_latent_layer = Lambda(dnn_sampling, name='dnn_latent_layer',
-								arguments = {'latent_dim':self.dnn_latent_dim, 
-											'batch_size':self.batch_size})
-
-		self.dnn_latent_layer = dnn_latent_layer([self.dnn_latent_mean, 
-												  self.dnn_latent_log_var])
-	"""
 	def build_latent_encoder(self, padding='same', activation='relu', 
 								base_name = 'enc_conv1d_{}'):
 		
@@ -320,9 +288,10 @@ class ConvVAEPredictor(object):
 		#	this is the image generation stage: sigmoid == images from 0-1
 		one = 1 # required to make a `point-wise` convolution
 		self.vae_reconstruction = Conv1DTranspose(filters =one, 
-							kernel_size =self.final_kernel_size, 
-							padding = 'same', activation = 'sigmoid',
-							name = 'vae_reconstruction')(x)
+										kernel_size = self.final_kernel_size, 
+										padding = 'same', 
+										activation = 'sigmoid',
+										name = 'vae_reconstruction')(x)
 
 	def dnn_kl_loss(self, labels, preds):
 		vs = 1 - self.dnn_log_var_prior + self.dnn_latent_log_var
@@ -332,12 +301,8 @@ class ConvVAEPredictor(object):
 		return -0.5*K.sum(vs, axis = -1)
 
 	def dnn_predictor_loss(self, labels, preds):
-		# pred_shape = (self.dnn_out_dim,)
-		# preds = Reshape(pred_shape)(preds)
-		
 		if self.predictor_type is 'classification':
 			reconstruction_loss = categorical_crossentropy(labels, preds)
-			# reconstruction_loss = self.dnn_latent_dim * reconstruction_loss
 		elif self.predictor_type is 'regression':
 			reconstruction_loss = mean_squared_error(labels, preds)
 		else:
@@ -346,7 +311,9 @@ class ConvVAEPredictor(object):
 		return reconstruction_loss
 
 	def build_model(self, batch_size = None, hidden_activation = 'relu', 
-				  output_activation = 'sigmoid'):
+				  output_activation = 'sigmoid',
+				  dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
+				  dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
 
 		batch_shape = (self.batch_size, self.original_dim, 1)
 		self.input_layer = Input(batch_shape = batch_shape, name='input_layer')
@@ -379,8 +346,8 @@ class ConvVAEPredictor(object):
 
 		self.model = Model([self.input_layer], output_stack)
 
-	def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
-				  dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
+		# def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
+		# 			  dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
 		metrics_ = {'dnn_prediction': ['acc', 'mse'],
 					'dnn_latent_layer': ['acc', 'mse'],
 					'vae_reconstruction': ['mse']}

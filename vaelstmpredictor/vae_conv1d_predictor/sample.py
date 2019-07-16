@@ -5,15 +5,8 @@ from collections import namedtuple
 from json import load as json_load
 from keras.utils import to_categorical
 
-# from ..utils.midi_utils import write_sample
+from .model import ConvVAEPredictor as VAEPredictor
 
-# from .model import load_model, generate_sample, make_decoder
-# from .model import make_w_encoder, make_z_encoder, sample_z
-from .dense_model import VAEPredictor
-from .conv1d_model import ConvVAEPredictor
-"""
-Code to load pianoroll data (.pickle)
-"""
 import numpy as np
 
 def generate_sample(instance, vae_enc_model, dec_model, 
