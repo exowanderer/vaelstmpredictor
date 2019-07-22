@@ -52,8 +52,7 @@ def Conv1DTranspose(filters, kernel_size, strides = 1, padding='same',
 	conv1D.add(UpSampling1D(size=strides))
 
 	# FINDME maybe strides should be == 1 here? Check size ratios after decoder
-	conv1D.add(Conv1D(filters=filters, kernel_size=(kernel_size), 
-							padding=padding, activation = activation))
+	conv1D.add(Conv1D(filters, kernel_size, padding=padding, activation = activation))
 	return conv1D
 
 def vae_sampling(args, latent_dim, batch_size = 128, 
@@ -99,9 +98,10 @@ def dnn_sampling(args, latent_dim, batch_size = 128, channels = None,
 class ConvVAEPredictor(object):
 	def __init__(self, encoder_filters, encoder_kernel_sizes,
 					vae_hidden_dims, dnn_hidden_dims, 
-					decoder_filters, decoder_kernel_sizes, 
+					decoder_filters, decoder_kernel_sizes,
+					encoder_pool_sizes, dnn_pool_sizes, decoder_pool_sizes,
 					dnn_filters, dnn_kernel_sizes, dnn_strides = 2,
-					encoder_pool_sizes, dnn_pool_sizes, decoder_pool_sizes,					encoder_strides = 2, decoder_strides = 2,
+					encoder_strides = 2, decoder_strides = 2,
 					vae_latent_dim = 2, encoder_top_size = 16, 
 					final_kernel_size = 3, data_shape = (784,1), 
 					batch_size = 128, run_all = False, 
@@ -166,13 +166,12 @@ class ConvVAEPredictor(object):
 		for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
 			name = base_name.format(kb)
 			
-			x = Conv1D(filters = cfilter, 
-								kernel_size = ksize,
-								strides = stride, 
-								padding = padding,
-								activation = activation, 
-								name = name)(x)
-			x = MaxPooling1D(psize)(x)
+			x = Conv1D(cfilter, ksize,
+						strides = stride, 
+						padding = padding,
+						activation = activation, 
+						name = name)(x)
+			x = MaxPooling1D((psize,))(x)
 
 		x = Flatten()(x)
 
@@ -214,13 +213,12 @@ class ConvVAEPredictor(object):
 		for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
 			name = base_name.format(kb)
 			
-			x = Conv1D(filters = cfilter, 
-								kernel_size = ksize,
-								strides = stride, 
-								padding = padding,
-								activation = activation, 
-								name = name)(x)
-			x = MaxPooling1D(psize)(x)
+			x = Conv1D(cfilter, ksize,
+						strides = stride, 
+						padding = padding,
+						activation = activation, 
+						name = name)(x)
+			x = MaxPooling1D((psize,))(x)
 
 		self.last_conv_shape = K.int_shape(x)
 		
@@ -272,10 +270,11 @@ class ConvVAEPredictor(object):
 
 		shouldbe_last_conv_shape = (numerator//divisor, n_channels)
 		
+		x = reshaped_dnn_w_latent
 		for layer_size in self.vae_hidden_dims:
                         x = Dense(units = layer_size, activation='relu')(x)
-                        
-		x = x(reshaped_dnn_w_latent)
+
+		x = Dense(units = np.prod(shouldbe_last_conv_shape), activation='relu')(x)
 		
 		# Reshapes z into a feature map of the same shape as the feature map
 		#	just before the last Flatten layer in the encoder model
@@ -292,23 +291,16 @@ class ConvVAEPredictor(object):
 		for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
 			name = base_name.format(kb)
 			
-			x = Conv1DTranspose(filters = cfilter, 
-								kernel_size = ksize,
-								strides = stride,
-								padding = padding, 
-								activation = activation,
-								name = name)(x)
+			print("Decoder kernel", (ksize))
+			x = Conv1DTranspose(cfilter, ksize,
+							strides = stride,
+							padding = padding, 
+							activation = activation,
+							name = name)(x)
 			
-			x = UpSampling1D(psize)(x)
+			x = UpSampling1D((psize,))(x)
 		
-		# Use a point-wise convolution on the top of the conv-stack
-		#	this is the image generation stage: sigmoid == images from 0-1
-		one = 1 # required to make a `point-wise` convolution
-		self.vae_reconstruction = Conv1DTranspose(filters =one, 
-										kernel_size = self.final_kernel_size, 
-										padding = 'same', 
-										activation = 'sigmoid',
-										name = 'vae_reconstruction')(x)
+		self.vae_reconstruction = x
 
 	def dnn_kl_loss(self, labels, preds):
 		vs = 1 - self.dnn_log_var_prior + self.dnn_latent_log_var

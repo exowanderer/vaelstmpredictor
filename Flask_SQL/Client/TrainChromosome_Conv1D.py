@@ -95,6 +95,9 @@ if __name__ == '__main__':
 
 			vae_hidden_dims = [clargs.size_vae_hidden]*clargs.num_vae_layers
 			dnn_hidden_dims = [clargs.size_dnn_hidden]*clargs.num_dnn_layers
+			size_kernel = np.array(json.loads(clargs.size_kernel))
+			size_pool = np.array(json.loads(clargs.size_pool))
+			size_filter = np.array(json.loads(clargs.size_filter))
 			
 			data_instance = MNISTData(batch_size = clargs.batch_size)
 			
@@ -118,9 +121,9 @@ if __name__ == '__main__':
 			chrom_params['dnn_weight'] = clargs.dnn_weight
 			chrom_params['dnn_kl_weight'] = clargs.dnn_kl_weight
 			chrom_params['num_conv_layers'] = clargs.num_conv_layers
-			chrom_params['size_kernel'] = clargs.size_kernel
-			chrom_params['size_pool'] = clargs.size_pool
-			chrom_params['size_filter'] = clargs.size_filterclargs.
+			chrom_params['size_kernel'] = size_kernel
+			chrom_params['size_pool'] = size_pool
+			chrom_params['size_filter'] = size_filter
 			chrom_params['clargs'] = clargs
 
 			info_message('\n\nParams for this VAE_NN:')
