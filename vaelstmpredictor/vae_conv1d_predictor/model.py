@@ -6,7 +6,7 @@ import scipy.stats
 from functools import partial, update_wrapper
 
 from keras import backend as K
-from keras.layers import Input, Lambda, concatenate, Dense, Conv1D 
+from keras.layers import Input, Lambda, concatenate, Dense, Conv1D , MaxPooling1D
 from keras.layers import UpSampling1D, Flatten, Reshape
 from keras.models import Model, Sequential
 from keras.losses import binary_crossentropy, categorical_crossentropy
@@ -98,9 +98,10 @@ def dnn_sampling(args, latent_dim, batch_size = 128, channels = None,
 
 class ConvVAEPredictor(object):
 	def __init__(self, encoder_filters, encoder_kernel_sizes,
+					vae_hidden_dims, dnn_hidden_dims, 
 					decoder_filters, decoder_kernel_sizes, 
 					dnn_filters, dnn_kernel_sizes, dnn_strides = 2,
-					encoder_strides = 2, decoder_strides = 2, 
+					encoder_pool_sizes, dnn_pool_sizes, decoder_pool_sizes,					encoder_strides = 2, decoder_strides = 2,
 					vae_latent_dim = 2, encoder_top_size = 16, 
 					final_kernel_size = 3, data_shape = (784,1), 
 					batch_size = 128, run_all = False, 
@@ -119,22 +120,29 @@ class ConvVAEPredictor(object):
 		
 		self.encoder_filters = encoder_filters
 		self.encoder_kernel_sizes = encoder_kernel_sizes
+		self.encoder_pool_sizes = encoder_pool_sizes
 		self.encoder_strides = encoder_strides
 		self.encoder_top_size = encoder_top_size
 		
 		self.decoder_filters = decoder_filters
 		self.decoder_kernel_sizes = decoder_kernel_sizes
+		self.decoder_pool_sizes = decoder_pool_sizes
 		self.decoder_strides = decoder_strides
 		self.final_kernel_size = final_kernel_size
 
 		self.dnn_filters = dnn_filters
 		self.dnn_kernel_sizes = dnn_kernel_sizes
+		self.dnn_pool_sizes = dnn_pool_sizes
 		self.dnn_strides = dnn_strides
 		self.dnn_out_dim = dnn_out_dim
 
 		self.layer_type = layer_type
 		self.predictor_type = predictor_type
 		self.original_dim = original_dim
+		
+		self.vae_hidden_dims = vae_hidden_dims
+		self.dnn_hidden_dims = dnn_hidden_dims
+		self.vae_latent_dim = vae_latent_dim
 		
 		"""FINDME: Why is this dnn_out_dim-1(??)"""
 		if dnn_latent_dim is not None: self.dnn_latent_dim = dnn_out_dim - 1
@@ -152,9 +160,10 @@ class ConvVAEPredictor(object):
 		
 		zipper = zip(self.dnn_filters, 
 					self.dnn_kernel_sizes,
+					self.dnn_pool_sizes,
 					self.dnn_strides)
 		
-		for kb, (cfilter, ksize, stride) in enumerate(zipper):
+		for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
 			name = base_name.format(kb)
 			
 			x = Conv1D(filters = cfilter, 
@@ -163,11 +172,12 @@ class ConvVAEPredictor(object):
 								padding = padding,
 								activation = activation, 
 								name = name)(x)
+			x = MaxPooling1D(psize)(x)
 
 		x = Flatten()(x)
-		
-		x = Dense(units = self.dnn_out_dim, 
-						activation='relu', name = 'dnn_dense_0')(x)
+
+		for layer_size in self.dnn_hidden_dims:
+                        x = Dense(units = layer_size, activation='relu')(x)
 		
 		# The input image ends up being encoded into these two parameters
 		self.dnn_latent_mean = Dense(units = self.dnn_latent_dim, 
@@ -198,9 +208,10 @@ class ConvVAEPredictor(object):
 
 		zipper = zip(self.encoder_filters, 
 					self.encoder_kernel_sizes,
+					self.encoder_pool_sizes,
 					self.encoder_strides)
 
-		for kb, (cfilter, ksize, stride) in enumerate(zipper):
+		for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
 			name = base_name.format(kb)
 			
 			x = Conv1D(filters = cfilter, 
@@ -209,13 +220,14 @@ class ConvVAEPredictor(object):
 								padding = padding,
 								activation = activation, 
 								name = name)(x)
+			x = MaxPooling1D(psize)(x)
 
 		self.last_conv_shape = K.int_shape(x)
 		
 		x = Flatten()(x)
-		
-		x = Dense(units = self.encoder_top_size, 
-						activation='relu', name = 'enc_dense_0')(x)
+
+		for layer_size in self.vae_hidden_dims:
+                        x = Dense(units = layer_size, activation='relu')(x)
 
 		# The input image ends up being encoded into these two parameters
 		self.vae_latent_mean = Dense(units = self.vae_latent_dim, 
@@ -259,8 +271,10 @@ class ConvVAEPredictor(object):
 		numerator = self.data_shape[0]
 
 		shouldbe_last_conv_shape = (numerator//divisor, n_channels)
-		x = Dense(np.prod(shouldbe_last_conv_shape),
-							activation = 'relu', name = 'dec_dense_0')
+		
+		for layer_size in self.vae_hidden_dims:
+                        x = Dense(units = layer_size, activation='relu')(x)
+                        
 		x = x(reshaped_dnn_w_latent)
 		
 		# Reshapes z into a feature map of the same shape as the feature map
@@ -272,9 +286,10 @@ class ConvVAEPredictor(object):
 		'''
 		zipper = zip(self.decoder_filters, 
 					self.decoder_kernel_sizes,
+					self.decoder_pool_sizes,
 					self.decoder_strides)
 
-		for kb, (cfilter, ksize, stride) in enumerate(zipper):
+		for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
 			name = base_name.format(kb)
 			
 			x = Conv1DTranspose(filters = cfilter, 
@@ -283,6 +298,8 @@ class ConvVAEPredictor(object):
 								padding = padding, 
 								activation = activation,
 								name = name)(x)
+			
+			x = UpSampling1D(psize)(x)
 		
 		# Use a point-wise convolution on the top of the conv-stack
 		#	this is the image generation stage: sigmoid == images from 0-1

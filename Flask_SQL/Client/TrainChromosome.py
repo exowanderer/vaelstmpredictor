@@ -61,6 +61,7 @@ if __name__ == '__main__':
 			clargs.log_dir = params["log_dir"]
 			clargs.do_log = True
 			clargs.do_ckpt = False
+			clargs.verbose = True
 			#clargs.model_dir = params["model_dir"]
 			clargs.model_dir = "data/models"
 			clargs.mutate_prob = params["mutate_prob"]

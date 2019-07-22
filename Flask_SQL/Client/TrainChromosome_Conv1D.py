@@ -75,21 +75,26 @@ if __name__ == '__main__':
 			clargs.prediction_log_var_prior = params["prediction_log_var_prior"]
 			clargs.predictor_type = params["predictor_type"]
 			clargs.run_name = params["run_name"]
-			
-			clargs.dnn_filter_size = params["size_dnn_hidden"]
-			clargs.vae_filter_size = params["size_vae_hidden"]
-			
+			clargs.size_dnn_hidden = params["size_dnn_hidden"]
+			clargs.size_vae_hidden = params["size_vae_hidden"]
 			clargs.vae_latent_dim = params["size_vae_latent"]
 			clargs.table_dir = params["table_dir"]
 			clargs.train_file = params["train_file"]
 			clargs.vae_kl_weight = params["vae_kl_weight"]
 			clargs.vae_weight = params["vae_weight"]
 			clargs.w_kl_anneal = params["w_kl_anneal"]
+			clargs.num_conv_layers = params["num_conv_layers"]
+			clargs.size_kernel = params["size_kernel"]
+			clargs.size_pool = params["size_pool"]
+			clargs.size_filter = params["size_filter"]
 			
 			clargs.hostname = hostname
 			clargs.time_stamp = int(time())
 			#Missing in DB?
 			clargs.save_model = ""
+
+			vae_hidden_dims = [clargs.size_vae_hidden]*clargs.num_vae_layers
+			dnn_hidden_dims = [clargs.size_dnn_hidden]*clargs.num_dnn_layers
 			
 			data_instance = MNISTData(batch_size = clargs.batch_size)
 			
@@ -103,10 +108,8 @@ if __name__ == '__main__':
 			chrom_params['data_instance'] = data_instance
 			chrom_params['verbose'] = clargs.verbose
 			chrom_params['save_model'] = clargs.save_model
-			chrom_params['num_vae_layers'] = clargs.num_vae_layers
-			chrom_params['num_dnn_layers'] = clargs.num_dnn_layers
-			chrom_params['dnn_filter_size'] = clargs.dnn_filter_size
-			chrom_params['vae_filter_size'] = clargs.vae_filter_size
+			chrom_params['vae_hidden_dims'] = vae_hidden_dims
+			chrom_params['dnn_hidden_dims'] = dnn_hidden_dims
 			chrom_params['vae_latent_dim'] = clargs.vae_latent_dim
 			chrom_params['generationID'] = clargs.generationID
 			chrom_params['chromosomeID'] = clargs.chromosomeID
@@ -114,6 +117,10 @@ if __name__ == '__main__':
 			chrom_params['vae_kl_weight'] = clargs.vae_kl_weight
 			chrom_params['dnn_weight'] = clargs.dnn_weight
 			chrom_params['dnn_kl_weight'] = clargs.dnn_kl_weight
+			chrom_params['num_conv_layers'] = clargs.num_conv_layers
+			chrom_params['size_kernel'] = clargs.size_kernel
+			chrom_params['size_pool'] = clargs.size_pool
+			chrom_params['size_filter'] = clargs.size_filterclargs.
 			chrom_params['clargs'] = clargs
 
 			info_message('\n\nParams for this VAE_NN:')

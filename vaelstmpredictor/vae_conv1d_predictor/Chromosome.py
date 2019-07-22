@@ -27,9 +27,10 @@ def info_message(message, end = '\n'):
 class Chromosome(ConvVAEPredictor):
 	
 	def __init__(self, clargs, data_instance, vae_latent_dim, 
-				num_vae_layers, num_dnn_layers, 
-				vae_filter_size, dnn_filter_size, 
-				vae_kernel_size = 3, dnn_kernel_size = 3,
+				vae_hidden_dims, dnn_hidden_dims,
+				num_conv_layers, size_kernel, size_pool, size_filter,
+				#vae_filter_size, dnn_filter_size, 
+				#vae_kernel_size = 3, dnn_kernel_size = 3,
 				dnn_strides = 2, vae_strides = 2, encoder_top_size = 16, 
 				final_kernel_size = 3, data_shape = (784,1), 
 				generationID = 0, chromosomeID = 0, 
@@ -40,26 +41,37 @@ class Chromosome(ConvVAEPredictor):
 				n_channels = 1, verbose = False):
 
 		''' Configure dnn '''
-		dnn_filters = np.array([dnn_filter_size]*num_dnn_layers)
-		self.dnn_filters = dnn_filters*(2**np.arange(num_dnn_layers))
+		#dnn_filters = np.array([dnn_filter_size]*num_dnn_layers)
+		#self.dnn_filters = dnn_filters*(2**np.arange(num_dnn_layers))
+		self.dnn_filters = size_filter
 		
-		self.dnn_kernel_sizes = [dnn_kernel_size]*num_dnn_layers
-		self.dnn_strides = [dnn_strides]*num_dnn_layers
+		#self.dnn_kernel_sizes = [dnn_kernel_size]*num_dnn_layers
+		#self.dnn_strides = [dnn_strides]*num_dnn_layers
+		self.dnn_kernel_sizes = size_kernel*2 +1
+		self.dnn_pool_sizes = size_pool*2
+		self.dnn_strides = [dnn_strides]*num_conv_layers
 
 		''' Configure encoder '''
-		encoder_filters = np.array([vae_filter_size]*num_vae_layers)
-		self.encoder_filters = encoder_filters*(2**np.arange(num_vae_layers))
+		#encoder_filters = np.array([vae_filter_size]*num_vae_layers)
+		#self.encoder_filters = encoder_filters*(2**np.arange(num_vae_layers))
+		self.encoder_filters = size_filter
 		
-		self.encoder_kernel_sizes = [vae_kernel_size]*num_vae_layers
-		self.encoder_strides = [vae_strides]*num_vae_layers
+		#self.encoder_kernel_sizes = [vae_kernel_size]*num_vae_layers
+		#self.encoder_strides = [vae_strides]*num_vae_layers
+		self.encoder_kernel_sizes = size_kernel*2 +1
+		self.encoder_pool_sizes = size_pool*2
+		self.encoder_strides = [vae_strides]*num_conv_layers
 
 		''' Configure Decoder '''
-		decoder_filters = [vae_filter_size]*num_vae_layers
-		decoder_filters = np.array(decoder_filters)
-		self.decoder_filters = decoder_filters//(2**np.arange(num_vae_layers))
+		#decoder_filters = np.array([vae_filter_size]*num_vae_layers)
+		#self.decoder_filters = decoder_filters//(2**np.arange(num_vae_layers))
+		self.decoder_filters = np.flip(size_filter, axis=0)
 
-		self.decoder_kernel_sizes = [vae_kernel_size]*num_vae_layers
-		self.decoder_strides = [vae_strides]*num_vae_layers
+		#self.decoder_kernel_sizes = [vae_kernel_size]*num_vae_layers
+		#self.decoder_strides = [vae_strides]*num_vae_layers
+		self.decoder_kernel_sizes = np.flip(size_kernel*2 +1, axis=0)
+		self.decoder_pool_sizes = size_pool*2
+		self.decoder_strides = [vae_strides]*num_conv_layers
 		
 		''' Store in `self` '''
 		self.data_shape = data_shape
@@ -101,6 +113,9 @@ class Chromosome(ConvVAEPredictor):
 		self.vae_kl_weight = vae_kl_weight
 		self.dnn_weight = dnn_weight
 		self.dnn_kl_weight = dnn_kl_weight
+		
+		self.vae_hidden_dims = vae_hidden_dims
+		self.dnn_hidden_dims = dnn_hidden_dims
 		
 		'''
 		self.params_dict = {}
