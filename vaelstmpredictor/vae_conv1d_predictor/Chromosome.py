@@ -54,7 +54,7 @@ class Chromosome(ConvVAEPredictor):
 		''' Configure encoder '''
 		#encoder_filters = np.array([vae_filter_size]*num_vae_layers)
 		#self.encoder_filters = encoder_filters*(2**np.arange(num_vae_layers))
-		self.encoder_filters = size_filter
+		self.encoder_filters = [size_filter]*num_conv_layers
 		
 		#self.encoder_kernel_sizes = [vae_kernel_size]*num_vae_layers
 		#self.encoder_strides = [vae_strides]*num_vae_layers

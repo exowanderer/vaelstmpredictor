@@ -45,14 +45,14 @@ ITERABLES = (list, tuple, np.array)
 def debug_message(message): print('[DEBUG] {}'.format(message))
 def info_message(message): print('[INFO] {}'.format(message))
 
-def Conv1DTranspose(filters, kernel_size, strides = 1, padding='same', 
+def Conv1DTranspose(filters, ksize, strides = 1, padding='same', 
 						activation = 'relu', name = None):
 	
 	conv1D = Sequential(name = name)
 	conv1D.add(UpSampling1D(size=strides))
 
 	# FINDME maybe strides should be == 1 here? Check size ratios after decoder
-	conv1D.add(Conv1D(filters, kernel_size, padding=padding, activation = activation))
+	conv1D.add(Conv1D(filters, ksize, padding=padding, activation = activation))
 	return conv1D
 
 def vae_sampling(args, latent_dim, batch_size = 128, 
@@ -171,7 +171,7 @@ class ConvVAEPredictor(object):
 						padding = padding,
 						activation = activation, 
 						name = name)(x)
-			x = MaxPooling1D((psize,))(x)
+			x = MaxPooling1D(psize)(x)
 
 		x = Flatten()(x)
 
@@ -218,7 +218,7 @@ class ConvVAEPredictor(object):
 						padding = padding,
 						activation = activation, 
 						name = name)(x)
-			x = MaxPooling1D((psize,))(x)
+			x = MaxPooling1D(psize)(x)
 
 		self.last_conv_shape = K.int_shape(x)
 		
@@ -291,16 +291,19 @@ class ConvVAEPredictor(object):
 		for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
 			name = base_name.format(kb)
 			
-			print("Decoder kernel", (ksize))
 			x = Conv1DTranspose(cfilter, ksize,
 							strides = stride,
 							padding = padding, 
 							activation = activation,
 							name = name)(x)
 			
-			x = UpSampling1D((psize,))(x)
+			x = UpSampling1D(psize)(x)
 		
-		self.vae_reconstruction = x
+		
+		self.vae_reconstruction = Conv1DTranspose(1, self.final_kernel_size,
+							padding='same',
+							activation='sigmoid',
+							name='vae_reconstruction')(x)
 
 	def dnn_kl_loss(self, labels, preds):
 		vs = 1 - self.dnn_log_var_prior + self.dnn_latent_log_var
@@ -378,7 +381,6 @@ class ConvVAEPredictor(object):
 				)
 	
 	def vae_reconstruction_loss(self, input_layer, vae_reconstruction):
-
 		# reshape_input_layer = Reshape((self.batch_size, self.data_shape[0]))
 		# input_layer = reshape_input_layer(input_layer)
 
