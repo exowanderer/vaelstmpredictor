@@ -28,7 +28,7 @@ class Chromosome(ConvVAEPredictor):
 	
 	def __init__(self, clargs, data_instance, vae_latent_dim, 
 				vae_hidden_dims, dnn_hidden_dims,
-				num_conv_layers, size_kernel, size_pool, size_filter,
+				num_conv_layers, size_kernel, size_filter, size_pool = 2,
 				#vae_filter_size, dnn_filter_size, 
 				#vae_kernel_size = 3, dnn_kernel_size = 3,
 				dnn_strides = 2, vae_strides = 2, encoder_top_size = 16, 
@@ -43,12 +43,12 @@ class Chromosome(ConvVAEPredictor):
 		''' Configure dnn '''
 		#dnn_filters = np.array([dnn_filter_size]*num_dnn_layers)
 		#self.dnn_filters = dnn_filters*(2**np.arange(num_dnn_layers))
-		self.dnn_filters = size_filter
+		self.dnn_filters = [size_filter]*num_conv_layers
 		
 		#self.dnn_kernel_sizes = [dnn_kernel_size]*num_dnn_layers
 		#self.dnn_strides = [dnn_strides]*num_dnn_layers
-		self.dnn_kernel_sizes = size_kernel*2 +1
-		self.dnn_pool_sizes = size_pool*2
+		self.dnn_kernel_sizes = [size_kernel*2 +1]*num_conv_layers
+		self.dnn_pool_sizes = [size_pool*2]*num_conv_layers
 		self.dnn_strides = [dnn_strides]*num_conv_layers
 
 		''' Configure encoder '''
@@ -58,19 +58,19 @@ class Chromosome(ConvVAEPredictor):
 		
 		#self.encoder_kernel_sizes = [vae_kernel_size]*num_vae_layers
 		#self.encoder_strides = [vae_strides]*num_vae_layers
-		self.encoder_kernel_sizes = size_kernel*2 +1
-		self.encoder_pool_sizes = size_pool*2
+		self.encoder_kernel_sizes = [size_kernel*2 +1]*num_conv_layers
+		self.encoder_pool_sizes = [size_pool*2]*num_conv_layers
 		self.encoder_strides = [vae_strides]*num_conv_layers
 
 		''' Configure Decoder '''
 		#decoder_filters = np.array([vae_filter_size]*num_vae_layers)
 		#self.decoder_filters = decoder_filters//(2**np.arange(num_vae_layers))
-		self.decoder_filters = np.flip(size_filter, axis=0)
+		self.decoder_filters = [size_filter]*num_conv_layers
 
 		#self.decoder_kernel_sizes = [vae_kernel_size]*num_vae_layers
 		#self.decoder_strides = [vae_strides]*num_vae_layers
-		self.decoder_kernel_sizes = np.flip(size_kernel*2 +1, axis=0)
-		self.decoder_pool_sizes = size_pool*2
+		self.decoder_kernel_sizes = [size_kernel*2 +1]*num_conv_layers
+		self.decoder_pool_sizes = [size_pool*2]*num_conv_layers
 		self.decoder_strides = [vae_strides]*num_conv_layers
 		
 		''' Store in `self` '''
