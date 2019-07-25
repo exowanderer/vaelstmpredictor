@@ -111,7 +111,7 @@ class ConvVAEPredictor(object):
 					dnn_log_var_prior = 0.0, optimizer = 'adam-wn', 
 					predictor_type = 'classification', 
 					layer_type = 'Conv1D'):
-
+		K.clear_session()
 		self.n_channels = n_channels
 		self.data_shape = data_shape
 		self.batch_size = batch_size
