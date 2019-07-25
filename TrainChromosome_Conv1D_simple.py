@@ -137,6 +137,7 @@ if __name__ == '__main__':
 			try:
 				chromosome = Chromosome(**chrom_params)
 				chromosome.verbose = True
+				chromosome.model.summary()
 				chromosome.train(verbose=True)
 			except Exception as e:
 				warning_message("Error has occured while training")

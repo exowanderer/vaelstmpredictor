@@ -28,10 +28,10 @@ class Chromosome(ConvVAEPredictor):
 	
 	def __init__(self, clargs, data_instance, vae_latent_dim, 
 				vae_hidden_dims, dnn_hidden_dims,
-				num_conv_layers, size_kernel, size_filter, size_pool = 2,
+				num_conv_layers, size_kernel, size_filter, size_pool = 1,
 				#vae_filter_size, dnn_filter_size, 
 				#vae_kernel_size = 3, dnn_kernel_size = 3,
-				dnn_strides = 2, vae_strides = 2, encoder_top_size = 16, 
+				dnn_strides = 1, vae_strides = 1, encoder_top_size = 16, 
 				final_kernel_size = 3, data_shape = (784,1), 
 				generationID = 0, chromosomeID = 0, 
 				vae_kl_weight = 1.0, vae_weight = 1.0, 

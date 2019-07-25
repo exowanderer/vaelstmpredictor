@@ -6,7 +6,7 @@ import scipy.stats
 from functools import partial, update_wrapper
 
 from keras import backend as K
-from keras.layers import Input, Lambda, concatenate, Dense, Conv1D , MaxPooling1D
+from keras.layers import Input, Lambda, concatenate, Dense, Conv1D #, MaxPooling1D
 from keras.layers import UpSampling1D, Flatten, Reshape
 from keras.models import Model, Sequential
 from keras.losses import binary_crossentropy, categorical_crossentropy
@@ -171,7 +171,7 @@ class ConvVAEPredictor(object):
 						padding = padding,
 						activation = activation, 
 						name = name)(x)
-			x = MaxPooling1D(psize)(x)
+			# x = MaxPooling1D(psize)(x)
 
 		x = Flatten()(x)
 
@@ -218,7 +218,7 @@ class ConvVAEPredictor(object):
 						padding = padding,
 						activation = activation, 
 						name = name)(x)
-			x = MaxPooling1D(psize)(x)
+			# x = MaxPooling1D(psize)(x)
 
 		self.last_conv_shape = K.int_shape(x)
 		
@@ -297,7 +297,7 @@ class ConvVAEPredictor(object):
 							activation = activation,
 							name = name)(x)
 			
-			x = UpSampling1D(psize)(x)
+			# x = UpSampling1D(psize)(x)
 		
 		
 		self.vae_reconstruction = Conv1DTranspose(1, self.final_kernel_size,
