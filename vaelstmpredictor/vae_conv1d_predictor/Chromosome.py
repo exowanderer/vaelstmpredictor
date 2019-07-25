@@ -37,7 +37,7 @@ class Chromosome(ConvVAEPredictor):
 				vae_kl_weight = 1.0, vae_weight = 1.0, 
 				dnn_weight = 1.0, dnn_kl_weight = 1.0,
 				dnn_latent_dim = None, batch_size = 128, 
-				dnn_log_var_prior = 0.0, save_model = True, 
+				dnn_log_var_prior = 0.0, save_model = False, 
 				n_channels = 1, verbose = False):
 
 		''' Configure dnn '''

@@ -62,6 +62,7 @@ if __name__ == '__main__':
 			clargs.do_log = True
 			clargs.do_ckpt = False
 			clargs.verbose = True
+			clargs.save_model = False
 			#clargs.model_dir = params["model_dir"]
 			clargs.model_dir = "data/models"
 			clargs.mutate_prob = params["mutate_prob"]
@@ -90,8 +91,6 @@ if __name__ == '__main__':
 			
 			clargs.hostname = hostname
 			clargs.time_stamp = int(time())
-			#Missing in DB?
-			clargs.save_model = ""
 
 			vae_hidden_dims = [clargs.size_vae_hidden]*clargs.num_vae_layers
 			dnn_hidden_dims = [clargs.size_dnn_hidden]*clargs.num_dnn_layers
