@@ -44,6 +44,11 @@ def AddChrom():
         size_vae_latent = request.args.get('size_vae_latent')
         size_vae_hidden = request.args.get('size_vae_hidden')
         size_dnn_hidden = request.args.get('size_dnn_hidden')
+        num_conv_layers = request.args.get('num_conv_layers')
+        size_kernel = request.args.get('size_kernel')
+        size_pool = request.args.get('size_pool')
+        size_filter = request.args.get('size_filter')
+        info = request.args.get('info')
 
         c = db.session.query(Chromosome).filter(Chromosome.chromosomeID == chromosomeID, Chromosome.generationID == generationID).first()
         if(c == None):
@@ -79,7 +84,12 @@ def AddChrom():
                                 num_dnn_layers = num_dnn_layers,
                                 size_vae_latent = size_vae_latent,
                                 size_vae_hidden = size_vae_hidden,
-                                size_dnn_hidden = size_dnn_hidden)
+                                size_dnn_hidden = size_dnn_hidden,
+                                num_conv_layers = num_conv_layers,
+                                size_kernel = size_kernel,
+                                size_pool = size_pool,
+                                size_filter = size_filter,
+                                info = info)
             db.session.add(chrom)
         else :
             c.isTrained = isTrained
@@ -113,6 +123,11 @@ def AddChrom():
             c.size_vae_latent = size_vae_latent
             c.size_vae_hidden = size_vae_hidden
             c.size_dnn_hidden = size_dnn_hidden
+            c.num_conv_layers = num_conv_layers
+            c.size_kernel = size_kernel
+            c.size_pool = size_pool
+            c.size_filter = size_filter
+            c.info = info
         db.session.commit()
         return "1"
     return '0'
@@ -122,6 +137,29 @@ def GetGeneration():
     if request.method == 'GET':
         generationID = db.session.query(Variables).filter(Variables.name == "CurrentGen").first().value
         chroms = db.session.query(Chromosome).filter(Chromosome.generationID == generationID).all()
+        resp = []
+        for c in chroms:
+            resp.append({'chromosomeID': c.chromosomeID,
+                        'generationID': c.generationID,
+                        'isTrained': c.isTrained,
+            			'fitness': c.fitness,
+            			'num_vae_layers': c.num_vae_layers,
+            			'num_dnn_layers': c.num_dnn_layers,
+            			'size_vae_latent': c.size_vae_latent,
+            			'size_vae_hidden': c.size_vae_hidden,
+            			'size_dnn_hidden': c.size_dnn_hidden,
+            			'num_conv_layers': c.num_conv_layers,
+                        'size_kernel': c.size_kernel,
+                        'size_pool': c.size_pool,
+                        'size_filter': c.size_filter,
+            			'info': c.info})
+        return jsonify(resp)
+    return '0'
+
+@app.route('/GetDatabase')
+def GetDatabase():
+    if request.method == 'GET':
+        chroms = db.session.query(Chromosome).all()
         resp = []
         for c in chroms:
             resp.append({'chromosomeID': c.chromosomeID,
@@ -156,7 +194,12 @@ def GetGeneration():
             			'num_dnn_layers': c.num_dnn_layers,
             			'size_vae_latent': c.size_vae_latent,
             			'size_vae_hidden': c.size_vae_hidden,
-            			'size_dnn_hidden': c.size_dnn_hidden})
+            			'size_dnn_hidden': c.size_dnn_hidden,
+            			'num_conv_layers': c.num_conv_layers,
+                        'size_kernel': c.size_kernel,
+                        'size_pool': c.size_pool,
+                        'size_filter': c.size_filter,
+            			'info': c.info})
         return jsonify(resp)
     return '0'
 
@@ -202,7 +245,12 @@ def GetUnTrainedChrom():
             			'num_dnn_layers': c.num_dnn_layers,
             			'size_vae_latent': c.size_vae_latent,
             			'size_vae_hidden': c.size_vae_hidden,
-            			'size_dnn_hidden': c.size_dnn_hidden})
+            			'size_dnn_hidden': c.size_dnn_hidden,
+            			'num_conv_layers': c.num_conv_layers,
+                        'size_kernel': c.size_kernel,
+                        'size_pool': c.size_pool,
+                        'size_filter': c.size_filter,
+            			'info': c.info})
     return '0'
 
 @app.route('/GetIsDone')

@@ -3,8 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
 app = Flask(__name__)
-#Connect to Database
-app.config['SQLALCHEMY_DATABASE_URI'] = ''
+app.config['SECRET_KEY'] = 'password'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://username:password@username.mysql.pythonanywhere-services.com/username$databasename'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "x-access-token"], supports_credentials=True)
 db = SQLAlchemy(app)
@@ -45,6 +45,11 @@ class Chromosome(db.Model):
     size_vae_latent = db.Column(db.Integer, default = 0)
     size_vae_hidden = db.Column(db.Integer, default = 0)
     size_dnn_hidden = db.Column(db.Integer, default = 0)
+    num_conv_layers = db.Column(db.Integer, default = 0)
+    size_kernel = db.Column(db.String(50), default = '[]')
+    size_pool = db.Column(db.String(50), default = '[]')
+    size_filter = db.Column(db.String(50), default = '[]')
+    info = db.Column(db.String(100), default = '')
 
 class Variables(db.Model):
     __tablename__ = 'Variables'

@@ -1,3 +1,6 @@
+import sys, os.path
+sys.path.append(os.path.abspath('../'))
+
 import numpy as np
 import socket
 from time import time
@@ -147,6 +150,13 @@ if __name__ == '__main__':
         CurrentGen.value = 0
         db.session.commit()
 
+    #------ Conv1D ----------
+    clargs.min_vae_hidden = 1
+    clargs.max_vae_hidden = 128
+    clargs.min_dnn_hidden = 1
+    clargs.max_dnn_hidden = 128
+    #------------------------
+
     generation = generate_random_chromosomes(population_size = population_size,
                         min_vae_hidden_layers = clargs.min_vae_hidden_layers,
                         min_dnn_hidden_layers = clargs.min_dnn_hidden_layers,
@@ -198,16 +208,18 @@ if __name__ == '__main__':
 
         for chromosomeID in tqdm(range(population_size)):
             parent1, parent2 = select_parents(generation)
-
-            child, crossover_happened = cross_over(new_generation, generation,
+            print("Start")
+            print("Chrom",chromosomeID, generation.loc[chromosomeID, ["size_dnn_hidden", "size_vae_hidden"]])
+            crossover_happened = cross_over(new_generation, generation,
                                             parent1, parent2, chromosomeID,
-                                            param_choices.keys(), cross_prob,
+                                            list(param_choices.keys()), cross_prob,
                                             verbose = verbose)
 
-            new_generation, mutation_happened = mutate(
-                                            new_generation, generation,
+            mutation_happened = mutate(new_generation, generation,
                                             chromosomeID, mutate_prob,
                                             param_choices, verbose = verbose)
+            print("End")
+            print("Chrom",chromosomeID, generation.loc[chromosomeID, ["size_dnn_hidden", "size_vae_hidden"]])
 
             isTrained = not (mutation_happened or crossover_happened)
             if not isTrained:

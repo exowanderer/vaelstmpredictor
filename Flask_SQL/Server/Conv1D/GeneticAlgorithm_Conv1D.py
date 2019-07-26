@@ -1,8 +1,12 @@
+import sys, os.path
+sys.path.append(os.path.abspath('../'))
+
 from database import db, Chromosome
 import numpy as np
 import pandas as pd
 from numpy import random
 from time import sleep
+from flask import json
 import os
 
 import warnings
@@ -91,6 +95,11 @@ def create_blank_dataframe(generationID, population_size):
     generation['vae_kl_weight'] = zeros
     generation['vae_weight'] = zeros
     generation['w_kl_anneal'] = zeros
+    generation['num_conv_layers'] = zeros
+    generation['size_kernel'] = [np.array([], dtype=int)]*population_size
+    generation['size_pool'] = [np.array([], dtype=int)]*population_size
+    generation['size_filter'] = [np.array([], dtype=int)]*population_size
+    generation['info'] = ['']*population_size
 
     return generation
 
@@ -100,6 +109,10 @@ def generate_random_chromosomes(population_size, geneationID = 0,
                         min_vae_hidden = 2, max_vae_hidden = 1024,
                         min_dnn_hidden = 2, max_dnn_hidden = 1024,
                         min_vae_latent = 2, max_vae_latent = 1024,
+                        min_conv_layers = 1, max_conv_layers = 5,
+                        min_kernel_size = 0, max_kernel_size = 6,
+                        min_pool_size = 0, max_pool_size = 4,
+                        min_filter_size = 1, max_filter_size = 128,
                         verbose=False):
 
     # create blank dataframe with full SQL database required entrie
@@ -111,6 +124,10 @@ def generate_random_chromosomes(population_size, geneationID = 0,
     vae_latent_choices = range(min_vae_latent, max_vae_latent)
     vae_nUnits_choices = range(min_vae_hidden, max_vae_hidden)
     dnn_nUnits_choices = range(min_dnn_hidden, max_dnn_hidden)
+    conv_nUnits_choices = range(min_conv_layers, max_conv_layers)
+    kernel_nUnits_choices = range(min_kernel_size, max_kernel_size)
+    pool_nUnits_choices = range(min_pool_size, max_pool_size)
+    filter_nUnits_choices = range(min_filter_size, max_filter_size)
 
     generation['num_vae_layers'] = np.random.choice(vae_nLayers_choices,
                                                         size = population_size)
@@ -122,6 +139,13 @@ def generate_random_chromosomes(population_size, geneationID = 0,
                                                         size = population_size)
     generation['size_dnn_hidden'] = np.random.choice(dnn_nUnits_choices,
                                                         size = population_size)
+    generation['num_conv_layers'] = np.random.choice(conv_nUnits_choices,
+                                                        size = population_size)
+
+    for i in range(population_size):
+        generation.set_value(i, "size_kernel",  np.random.choice(kernel_nUnits_choices, size = (generation.loc[i, 'num_conv_layers'])))
+        generation.set_value(i, "size_pool",  np.random.choice(pool_nUnits_choices, size = (generation.loc[i, 'num_conv_layers'])))
+        generation.set_value(i, "size_filter",  np.random.choice(filter_nUnits_choices, size = (generation.loc[i, 'num_conv_layers'])))
 
     return generation
 
@@ -163,6 +187,11 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30):
         size_vae_latent = chromosome.size_vae_latent
         size_vae_hidden = chromosome.size_vae_hidden
         size_dnn_hidden = chromosome.size_dnn_hidden
+        num_conv_layers = chromosome.num_conv_layers
+        size_kernel = json.dumps(chromosome.size_kernel.tolist())
+        size_pool = json.dumps(chromosome.size_pool.tolist())
+        size_filter = json.dumps(chromosome.size_filter.tolist())
+        info = chromosome.info
 
         c = db.session.query(Chromosome).filter(Chromosome.chromosomeID == chromosomeID, Chromosome.generationID == generationID).first()
         if(c == None):
@@ -197,7 +226,12 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30):
                                 num_dnn_layers = num_dnn_layers,
                                 size_vae_latent = size_vae_latent,
                                 size_vae_hidden = size_vae_hidden,
-                                size_dnn_hidden = size_dnn_hidden)
+                                size_dnn_hidden = size_dnn_hidden,
+                                num_conv_layers = num_conv_layers,
+                                size_kernel = size_kernel,
+                                size_pool = size_pool,
+                                size_filter = size_filter,
+                                info = info)
             db.session.add(chrom)
         else :
             c.fitness = fitness
@@ -230,6 +264,11 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30):
             c.size_vae_latent = size_vae_latent
             c.size_vae_hidden = size_vae_hidden
             c.size_dnn_hidden = size_dnn_hidden
+            c.num_conv_layers = num_conv_layers
+            c.size_kernel = size_kernel
+            c.size_pool = size_pool
+            c.size_filter = size_filter
+            c.info = info
         db.session.commit()
 
     while True:
@@ -290,11 +329,30 @@ def cross_over(new_generation, generation, parent1, parent2,
         crossover_happened = True
 
         for param in param_choices:
+            if(param in ["size_kernel", "size_pool", "size_filter"]):
+                continue
             p1_param = generation.ix[idx_parent1, param]
             p2_param = generation.ix[idx_parent2, param]
 
             child_gene = random.choice([p1_param, p2_param])
             new_generation.set_value(chromosomeID, param, child_gene)
+
+        #Merge Kernel sizes, Max Pooling layers and Filter sizes
+        num_conv_layers = new_generation.ix[chromosomeID, "num_conv_layers"]
+        for array_param in ["size_kernel", "size_pool", "size_filter"]:
+            new_array = np.array([0]*num_conv_layers, dtype=int)
+            for i in range(num_conv_layers):
+                array_p1 = generation.ix[idx_parent1, array_param]
+                array_p2 = generation.ix[idx_parent2, array_param]
+                if(len(array_p1) <= i):
+                    new_array[i] = array_p2[i]
+                elif(len(array_p2) <= i):
+                    new_array[i] = array_p1[i]
+                else:
+                    new_array[i] = random.choice([array_p1[i], array_p2[i]])
+            new_generation.set_value(chromosomeID, array_param, new_array)
+
+        new_generation.set_value(chromosomeID, 'info', 'Child of '+str(parent1.chromosomeID)+' and '+str(parent2.chromosomeID))
     else:
         crossover_happened = False
 
@@ -302,11 +360,14 @@ def cross_over(new_generation, generation, parent1, parent2,
         p2_fitness = generation.ix[idx_parent2, 'fitness']
 
         idx_child = idx_parent1 if p1_fitness > p2_fitness else idx_parent1
-        new_generation.iloc[chromosomeID] = generation.iloc[idx_child].copy()
+        params_copy = param_choices + ['fitness', 'hostname', 'time_stamp', 'isTrained']
+        parent_p = generation.loc[idx_child, params_copy]
+        new_generation.set_value(chromosomeID, params_copy, parent_p)
+        new_generation.set_value(chromosomeID, 'info', 'Descendant of '+str(generation.loc[idx_child, 'chromosomeID']))
 
-    return new_generation.astype(generation.dtypes), crossover_happened
+    return crossover_happened
 
-def mutate(new_generation, generation, chromosomeID,
+def mutate(new_generation, chromosomeID,
             prob, param_choices, verbose = False):
 
     if verbose:
@@ -317,20 +378,72 @@ def mutate(new_generation, generation, chromosomeID,
         if(random.random() <= prob):
             mutation_happened = True
 
-            # Compute delta_param step
-            change_p = np.random.uniform(-range_change, range_change)
+            if(param not in ["num_conv_layers", "size_kernel", "size_pool", "size_filter"]):
+                # Compute delta_param step
+                change_p = np.random.uniform(-range_change, range_change)
 
-            # Add delta_param to param
-            current_p = generation.loc[chromosomeID, param] + change_p
+                # Add delta_param to param
+                current_p = new_generation.loc[chromosomeID, param] + change_p
 
-            # If param less than `min_val`, then set param to `min_val`
-            current_p = np.max([current_p, min_val])
-            current_p = np.int(np.round(current_p))
+                # If param less than `min_val`, then set param to `min_val`
+                current_p = np.max([current_p, min_val])
+                current_p = np.int(np.round(current_p))
 
-            # All params must be integer sized: round and convert
-            new_generation.set_value(chromosomeID, param, current_p)
+                # All params must be integer sized: round and convert
+                new_generation.set_value(chromosomeID, param, current_p)
+            elif param == "num_conv_layers":
+                # Add or remove 1 Convolution layer
 
-    return new_generation, mutation_happened
+                num_conv_layers = new_generation.loc[chromosomeID, "num_conv_layers"]
+                size_kernel = new_generation.loc[chromosomeID, "size_kernel"]
+                size_pool = new_generation.loc[chromosomeID, "size_pool"]
+                size_filter = new_generation.loc[chromosomeID, "size_filter"]
+
+                change_p = np.int(np.round(np.random.uniform(-1, 1)))
+                if(change_p == -1):
+                    if(num_conv_layers > 0):
+                        del_index = random.choice(range(num_conv_layers))
+                        size_kernel = np.delete(size_kernel, del_index)
+                        size_pool = np.delete(size_pool, del_index)
+                        size_filter = np.delete(size_filter, del_index)
+                        num_conv_layers -= 1
+                elif(change_p == 1):
+                    if(num_conv_layers > 0):
+                        dup_index = random.choice(range(num_conv_layers))
+                        size_kernel = np.append(size_kernel, size_kernel[dup_index])
+                        size_pool = np.append(size_pool, size_pool[dup_index])
+                        size_filter = np.append(size_filter, size_filter[dup_index])
+                    else:
+                        size_kernel = np.append(size_kernel, 0)
+                        size_pool = np.append(size_pool, 0)
+                        size_filter = np.append(size_filter, 0)
+                    num_conv_layers += 1
+
+                new_generation.set_value(chromosomeID, "num_conv_layers", num_conv_layers)
+                new_generation.set_value(chromosomeID, "size_kernel", size_kernel)
+                new_generation.set_value(chromosomeID, "size_pool", size_pool)
+                new_generation.set_value(chromosomeID, "size_filter", size_filter)
+
+            elif param in ["size_kernel", "size_pool", "size_filter"]:
+                # Choose a random index and mutate it
+
+                num_conv_layers = new_generation.loc[chromosomeID, "num_conv_layers"]
+                array_p = new_generation.loc[chromosomeID, param]
+                if(num_conv_layers > 0):
+                    change_index = random.choice(range(num_conv_layers))
+
+                    change_p = np.random.uniform(-range_change, range_change)
+                    current_p = array_p[change_index] + change_p
+                    current_p = np.max([current_p, min_val])
+                    current_p = np.int(np.round(current_p))
+
+                    array_p[change_index] = current_p
+                    new_generation.set_value(chromosomeID, param, array_p)
+
+    if(mutation_happened):
+        new_generation.set_value(chromosomeID, 'info', new_generation.loc[chromosomeID, 'info']+" [Mutated]")
+
+    return mutation_happened
 
 def activate_workers(logdir = 'train_logs',
                     git_dir = 'vaelstmpredictor',
