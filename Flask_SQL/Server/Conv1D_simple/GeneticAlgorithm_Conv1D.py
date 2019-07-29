@@ -145,124 +145,125 @@ def generate_random_chromosomes(population_size, geneationID = 0,
 
     return generation
 
-def train_generation(generation, clargs, verbose=False, sleep_time=30):
-    generationID = 0;
-
+def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=True):
+    generationID = generation['generationID'][0]
     print("Generation has "+str(len(generation))+" Chromosome")
-    for chromosome in generation.itertuples():
-        print("Chromosome ID: "+str(chromosome.chromosomeID))
-        chromosomeID = chromosome.chromosomeID
-        generationID = chromosome.generationID #Get Global Generation ID
-        fitness = chromosome.fitness
-        run_name = clargs.run_name
-        predictor_type = clargs.predictor_type
-        batch_size = clargs.batch_size
-        optimizer = clargs.optimizer
-        num_epochs = clargs.num_epochs
-        dnn_weight = clargs.dnn_weight
-        vae_weight = clargs.vae_weight
-        vae_kl_weight = clargs.vae_kl_weight
-        dnn_kl_weight = clargs.dnn_kl_weight
-        prediction_log_var_prior = clargs.prediction_log_var_prior
-        patience = clargs.patience
-        kl_anneal = clargs.kl_anneal
-        w_kl_anneal = clargs.w_kl_anneal
-        dnn_log_var_prior = clargs.dnn_log_var_prior
-        log_dir = clargs.log_dir
-        model_dir = clargs.model_dir
-        table_dir = clargs.table_dir
-        train_file = clargs.train_file
-        cross_prob = clargs.cross_prob
-        mutate_prob = clargs.mutate_prob
-        population_size = clargs.population_size
-        num_generations = clargs.num_generations
-        time_stamp = clargs.time_stamp
-        hostname = clargs.hostname
-        num_vae_layers = chromosome.num_vae_layers
-        num_dnn_layers = chromosome.num_dnn_layers
-        size_vae_latent = chromosome.size_vae_latent
-        size_vae_hidden = chromosome.size_vae_hidden
-        size_dnn_hidden = chromosome.size_dnn_hidden
-        num_conv_layers = chromosome.num_conv_layers
-        size_kernel = str(chromosome.size_kernel)
-        size_filter = str(chromosome.size_filter)
-        info = chromosome.info
 
-        c = db.session.query(Chromosome).filter(Chromosome.chromosomeID == chromosomeID, Chromosome.generationID == generationID).first()
-        if(c == None):
-            chrom = Chromosome(chromosomeID = chromosomeID,
-                                generationID = generationID,
-                                fitness = fitness,
-                                run_name = run_name,
-                                predictor_type = predictor_type,
-                                batch_size = batch_size,
-                                optimizer = optimizer,
-                                num_epochs = num_epochs,
-                                dnn_weight = dnn_weight,
-                                vae_weight = vae_weight,
-                                vae_kl_weight = vae_kl_weight,
-                                dnn_kl_weight = dnn_kl_weight,
-                                prediction_log_var_prior = prediction_log_var_prior,
-                                patience = patience,
-                                kl_anneal = kl_anneal,
-                                w_kl_anneal = w_kl_anneal,
-                                dnn_log_var_prior = dnn_log_var_prior,
-                                log_dir = log_dir,
-                                model_dir = model_dir,
-                                table_dir = table_dir,
-                                train_file = train_file,
-                                cross_prob = cross_prob,
-                                mutate_prob = mutate_prob,
-                                population_size = population_size,
-                                num_generations = num_generations,
-                                time_stamp = time_stamp,
-                                hostname = hostname,
-                                num_vae_layers = num_vae_layers,
-                                num_dnn_layers = num_dnn_layers,
-                                size_vae_latent = size_vae_latent,
-                                size_vae_hidden = size_vae_hidden,
-                                size_dnn_hidden = size_dnn_hidden,
-                                num_conv_layers = num_conv_layers,
-                                size_kernel = size_kernel,
-                                size_filter = size_filter,
-                                info = info)
-            db.session.add(chrom)
-        else :
-            c.fitness = fitness
-            c.run_name = run_name
-            c.predictor_type = predictor_type
-            c.batch_size = batch_size
-            c.optimizer = optimizer
-            c.num_epochs = num_epochs
-            c.dnn_weight = dnn_weight
-            c.vae_weight = vae_weight
-            c.vae_kl_weight = vae_kl_weight
-            c.dnn_kl_weight = dnn_kl_weight
-            c.prediction_log_var_prior = prediction_log_var_prior
-            c.patience = patience
-            c.kl_anneal = kl_anneal
-            c.w_kl_anneal = w_kl_anneal
-            c.dnn_log_var_prior = dnn_log_var_prior
-            c.log_dir = log_dir
-            c.model_dir = model_dir
-            c.table_dir = table_dir
-            c.train_file = train_file
-            c.cross_prob = cross_prob
-            c.mutate_prob = mutate_prob
-            c.population_size = population_size
-            c.num_generations = num_generations
-            c.time_stamp = time_stamp
-            c.hostname = hostname
-            c.num_vae_layers = num_vae_layers
-            c.num_dnn_layers = num_dnn_layers
-            c.size_vae_latent = size_vae_latent
-            c.size_vae_hidden = size_vae_hidden
-            c.size_dnn_hidden = size_dnn_hidden
-            c.num_conv_layers = num_conv_layers
-            c.size_kernel = size_kernel
-            c.size_filter = size_filter
-            c.info = info
-        db.session.commit()
+    if(save_DB):
+        for chromosome in generation.itertuples():
+            print("Chromosome ID: "+str(chromosome.chromosomeID))
+            chromosomeID = chromosome.chromosomeID
+            generationID = chromosome.generationID #Get Global Generation ID
+            fitness = chromosome.fitness
+            run_name = clargs.run_name
+            predictor_type = clargs.predictor_type
+            batch_size = clargs.batch_size
+            optimizer = clargs.optimizer
+            num_epochs = clargs.num_epochs
+            dnn_weight = clargs.dnn_weight
+            vae_weight = clargs.vae_weight
+            vae_kl_weight = clargs.vae_kl_weight
+            dnn_kl_weight = clargs.dnn_kl_weight
+            prediction_log_var_prior = clargs.prediction_log_var_prior
+            patience = clargs.patience
+            kl_anneal = clargs.kl_anneal
+            w_kl_anneal = clargs.w_kl_anneal
+            dnn_log_var_prior = clargs.dnn_log_var_prior
+            log_dir = clargs.log_dir
+            model_dir = clargs.model_dir
+            table_dir = clargs.table_dir
+            train_file = clargs.train_file
+            cross_prob = clargs.cross_prob
+            mutate_prob = clargs.mutate_prob
+            population_size = clargs.population_size
+            num_generations = clargs.num_generations
+            time_stamp = clargs.time_stamp
+            hostname = clargs.hostname
+            num_vae_layers = chromosome.num_vae_layers
+            num_dnn_layers = chromosome.num_dnn_layers
+            size_vae_latent = chromosome.size_vae_latent
+            size_vae_hidden = chromosome.size_vae_hidden
+            size_dnn_hidden = chromosome.size_dnn_hidden
+            num_conv_layers = chromosome.num_conv_layers
+            size_kernel = str(chromosome.size_kernel)
+            size_filter = str(chromosome.size_filter)
+            info = chromosome.info
+
+            c = db.session.query(Chromosome).filter(Chromosome.chromosomeID == chromosomeID, Chromosome.generationID == generationID).first()
+            if(c == None):
+                chrom = Chromosome(chromosomeID = chromosomeID,
+                                    generationID = generationID,
+                                    fitness = fitness,
+                                    run_name = run_name,
+                                    predictor_type = predictor_type,
+                                    batch_size = batch_size,
+                                    optimizer = optimizer,
+                                    num_epochs = num_epochs,
+                                    dnn_weight = dnn_weight,
+                                    vae_weight = vae_weight,
+                                    vae_kl_weight = vae_kl_weight,
+                                    dnn_kl_weight = dnn_kl_weight,
+                                    prediction_log_var_prior = prediction_log_var_prior,
+                                    patience = patience,
+                                    kl_anneal = kl_anneal,
+                                    w_kl_anneal = w_kl_anneal,
+                                    dnn_log_var_prior = dnn_log_var_prior,
+                                    log_dir = log_dir,
+                                    model_dir = model_dir,
+                                    table_dir = table_dir,
+                                    train_file = train_file,
+                                    cross_prob = cross_prob,
+                                    mutate_prob = mutate_prob,
+                                    population_size = population_size,
+                                    num_generations = num_generations,
+                                    time_stamp = time_stamp,
+                                    hostname = hostname,
+                                    num_vae_layers = num_vae_layers,
+                                    num_dnn_layers = num_dnn_layers,
+                                    size_vae_latent = size_vae_latent,
+                                    size_vae_hidden = size_vae_hidden,
+                                    size_dnn_hidden = size_dnn_hidden,
+                                    num_conv_layers = num_conv_layers,
+                                    size_kernel = size_kernel,
+                                    size_filter = size_filter,
+                                    info = info)
+                db.session.add(chrom)
+            else :
+                c.fitness = fitness
+                c.run_name = run_name
+                c.predictor_type = predictor_type
+                c.batch_size = batch_size
+                c.optimizer = optimizer
+                c.num_epochs = num_epochs
+                c.dnn_weight = dnn_weight
+                c.vae_weight = vae_weight
+                c.vae_kl_weight = vae_kl_weight
+                c.dnn_kl_weight = dnn_kl_weight
+                c.prediction_log_var_prior = prediction_log_var_prior
+                c.patience = patience
+                c.kl_anneal = kl_anneal
+                c.w_kl_anneal = w_kl_anneal
+                c.dnn_log_var_prior = dnn_log_var_prior
+                c.log_dir = log_dir
+                c.model_dir = model_dir
+                c.table_dir = table_dir
+                c.train_file = train_file
+                c.cross_prob = cross_prob
+                c.mutate_prob = mutate_prob
+                c.population_size = population_size
+                c.num_generations = num_generations
+                c.time_stamp = time_stamp
+                c.hostname = hostname
+                c.num_vae_layers = num_vae_layers
+                c.num_dnn_layers = num_dnn_layers
+                c.size_vae_latent = size_vae_latent
+                c.size_vae_hidden = size_vae_hidden
+                c.size_dnn_hidden = size_dnn_hidden
+                c.num_conv_layers = num_conv_layers
+                c.size_kernel = size_kernel
+                c.size_filter = size_filter
+                c.info = info
+            db.session.commit()
 
     while True:
         print("Waiting for Chromosomes to be Trained in Generation "+str(generationID))
@@ -280,6 +281,48 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30):
         assert(sql_chrom.isTrained == 2), "Finished training yet there's a chromosome with isTrained != 2"
         generation.set_value(chrom.chromosomeID, "isTrained", sql_chrom.isTrained)
         generation.set_value(chrom.chromosomeID, "fitness", sql_chrom.fitness)
+    return generation
+
+def load_generation_from_sql(generationID, population_size):
+    generation = create_blank_dataframe(generationID, population_size)
+    for chrom in generation.itertuples():
+        sql_chrom = db.session.query(Chromosome).filter(Chromosome.chromosomeID == chrom.chromosomeID, Chromosome.generationID == generationID).first()
+        generation.set_value(chrom.chromosomeID, "info", sql_chrom.info)
+        generation.set_value(chrom.chromosomeID, "size_filter", int(sql_chrom.size_filter))
+        generation.set_value(chrom.chromosomeID, "size_kernel", int(sql_chrom.size_kernel))
+        generation.set_value(chrom.chromosomeID, "num_conv_layers", sql_chrom.num_conv_layers)
+        generation.set_value(chrom.chromosomeID, "size_dnn_hidden", sql_chrom.size_dnn_hidden)
+        generation.set_value(chrom.chromosomeID, "size_vae_hidden", sql_chrom.size_vae_hidden)
+        generation.set_value(chrom.chromosomeID, "size_vae_latent", sql_chrom.size_vae_latent)
+        generation.set_value(chrom.chromosomeID, "num_dnn_layers", sql_chrom.num_dnn_layers)
+        generation.set_value(chrom.chromosomeID, "num_vae_layers", sql_chrom.num_vae_layers)
+        generation.set_value(chrom.chromosomeID, "hostname", sql_chrom.hostname)
+        generation.set_value(chrom.chromosomeID, "time_stamp", sql_chrom.time_stamp)
+        generation.set_value(chrom.chromosomeID, "num_generations", sql_chrom.num_generations)
+        generation.set_value(chrom.chromosomeID, "population_size", sql_chrom.population_size)
+        generation.set_value(chrom.chromosomeID, "mutate_prob", sql_chrom.mutate_prob)
+        generation.set_value(chrom.chromosomeID, "cross_prob", sql_chrom.cross_prob)
+        generation.set_value(chrom.chromosomeID, "train_file", sql_chrom.train_file)
+        generation.set_value(chrom.chromosomeID, "table_dir", sql_chrom.table_dir)
+        generation.set_value(chrom.chromosomeID, "model_dir", sql_chrom.model_dir)
+        generation.set_value(chrom.chromosomeID, "log_dir", sql_chrom.log_dir)
+        generation.set_value(chrom.chromosomeID, "dnn_log_var_prior", sql_chrom.dnn_log_var_prior)
+        generation.set_value(chrom.chromosomeID, "w_kl_anneal", sql_chrom.w_kl_anneal)
+        generation.set_value(chrom.chromosomeID, "kl_anneal", sql_chrom.kl_anneal)
+        generation.set_value(chrom.chromosomeID, "patience", sql_chrom.patience)
+        generation.set_value(chrom.chromosomeID, "prediction_log_var_prior", sql_chrom.prediction_log_var_prior)
+        generation.set_value(chrom.chromosomeID, "dnn_kl_weight", sql_chrom.dnn_kl_weight)
+        generation.set_value(chrom.chromosomeID, "vae_kl_weight", sql_chrom.vae_kl_weight)
+        generation.set_value(chrom.chromosomeID, "vae_weight", sql_chrom.vae_weight)
+        generation.set_value(chrom.chromosomeID, "dnn_weight", sql_chrom.dnn_weight)
+        generation.set_value(chrom.chromosomeID, "num_epochs", sql_chrom.num_epochs)
+        generation.set_value(chrom.chromosomeID, "optimizer", sql_chrom.optimizer)
+        generation.set_value(chrom.chromosomeID, "batch_size", sql_chrom.batch_size)
+        generation.set_value(chrom.chromosomeID, "predictor_type", sql_chrom.predictor_type)
+        generation.set_value(chrom.chromosomeID, "run_name", sql_chrom.run_name)
+        generation.set_value(chrom.chromosomeID, "isTrained", sql_chrom.isTrained)
+        generation.set_value(chrom.chromosomeID, "fitness", sql_chrom.fitness)
+
     return generation
 
 def select_parents(generation):

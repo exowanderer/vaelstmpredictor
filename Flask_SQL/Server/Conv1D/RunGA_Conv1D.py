@@ -6,9 +6,9 @@ import socket
 from time import time
 from tqdm import tqdm
 import argparse
-from database import Variables, db
+from database import Variables, Chromosome, db
 
-from GeneticAlgorithm_Conv1D import generate_random_chromosomes, train_generation, create_blank_dataframe, select_parents, cross_over, mutate
+from GeneticAlgorithm_Conv1D import generate_random_chromosomes, train_generation, create_blank_dataframe, select_parents, cross_over, mutate, load_generation_from_sql
 
 def debuge_message(message): print('[DEBUG] {}'.format(message))
 def info_message(message): print('[INFO] {}'.format(message))
@@ -159,36 +159,39 @@ if __name__ == '__main__':
     #Save Generation ID in the database
     CurrentGen = db.session.query(Variables).filter(Variables.name == "CurrentGen").first()
     if CurrentGen == None:
-        var = Variables(name="CurrentGen", value=0)
-        db.session.add(var)
+        CurrentGen = Variables(name="CurrentGen", value=0)
+        db.session.add(CurrentGen)
         db.session.commit()
+
+    check = db.session.query(Chromosome).filter(Chromosome.generationID == CurrentGen.value).first()
+    if(check == None):
+        generation = generate_random_chromosomes(population_size = population_size,
+                            min_vae_hidden_layers = clargs.min_vae_hidden_layers,
+                            min_dnn_hidden_layers = clargs.min_dnn_hidden_layers,
+                            max_vae_hidden_layers = clargs.max_vae_hidden_layers,
+                            max_dnn_hidden_layers = clargs.max_dnn_hidden_layers,
+                            min_vae_hidden = clargs.min_vae_hidden,
+                            max_vae_hidden = clargs.max_vae_hidden,
+                            min_dnn_hidden = clargs.min_dnn_hidden,
+                            max_dnn_hidden = clargs.max_dnn_hidden,
+                            min_vae_latent = clargs.min_vae_latent,
+                            max_vae_latent = clargs.max_vae_latent,
+                            min_conv_layers = clargs.min_conv_layers,
+                            max_conv_layers = clargs.max_conv_layers,
+                            min_kernel_size = clargs.min_kernel_size,
+                            max_kernel_size = clargs.max_kernel_size,
+                            min_pool_size = clargs.min_pool_size,
+                            max_pool_size = clargs.max_pool_size,
+                            max_filter_size = clargs.max_filter_size,
+                            min_filter_size = clargs.min_filter_size,
+                            verbose = clargs.verbose)
     else:
-        CurrentGen.value = 0
-        db.session.commit()
+        info_message("Loaded Generation From DB")
+        generation = load_generation_from_sql(CurrentGen.value, population_size)
 
-    generation = generate_random_chromosomes(population_size = population_size,
-                        min_vae_hidden_layers = clargs.min_vae_hidden_layers,
-                        min_dnn_hidden_layers = clargs.min_dnn_hidden_layers,
-                        max_vae_hidden_layers = clargs.max_vae_hidden_layers,
-                        max_dnn_hidden_layers = clargs.max_dnn_hidden_layers,
-                        min_vae_hidden = clargs.min_vae_hidden,
-                        max_vae_hidden = clargs.max_vae_hidden,
-                        min_dnn_hidden = clargs.min_dnn_hidden,
-                        max_dnn_hidden = clargs.max_dnn_hidden,
-                        min_vae_latent = clargs.min_vae_latent,
-                        max_vae_latent = clargs.max_vae_latent,
-                        min_conv_layers = clargs.min_conv_layers,
-                        max_conv_layers = clargs.max_conv_layers,
-                        min_kernel_size = clargs.min_kernel_size,
-                        max_kernel_size = clargs.max_kernel_size,
-                        min_pool_size = clargs.min_pool_size,
-                        max_pool_size = clargs.max_pool_size,
-                        max_filter_size = clargs.max_filter_size,
-                        min_filter_size = clargs.min_filter_size,
-                        verbose = clargs.verbose)
+    generationID = CurrentGen.value
+    generation = train_generation(generation, clargs, verbose=verbose, sleep_time=sleep_time, save_DB=(check == None))
 
-    generationID = 0
-    generation = train_generation(generation, clargs, verbose=verbose, sleep_time=sleep_time)
     best_fitness = []
     fitnesses = generation.fitness.values
     new_best_fitness = generation.fitness.values.max()

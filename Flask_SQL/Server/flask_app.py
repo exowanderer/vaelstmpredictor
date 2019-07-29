@@ -50,84 +50,55 @@ def AddChrom():
         size_filter = request.args.get('size_filter')
         info = request.args.get('info')
 
-        c = db.session.query(Chromosome).filter(Chromosome.chromosomeID == chromosomeID, Chromosome.generationID == generationID).first()
+        c = db.session.query(Chromosome).filter(Chromosome.chromosomeID == chromosomeID,
+                                                Chromosome.generationID == generationID,
+                                                Chromosome.num_vae_layers == num_vae_layers,
+                                                Chromosome.num_dnn_layers == num_dnn_layers,
+                                                Chromosome.size_vae_latent == size_vae_latent,
+                                                Chromosome.size_vae_hidden == size_vae_hidden,
+                                                Chromosome.size_dnn_hidden == size_dnn_hidden,
+                                                Chromosome.size_kernel == size_kernel,
+                                                Chromosome.size_pool == size_pool,
+                                                Chromosome.size_filter == size_filter).first()
         if(c == None):
-            chrom = Chromosome(chromosomeID = chromosomeID,
-                                generationID = generationID,
-                                isTrained = isTrained,
-                                fitness = fitness,
-                                run_name = run_name,
-                                predictor_type = predictor_type,
-                                batch_size = batch_size,
-                                optimizer = optimizer,
-                                num_epochs = num_epochs,
-                                dnn_weight = dnn_weight,
-                                vae_weight = vae_weight,
-                                vae_kl_weight = vae_kl_weight,
-                                dnn_kl_weight = dnn_kl_weight,
-                                prediction_log_var_prior = prediction_log_var_prior,
-                                patience = patience,
-                                kl_anneal = kl_anneal,
-                                w_kl_anneal = w_kl_anneal,
-                                dnn_log_var_prior = dnn_log_var_prior,
-                                log_dir = log_dir,
-                                model_dir = model_dir,
-                                table_dir = table_dir,
-                                train_file = train_file,
-                                cross_prob = cross_prob,
-                                mutate_prob = mutate_prob,
-                                population_size = population_size,
-                                num_generations = num_generations,
-                                time_stamp = time_stamp,
-                                hostname = hostname,
-                                num_vae_layers = num_vae_layers,
-                                num_dnn_layers = num_dnn_layers,
-                                size_vae_latent = size_vae_latent,
-                                size_vae_hidden = size_vae_hidden,
-                                size_dnn_hidden = size_dnn_hidden,
-                                num_conv_layers = num_conv_layers,
-                                size_kernel = size_kernel,
-                                size_pool = size_pool,
-                                size_filter = size_filter,
-                                info = info)
-            db.session.add(chrom)
-        else :
-            c.isTrained = isTrained
-            c.fitness = fitness
-            c.run_name = run_name
-            c.predictor_type = predictor_type
-            c.batch_size = batch_size
-            c.optimizer = optimizer
-            c.num_epochs = num_epochs
-            c.dnn_weight = dnn_weight
-            c.vae_weight = vae_weight
-            c.vae_kl_weight = vae_kl_weight
-            c.dnn_kl_weight = dnn_kl_weight
-            c.prediction_log_var_prior = prediction_log_var_prior
-            c.patience = patience
-            c.kl_anneal = kl_anneal
-            c.w_kl_anneal = w_kl_anneal
-            c.dnn_log_var_prior = dnn_log_var_prior
-            c.log_dir = log_dir
-            c.model_dir = model_dir
-            c.table_dir = table_dir
-            c.train_file = train_file
-            c.cross_prob = cross_prob
-            c.mutate_prob = mutate_prob
-            c.population_size = population_size
-            c.num_generations = num_generations
-            c.time_stamp = time_stamp
-            c.hostname = hostname
-            c.num_vae_layers = num_vae_layers
-            c.num_dnn_layers = num_dnn_layers
-            c.size_vae_latent = size_vae_latent
-            c.size_vae_hidden = size_vae_hidden
-            c.size_dnn_hidden = size_dnn_hidden
-            c.num_conv_layers = num_conv_layers
-            c.size_kernel = size_kernel
-            c.size_pool = size_pool
-            c.size_filter = size_filter
-            c.info = info
+            return '1'
+
+        c.isTrained = isTrained
+        c.fitness = fitness
+        c.run_name = run_name
+        c.predictor_type = predictor_type
+        c.batch_size = batch_size
+        c.optimizer = optimizer
+        c.num_epochs = num_epochs
+        c.dnn_weight = dnn_weight
+        c.vae_weight = vae_weight
+        c.vae_kl_weight = vae_kl_weight
+        c.dnn_kl_weight = dnn_kl_weight
+        c.prediction_log_var_prior = prediction_log_var_prior
+        c.patience = patience
+        c.kl_anneal = kl_anneal
+        c.w_kl_anneal = w_kl_anneal
+        c.dnn_log_var_prior = dnn_log_var_prior
+        c.log_dir = log_dir
+        c.model_dir = model_dir
+        c.table_dir = table_dir
+        c.train_file = train_file
+        c.cross_prob = cross_prob
+        c.mutate_prob = mutate_prob
+        c.population_size = population_size
+        c.num_generations = num_generations
+        c.time_stamp = time_stamp
+        c.hostname = hostname
+        c.num_vae_layers = num_vae_layers
+        c.num_dnn_layers = num_dnn_layers
+        c.size_vae_latent = size_vae_latent
+        c.size_vae_hidden = size_vae_hidden
+        c.size_dnn_hidden = size_dnn_hidden
+        c.num_conv_layers = num_conv_layers
+        c.size_kernel = size_kernel
+        c.size_pool = size_pool
+        c.size_filter = size_filter
+        c.info = info
         db.session.commit()
         return "1"
     return '0'
@@ -208,7 +179,7 @@ def GetUnTrainedChrom():
     if request.method == 'GET':
         c = db.session.query(Chromosome).filter(Chromosome.isTrained == 0).first()
         if(c == None):
-            c = db.session.query(Chromosome).filter(Chromosome.isTrained == 1).first()
+            c = db.session.query(Chromosome).filter(Chromosome.isTrained == 1).order_by(db.func.rand()).first()
         if(c == None):
             return "0"
         c.isTrained = 1
