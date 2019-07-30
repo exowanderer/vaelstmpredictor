@@ -211,7 +211,7 @@ class Chromosome(ConvVAEPredictor):
 		if self.clargs.w_kl_anneal > 0: 
 			self.dnn_kl_weight = K.variable(value=0.0)
 		
-		save_model_in_pieces(self.model, self.clargs)
+		if self.save_model: save_model_in_pieces(self.model, self.clargs)
 		
 		vae_train = DI.data_train
 		vae_features_val = DI.data_valid
