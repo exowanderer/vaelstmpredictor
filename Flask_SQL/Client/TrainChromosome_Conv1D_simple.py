@@ -138,6 +138,7 @@ if __name__ == '__main__':
 				chromosome.verbose = True
 				chromosome.model.summary()
 				chromosome.train(verbose=True)
+				K.clear_session()
 			except Exception as e:
 				warning_message("Error has occured while training")
 				print(e)
@@ -152,6 +153,10 @@ if __name__ == '__main__':
 
 			params["isTrained"] = 2
 			params["fitness"] = chromosome.fitness
+			params["val_vae_reconstruction_loss"] = chromosome.val_vae_reconstruction_loss
+			params["val_vae_latent_args_loss"] = chromosome.val_vae_latent_args_loss
+			params["val_dnn_latent_layer_loss"] = chromosome.val_dnn_latent_layer_loss
+			params["val_dnn_latent_mod_loss"] = chromosome.val_dnn_latent_mod_loss
 			params["hostname"] = clargs.hostname
 			params["time_stamp"] = clargs.time_stamp
 

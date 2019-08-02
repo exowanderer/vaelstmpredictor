@@ -142,6 +142,7 @@ class Chromosome(ConvVAEPredictor):
 		# self.model.compile(optimizer=self.optimizer)
 		self.neural_net = self.model
 		self.fitness = 0
+		self.best_loss = None
 		self.isTrained = False
 		
 		assert(os.path.exists(self.model_dir)), \

@@ -5,7 +5,7 @@ import os
 import requests
 import socket
 
-from vaelstmpredictor.vae_conv1d_predictor.GeneticAlgorithm import *
+from vaelstmpredictor.GeneticAlgorithm import *
 
 from time import time, sleep
 from vaelstmpredictor.utils.data_utils import MNISTData
@@ -46,10 +46,7 @@ if __name__ == '__main__':
 			info_message("No more Chromosomes to train")
 			sleep(30)
 		elif(chromosome != None):
-			try:
-				params = chromosome.json()
-			except:
-				continue
+			params = chromosome.json()
 
 			clargs.batch_size = params["batch_size"]
 			clargs.chromosomeID = params["chromosomeID"]
@@ -64,8 +61,6 @@ if __name__ == '__main__':
 			clargs.log_dir = params["log_dir"]
 			clargs.do_log = True
 			clargs.do_ckpt = False
-			clargs.verbose = True
-			clargs.save_model = False
 			#clargs.model_dir = params["model_dir"]
 			clargs.model_dir = "data/models"
 			clargs.mutate_prob = params["mutate_prob"]
@@ -81,25 +76,20 @@ if __name__ == '__main__':
 			clargs.run_name = params["run_name"]
 			clargs.size_dnn_hidden = params["size_dnn_hidden"]
 			clargs.size_vae_hidden = params["size_vae_hidden"]
-			clargs.vae_latent_dim = params["size_vae_latent"]
+			clargs.size_vae_latent = params["size_vae_latent"]
 			clargs.table_dir = params["table_dir"]
 			clargs.train_file = params["train_file"]
 			clargs.vae_kl_weight = params["vae_kl_weight"]
 			clargs.vae_weight = params["vae_weight"]
 			clargs.w_kl_anneal = params["w_kl_anneal"]
-			clargs.num_conv_layers = params["num_conv_layers"]
-			clargs.size_kernel = params["size_kernel"]
-			clargs.size_pool = params["size_pool"]
-			clargs.size_filter = params["size_filter"]
 			
 			clargs.hostname = hostname
 			clargs.time_stamp = int(time())
-
+			#Missing in DB?
+			clargs.save_model = ""
+			
 			vae_hidden_dims = [clargs.size_vae_hidden]*clargs.num_vae_layers
 			dnn_hidden_dims = [clargs.size_dnn_hidden]*clargs.num_dnn_layers
-			size_kernel = json.loads(clargs.size_kernel)
-			#size_pool = np.array(json.loads(clargs.size_pool))
-			size_filter = json.loads(clargs.size_filter)
 			
 			data_instance = MNISTData(batch_size = clargs.batch_size)
 			
@@ -111,22 +101,18 @@ if __name__ == '__main__':
 			
 			chrom_params = {}
 			chrom_params['data_instance'] = data_instance
-			chrom_params['verbose'] = clargs.verbose
+			chrom_params['verbose'] = True
 			chrom_params['save_model'] = clargs.save_model
 			chrom_params['vae_hidden_dims'] = vae_hidden_dims
 			chrom_params['dnn_hidden_dims'] = dnn_hidden_dims
-			chrom_params['vae_latent_dim'] = clargs.vae_latent_dim
+			chrom_params['vae_latent_dim'] = clargs.size_vae_latent
+			chrom_params['clargs'] = clargs
 			chrom_params['generationID'] = clargs.generationID
 			chrom_params['chromosomeID'] = clargs.chromosomeID
 			chrom_params['vae_weight'] = clargs.vae_weight
 			chrom_params['vae_kl_weight'] = clargs.vae_kl_weight
 			chrom_params['dnn_weight'] = clargs.dnn_weight
 			chrom_params['dnn_kl_weight'] = clargs.dnn_kl_weight
-			chrom_params['num_conv_layers'] = clargs.num_conv_layers
-			chrom_params['size_kernel'] = size_kernel
-			#chrom_params['size_pool'] = size_pool
-			chrom_params['size_filter'] = size_filter
-			chrom_params['clargs'] = clargs
 
 			info_message('\n\nParams for this VAE_NN:')
 			for key,val in clargs.__dict__.items():
@@ -136,9 +122,7 @@ if __name__ == '__main__':
 			try:
 				chromosome = Chromosome(**chrom_params)
 				chromosome.verbose = True
-				chromosome.model.summary()
 				chromosome.train(verbose=True)
-				K.clear_session()
 			except Exception as e:
 				warning_message("Error has occured while training")
 				print(e)
@@ -153,10 +137,6 @@ if __name__ == '__main__':
 
 			params["isTrained"] = 2
 			params["fitness"] = chromosome.fitness
-			params["val_vae_reconstruction_loss"] = chromosome.val_vae_reconstruction_loss
-			params["val_vae_latent_args_loss"] = chromosome.val_vae_latent_args_loss
-			params["val_dnn_latent_layer_loss"] = chromosome.val_dnn_latent_layer_loss
-			params["val_dnn_latent_mod_loss"] = chromosome.val_dnn_latent_mod_loss
 			params["hostname"] = clargs.hostname
 			params["time_stamp"] = clargs.time_stamp
 
