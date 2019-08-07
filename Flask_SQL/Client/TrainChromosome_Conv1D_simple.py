@@ -153,10 +153,10 @@ if __name__ == '__main__':
 
 			params["isTrained"] = 2
 			params["fitness"] = chromosome.fitness
-			params["val_vae_reconstruction_loss"] = chromosome.val_vae_reconstruction_loss
-			params["val_vae_latent_args_loss"] = chromosome.val_vae_latent_args_loss
-			params["val_dnn_latent_layer_loss"] = chromosome.val_dnn_latent_layer_loss
-			params["val_dnn_latent_mod_loss"] = chromosome.val_dnn_latent_mod_loss
+			params["val_vae_reconstruction_loss"] = chromosome.best_loss['val_vae_reconstruction_loss']
+			params["val_vae_latent_args_loss"] = chromosome.best_loss['val_vae_latent_args_loss']
+			params["val_dnn_latent_layer_loss"] = chromosome.best_loss['val_dnn_latent_layer_loss']
+			params["val_dnn_latent_mod_loss"] = chromosome.best_loss['val_dnn_latent_mod_loss']
 			params["hostname"] = clargs.hostname
 			params["time_stamp"] = clargs.time_stamp
 
