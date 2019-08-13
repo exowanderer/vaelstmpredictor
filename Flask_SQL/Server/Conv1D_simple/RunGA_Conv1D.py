@@ -8,7 +8,7 @@ from tqdm import tqdm
 import argparse
 from database import Variables, Chromosome, db
 
-from GeneticAlgorithm_Conv1D import generate_random_chromosomes, train_generation, create_blank_dataframe, select_parents, cross_over, mutate, load_generation_from_sql
+from GeneticAlgorithm_Conv1D import generate_random_chromosomes, train_generation, create_blank_dataframe, select_parents, cross_over, mutate, load_generation_from_sql, refactor_weights
 
 def debuge_message(message): print('[DEBUG] {}'.format(message))
 def info_message(message): print('[INFO] {}'.format(message))
@@ -61,13 +61,13 @@ if __name__ == '__main__':
                 help='Minimum kernel size (x2 +1)')
     parser.add_argument('--min_filter_size', type=int, default=1,
                 help='Minimum number of filters for each convolution layer')
-    parser.add_argument('--dnn_weight', type=float, default=1.0,
+    parser.add_argument('--dnn_weight', type=float, default=5880379,
                 help='relative weight on prediction loss')
-    parser.add_argument('--vae_weight', type=float, default=30.53,
+    parser.add_argument('--vae_weight', type=float, default=1,
                 help='relative weight on prediction loss')
-    parser.add_argument('--vae_kl_weight', type=float, default=1.39e6,
+    parser.add_argument('--vae_kl_weight', type=float, default=165,
                 help='relative weight on prediction loss')
-    parser.add_argument('--dnn_kl_weight', type=float, default=6.35,
+    parser.add_argument('--dnn_kl_weight', type=float, default=6925509,
                 help='relative weight on prediction loss')
     parser.add_argument('--prediction_log_var_prior', type=float, default=0.0,
                 help='w log var prior')
@@ -106,20 +106,8 @@ if __name__ == '__main__':
             help='Toggle whether to send the ckpt file + population local csv')
     parser.add_argument('--save_model', action='store_true',
             help='Save model ckpt.s and other stored values')
-    #------------------------------------------
-    #-------------- Added Param ---------------
-    parser.add_argument('--original_dim', type=int, default=10,
-                help='Number of features')
-    parser.add_argument('--n_labels', type=int, default=10,
-                help='Number of Labels')
-    #------------------------------------------
-    #------------------------------------------
+    
     clargs = parser.parse_args()
-
-    #for key,val in clargs.__dict__.items():
-    #    if 'dir' in key:
-    #        if not os.path.exists(val):
-    #            os.mkdir(val)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(("8.8.8.8", 80))
@@ -162,6 +150,7 @@ if __name__ == '__main__':
     check = db.session.query(Chromosome).filter(Chromosome.generationID == CurrentGen.value).first()
     if(check == None):
         generation = generate_random_chromosomes(population_size = population_size,
+                            clargs = clargs,
                             min_vae_hidden_layers = clargs.min_vae_hidden_layers,
                             min_dnn_hidden_layers = clargs.min_dnn_hidden_layers,
                             max_vae_hidden_layers = clargs.max_vae_hidden_layers,
@@ -179,6 +168,7 @@ if __name__ == '__main__':
                             max_filter_size = clargs.max_filter_size,
                             min_filter_size = clargs.min_filter_size,
                             verbose = clargs.verbose)
+        CurrentGen.value = 0
     else:
         info_message("Loaded Generation From DB")
         generation = load_generation_from_sql(CurrentGen.value, population_size)
@@ -207,7 +197,7 @@ if __name__ == '__main__':
 
     start = time()
     # while gen_num < num_generations:
-    for generationID in range(1,num_generations):
+    for generationID in range(generationID+1,num_generations):
 
         #Save Generation ID in the database
         CurrentGen = db.session.query(Variables).filter(Variables.name == "CurrentGen").first()
@@ -250,6 +240,7 @@ if __name__ == '__main__':
         new_generation = new_generation.sort_values('chromosomeID')
         new_generation.index = np.arange(population_size)
 
+        refactor_weights(new_generation, generation)
         generation = train_generation(new_generation, clargs, verbose=verbose, sleep_time=sleep_time)
 
         info_message('Time for Generation{}: {} minutes'.format(generationID,

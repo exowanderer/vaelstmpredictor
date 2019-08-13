@@ -139,36 +139,8 @@
 
                 <div id="evolution"></div>
             </div>
-
-            <p><a target="_blank" href="http://en.wikipedia.org/wiki/Genetic_algorithm">Genetic algorithms</a> (GA) are one of the standard optimization methods. They work by evolving a population of trial solutions towards better solutions using biological inspired genetic operators. The trial solutions are also called individuums. The above graphics shows the evolution of a particular genetic algorithm - <a target="_blank" href="http://en.wikipedia.org/wiki/Genetic_programming">genetic programming</a> - solving a problem of <a target="_blank" href="http://en.wikipedia.org/wiki/Symbolic_regression">symbolic regression</a>. It shows beautifully how the GA optimizes the problem. The above graphic can be used for visual debugging. Furthermore, it uncovers the beauty of a complex algorithm.</p>
-
-            <ul>
-                <li>The evolution of 12 generations each consisting of 256 individuums is shown.</li>
-                <li>The link colors encode the genetic operator. Red is elite, blue is mutation, green is crossover and yellow reproduction.</li>                
-                <li>The y-position of the nodes can encode the fitness, the size, or the height of the according individuum. And the position of the y-node can describe either the absolute value of the fitness, the size, or the height or the sequence in the population.</li>
-                <li>The node colors can describe the fitness, the size, or the height of the individuum.</li>
-                <li><b>The history of a individuum, hence all its ancestors and the genetic operators used to create the individuum can be highlighted by moving the mouse over a specific individuum.</b></li>
-            </ul>
-
-            <p>Conclustions from the graphic:</p>
-            <ul>
-                <li>The convergence of the genetic algorithm can be seen. In this example it is rarely good. The software for the genetic programming is still in an early beta phase.</li>
-                <li>Mutation is not very effective and results often in bad individuals.</li>
-                <li>Size grows during evolution, a hint for bloat.</li>
-                <li>Height grows during evolution, a hint for bloat.</li>
-                <li>Most individuums have the same ancestors.</li>
-            </ul>
-
-            <p>This work has been done with the help of <a target="_blank" href="https://github.com/Ambrosys/gpcxx">gpcxx</a> a modern C++ library for genetic programming which has produced the data for the above graphic. The development of this library is still in an early stage. The visualization has been done with the help of <a target="_blank" href="http://d3js.org/">d3.js</a> a great javascript framework of interactive visualizations. The graphic as been inspired by Sankey diagrams and the <a target="_blank" href="https://github.com/d3/d3-plugins/tree/master/sankey">Sankey plugin</a> for d3 js. <a target="_blank" href="https://jquery.com/">jquery</a> has also been used for general purpose stuff.</p>
-
-            <p>If you need help with visualization of data or algorithms or optimization algorithms in general just drop me a message here.</p>
             
         </main>
-
-        <footer>
-            <aside>May 9, 2015</aside>
-            <p>Karsten Ahnert</p>
-        </footer>
   
     </body>
 
@@ -223,7 +195,7 @@
             // .range( colorbrewer.Set1[4] );
             .range( [ "red" , "blue" , "green" , "yellow" ] );
 
-        d3.json( "evol.json" , function( data ) {
+        d3.json( "http://philippesaade11.pythonanywhere.com/Visuals" , function( data ) {
 
             // initialize the flowchart, create the graph
             flowchart.nodes( data.nodes )

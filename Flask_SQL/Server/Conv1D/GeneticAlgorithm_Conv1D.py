@@ -72,12 +72,8 @@ def create_blank_dataframe(generationID, population_size):
     generation['fitness'] = np.float32(zeros) - 1.0
     generation['batch_size'] = zeros
     generation['cross_prob'] = zeros
-    generation['dnn_kl_weight'] = zeros
     generation['dnn_log_var_prior'] = zeros
-    generation['dnn_weight'] = zeros
-    generation['do_chckpt'] = np.bool8(zeros)
     generation['hostname'] = ['127.0.0.1']*population_size
-    generation['iterations'] = zeros
     generation['kl_anneal'] = zeros
     generation['log_dir'] = ['../data/logs']*population_size
     generation['model_dir'] = ['../data/models']*population_size
@@ -92,18 +88,24 @@ def create_blank_dataframe(generationID, population_size):
     generation['table_dir'] = ['../data/tables']*population_size
     generation['time_stamp'] = zeros
     generation['train_file'] = ['train_file']*population_size
-    generation['vae_kl_weight'] = zeros
-    generation['vae_weight'] = zeros
+    generation['dnn_weight'] = np.float32(zeros)
+    generation['dnn_kl_weight'] = np.float32(zeros)
+    generation['vae_kl_weight'] = np.float32(zeros)		
+    generation['vae_weight'] = np.float32(zeros)
     generation['w_kl_anneal'] = zeros
     generation['num_conv_layers'] = zeros
     generation['size_kernel'] = [np.array([], dtype=int)]*population_size
     generation['size_pool'] = [np.array([], dtype=int)]*population_size
     generation['size_filter'] = [np.array([], dtype=int)]*population_size
     generation['info'] = ['']*population_size
+    generation['val_vae_reconstruction_loss'] = np.float32(zeros)		
+    generation['val_vae_latent_args_loss'] = np.float32(zeros)		
+    generation['val_dnn_latent_layer_loss'] = np.float32(zeros)		
+    generation['val_dnn_latent_mod_loss'] = np.float32(zeros)
 
     return generation
 
-def generate_random_chromosomes(population_size, geneationID = 0,
+def generate_random_chromosomes(population_size, clargs, geneationID = 0,
                         min_vae_hidden_layers = 1, max_vae_hidden_layers = 5,
                         min_dnn_hidden_layers = 1, max_dnn_hidden_layers = 5,
                         min_vae_hidden = 2, max_vae_hidden = 1024,
@@ -117,7 +119,13 @@ def generate_random_chromosomes(population_size, geneationID = 0,
 
     # create blank dataframe with full SQL database required entrie
     generation = create_blank_dataframe(geneationID, population_size)
-
+    
+    # Add weights from clargs		
+    generation['dnn_kl_weight'] = np.repeat(clargs.dnn_kl_weight, population_size)		
+    generation['dnn_weight'] = np.repeat(clargs.dnn_weight, population_size)		
+    generation['vae_kl_weight'] = np.repeat(clargs.vae_kl_weight, population_size)		
+    generation['vae_weight'] = np.repeat(clargs.vae_weight, population_size)
+    
     # Overwrite chromosome parameters to evolve with random choices
     vae_nLayers_choices = range(min_vae_hidden_layers, max_vae_hidden_layers)
     dnn_nLayers_choices = range(min_dnn_hidden_layers, max_dnn_hidden_layers)
@@ -164,10 +172,10 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
             batch_size = clargs.batch_size
             optimizer = clargs.optimizer
             num_epochs = clargs.num_epochs
-            dnn_weight = clargs.dnn_weight
-            vae_weight = clargs.vae_weight
-            vae_kl_weight = clargs.vae_kl_weight
-            dnn_kl_weight = clargs.dnn_kl_weight
+            dnn_weight = chromosome.dnn_weight
+            vae_weight = chromosome.vae_weight
+            vae_kl_weight = chromosome.vae_kl_weight
+            dnn_kl_weight = chromosome.dnn_kl_weight
             prediction_log_var_prior = clargs.prediction_log_var_prior
             patience = clargs.patience
             kl_anneal = clargs.kl_anneal
@@ -183,6 +191,10 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
             num_generations = clargs.num_generations
             time_stamp = clargs.time_stamp
             hostname = clargs.hostname
+            val_vae_reconstruction_loss = chromosome.val_vae_reconstruction_loss		
+            val_vae_latent_args_loss = chromosome.val_vae_latent_args_loss		
+            val_dnn_latent_layer_loss = chromosome.val_dnn_latent_layer_loss		
+            val_dnn_latent_mod_loss = chromosome.val_dnn_latent_mod_loss
             num_vae_layers = chromosome.num_vae_layers
             num_dnn_layers = chromosome.num_dnn_layers
             size_vae_latent = chromosome.size_vae_latent
@@ -223,6 +235,10 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
                                     num_generations = num_generations,
                                     time_stamp = time_stamp,
                                     hostname = hostname,
+                                    val_vae_reconstruction_loss = val_vae_reconstruction_loss,		
+                                    val_vae_latent_args_loss = val_vae_latent_args_loss,		
+                                    val_dnn_latent_layer_loss = val_dnn_latent_layer_loss,		
+                                    val_dnn_latent_mod_loss = val_dnn_latent_mod_loss,
                                     num_vae_layers = num_vae_layers,
                                     num_dnn_layers = num_dnn_layers,
                                     size_vae_latent = size_vae_latent,
@@ -260,6 +276,10 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
                 c.num_generations = num_generations
                 c.time_stamp = time_stamp
                 c.hostname = hostname
+                c.val_vae_reconstruction_loss = val_vae_reconstruction_loss		
+                c.val_vae_latent_args_loss = val_vae_latent_args_loss		
+                c.val_dnn_latent_layer_loss = val_dnn_latent_layer_loss		
+                c.val_dnn_latent_mod_loss = val_dnn_latent_mod_loss
                 c.num_vae_layers = num_vae_layers
                 c.num_dnn_layers = num_dnn_layers
                 c.size_vae_latent = size_vae_latent
@@ -288,7 +308,37 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
         assert(sql_chrom.isTrained == 2), "Finished training yet there's a chromosome with isTrained != 2"
         generation.set_value(chrom.chromosomeID, "isTrained", sql_chrom.isTrained)
         generation.set_value(chrom.chromosomeID, "fitness", sql_chrom.fitness)
+        generation.set_value(chrom.chromosomeID, "val_dnn_latent_layer_loss", sql_chrom.val_dnn_latent_layer_loss)		
+        generation.set_value(chrom.chromosomeID, "val_dnn_latent_mod_loss", sql_chrom.val_dnn_latent_mod_loss)		
+        generation.set_value(chrom.chromosomeID, "val_vae_latent_args_loss", sql_chrom.val_vae_latent_args_loss)		
+        generation.set_value(chrom.chromosomeID, "val_vae_reconstruction_loss", sql_chrom.val_vae_reconstruction_loss)
     return generation
+
+def refactor_weights(new_generation, generation):		
+    dnn_weights = []		
+    dnn_kl_weights = []		
+    vae_weights = []		
+    vae_kl_weights = []		
+    for chrom in generation.itertuples():		
+        val_loss = chrom.val_vae_reconstruction_loss + chrom.val_vae_latent_args_loss + chrom.val_dnn_latent_layer_loss + chrom.val_dnn_latent_mod_loss		
+        dnn_weight_ = val_loss / chrom.val_dnn_latent_mod_loss		
+        dnn_kl_weight_ = val_loss / chrom.val_dnn_latent_layer_loss		
+        vae_weight_ = val_loss / chrom.val_vae_reconstruction_loss		
+        vae_kl_weight_ = val_loss / chrom.val_vae_latent_args_loss		
+        dnn_weights.append(dnn_weight_)		
+        dnn_kl_weights.append(dnn_kl_weight_)		
+        vae_weights.append(vae_weight_)		
+        vae_kl_weights.append(vae_kl_weight_)		
+    dnn_weight_new = np.median(dnn_weights)		
+    dnn_kl_weight_new = np.median(dnn_kl_weights)		
+    vae_weight_new = np.median(vae_weights)		
+    vae_kl_weight_new = np.median(vae_kl_weights)		
+    print("Weights", dnn_weight_new, dnn_kl_weight_new, vae_weight_new, vae_kl_weight_new)		
+    for chrom in new_generation.itertuples():		
+        new_generation.set_value(chrom.chromosomeID, "dnn_weight", dnn_weight_new)		
+        new_generation.set_value(chrom.chromosomeID, "dnn_kl_weight", dnn_kl_weight_new)		
+        new_generation.set_value(chrom.chromosomeID, "vae_weight", vae_weight_new)		
+        new_generation.set_value(chrom.chromosomeID, "vae_kl_weight", vae_kl_weight_new)
 
 def load_generation_from_sql(generationID, population_size):
     generation = create_blank_dataframe(generationID, population_size)
@@ -304,6 +354,10 @@ def load_generation_from_sql(generationID, population_size):
         generation.set_value(chrom.chromosomeID, "size_vae_latent", sql_chrom.size_vae_latent)
         generation.set_value(chrom.chromosomeID, "num_dnn_layers", sql_chrom.num_dnn_layers)
         generation.set_value(chrom.chromosomeID, "num_vae_layers", sql_chrom.num_vae_layers)
+        generation.set_value(chrom.chromosomeID, "val_vae_reconstruction_loss", sql_chrom.val_vae_reconstruction_loss)		
+        generation.set_value(chrom.chromosomeID, "val_vae_latent_args_loss", sql_chrom.val_vae_latent_args_loss)		
+        generation.set_value(chrom.chromosomeID, "val_dnn_latent_layer_loss", sql_chrom.val_dnn_latent_layer_loss)		
+        generation.set_value(chrom.chromosomeID, "val_dnn_latent_mod_loss", sql_chrom.val_dnn_latent_mod_loss)
         generation.set_value(chrom.chromosomeID, "hostname", sql_chrom.hostname)
         generation.set_value(chrom.chromosomeID, "time_stamp", sql_chrom.time_stamp)
         generation.set_value(chrom.chromosomeID, "num_generations", sql_chrom.num_generations)
@@ -337,7 +391,11 @@ def select_parents(generation):
     '''Generate two random numbers between 0 and total_fitness
         not including total_fitness'''
 
-    total_fitness = generation.fitness.sum()
+    a = 0.5
+    c = 40
+    b = -10
+    d = 10
+    total_fitness = sum(np.exp(generation.fitness*a + b)*c+d)
     assert(total_fitness >= 0), '`total_fitness` should not be negative'
 
     rand_parent1 = random.random()*total_fitness
@@ -348,7 +406,9 @@ def select_parents(generation):
 
     fitness_count = 0
     for chromosome in generation.itertuples():
-        fitness_count += chromosome.fitness
+        #fitness_count += chromosome.fitness
+        fitness_count += np.exp(chromosome.fitness*a + b)*c+d
+
         if(parent1 is None and fitness_count >= rand_parent1):
             parent1 = chromosome
         if(parent2 is None and fitness_count >= rand_parent2):
@@ -383,6 +443,8 @@ def cross_over(new_generation, generation, parent1, parent2,
 
         #Merge Kernel sizes, Max Pooling layers and Filter sizes
         num_conv_layers = new_generation.ix[chromosomeID, "num_conv_layers"]
+        parent_choises = np.random.choice([True, False], size = population_size) #Boolean array to decide whether to choose from parent1 or parent2
+        
         for array_param in ["size_kernel", "size_pool", "size_filter"]:
             new_array = np.array([0]*num_conv_layers, dtype=int)
             for i in range(num_conv_layers):
@@ -393,7 +455,7 @@ def cross_over(new_generation, generation, parent1, parent2,
                 elif(len(array_p2) <= i):
                     new_array[i] = array_p1[i]
                 else:
-                    new_array[i] = random.choice([array_p1[i], array_p2[i]])
+                    new_array[i] = array_p1[i] if parent_choises[i] else array_p2[i]
             new_generation.set_value(chromosomeID, array_param, new_array)
 
         new_generation.set_value(chromosomeID, 'info', 'Child of '+str(parent1.chromosomeID)+' and '+str(parent2.chromosomeID))
