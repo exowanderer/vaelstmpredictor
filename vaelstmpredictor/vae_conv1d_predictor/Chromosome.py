@@ -41,38 +41,42 @@ class Chromosome(ConvVAEPredictor):
 				n_channels = 1, verbose = False):
 
 		''' Configure dnn '''
-		#dnn_filters = np.array([dnn_filter_size]*num_dnn_layers)
-		#self.dnn_filters = dnn_filters*(2**np.arange(num_dnn_layers))
-		self.dnn_filters = [size_filter]*num_conv_layers
+		if(isinstance(size_filter, int)):
+			self.dnn_filters = [size_filter]*num_conv_layers
+			self.encoder_filters = [size_filter]*num_conv_layers
+			self.decoder_filters = [size_filter]*num_conv_layers
+		else:
+			self.dnn_filters = size_filter
+			self.encoder_filters = size_filter
+			self.decoder_filters = size_filter
 		
-		#self.dnn_kernel_sizes = [dnn_kernel_size]*num_dnn_layers
-		#self.dnn_strides = [dnn_strides]*num_dnn_layers
-		self.dnn_kernel_sizes = [size_kernel*2 +1]*num_conv_layers
-		self.dnn_pool_sizes = [size_pool*2]*num_conv_layers
-		self.dnn_strides = [dnn_strides]*num_conv_layers
+		if(isinstance(size_kernel, int)):
+			self.dnn_kernel_sizes = [size_kernel*2 +1]*num_conv_layers
+			self.encoder_kernel_sizes = [size_kernel*2 +1]*num_conv_layers
+			self.decoder_kernel_sizes = [size_kernel*2 +1]*num_conv_layers
+		else:
+			self.dnn_kernel_sizes = size_kernel*2 +1
+			self.encoder_kernel_sizes = size_kernel*2 +1
+			self.decoder_kernel_sizes = size_kernel*2 +1
 
-		''' Configure encoder '''
-		#encoder_filters = np.array([vae_filter_size]*num_vae_layers)
-		#self.encoder_filters = encoder_filters*(2**np.arange(num_vae_layers))
-		self.encoder_filters = [size_filter]*num_conv_layers
-		
-		#self.encoder_kernel_sizes = [vae_kernel_size]*num_vae_layers
-		#self.encoder_strides = [vae_strides]*num_vae_layers
-		self.encoder_kernel_sizes = [size_kernel*2 +1]*num_conv_layers
-		self.encoder_pool_sizes = [size_pool*2]*num_conv_layers
-		self.encoder_strides = [vae_strides]*num_conv_layers
+		if(isinstance(size_pool, int)):
+			self.dnn_pool_sizes = [size_pool*2]*num_conv_layers
+			self.encoder_pool_sizes = [size_pool*2]*num_conv_layers
+			self.decoder_pool_sizes = [size_pool*2]*num_conv_layers
+		else:
+			self.dnn_pool_sizes = size_pool*2
+			self.encoder_pool_sizes = size_pool*2
+			self.decoder_pool_sizes = size_pool*2
 
-		''' Configure Decoder '''
-		#decoder_filters = np.array([vae_filter_size]*num_vae_layers)
-		#self.decoder_filters = decoder_filters//(2**np.arange(num_vae_layers))
-		self.decoder_filters = [size_filter]*num_conv_layers
+		if(isinstance(dnn_strides, int)):
+			self.dnn_strides = [dnn_strides]*num_conv_layers
+			self.encoder_strides = [vae_strides]*num_conv_layers
+			self.decoder_strides = [vae_strides]*num_conv_layers
+		else:
+			self.dnn_strides = dnn_strides
+			self.encoder_strides = vae_strides
+			self.decoder_strides = vae_strides
 
-		#self.decoder_kernel_sizes = [vae_kernel_size]*num_vae_layers
-		#self.decoder_strides = [vae_strides]*num_vae_layers
-		self.decoder_kernel_sizes = [size_kernel*2 +1]*num_conv_layers
-		self.decoder_pool_sizes = [size_pool*2]*num_conv_layers
-		self.decoder_strides = [vae_strides]*num_conv_layers
-		
 		''' Store in `self` '''
 		self.data_shape = data_shape
 		

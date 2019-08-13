@@ -52,7 +52,7 @@ def Conv1DTranspose(filters, ksize, strides = 1, padding='same',
 	conv1D.add(UpSampling1D(size=strides))
 
 	# FINDME maybe strides should be == 1 here? Check size ratios after decoder
-	conv1D.add(Conv1D(filters, ksize, padding=padding, activation = activation))
+	conv1D.add(Conv1D(filters, (ksize,), padding=padding, activation = activation))
 	return conv1D
 
 def vae_sampling(args, latent_dim, batch_size = 128, 
@@ -165,8 +165,7 @@ class ConvVAEPredictor(object):
 		
 		for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
 			name = base_name.format(kb)
-			
-			x = Conv1D(cfilter, ksize,
+			x = Conv1D(cfilter, (ksize,),
 						strides = stride, 
 						padding = padding,
 						activation = activation, 
@@ -213,7 +212,7 @@ class ConvVAEPredictor(object):
 		for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
 			name = base_name.format(kb)
 			
-			x = Conv1D(cfilter, ksize,
+			x = Conv1D(cfilter, (ksize,),
 						strides = stride, 
 						padding = padding,
 						activation = activation, 
