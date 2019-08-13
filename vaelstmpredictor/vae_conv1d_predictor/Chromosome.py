@@ -111,6 +111,7 @@ class Chromosome(ConvVAEPredictor):
 		
 		self.vae_latent_dim = vae_latent_dim
 		self.vae_kl_weight = vae_kl_weight
+		self.vae_weight = vae_weight
 		self.dnn_weight = dnn_weight
 		self.dnn_kl_weight = dnn_kl_weight
 		
@@ -138,7 +139,10 @@ class Chromosome(ConvVAEPredictor):
 		self.use_prev_input = False
 		self.dnn_out_dim = clargs.n_labels
 		
-		self.build_model()
+		self.build_model(vae_kl_weight = self.vae_kl_weight,
+							vae_weight = self.vae_weight,
+							dnn_weight = self.dnn_weight,
+							dnn_kl_weight = self.dnn_kl_weight)
 		# self.model.compile(optimizer=self.optimizer)
 		self.neural_net = self.model
 		self.fitness = 0
