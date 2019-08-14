@@ -366,13 +366,13 @@ class ConvVAEPredictor(object):
 					'dnn_latent_layer': ['acc', 'mse'],
 					'vae_reconstruction': ['mse']}
 
+		if self.predictor_type == 'classification':
+			dnn_latent_loss = self.dnn_kl_loss
+		else:
+			dnn_latent_loss = self.vae_kl_loss
+
 		self.model.compile(
 				optimizer = optimizer or self.optimizer,
-
-				if self.predictor_type == 'classification':
-					dnn_latent_loss = self.dnn_kl_loss
-				else:
-					dnn_latent_loss = self.vae_kl_loss
 
 				loss = {'vae_reconstruction': self.vae_reconstruction_loss,
 						'dnn_latent_layer': dnn_latent_loss,
