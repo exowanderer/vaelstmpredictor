@@ -3,8 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'password'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://username:password@username.mysql.pythonanywhere-services.com/username$databasename'
+app.config['SECRET_KEY'] = 'Random Password'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://Username:Password@Username.mysql.pythonanywhere-services.com/databasename'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "x-access-token"], supports_credentials=True)
 db = SQLAlchemy(app)
@@ -15,7 +15,7 @@ class Chromosome(db.Model):
     chromosomeID = db.Column(db.Integer, default = 0)
     generationID = db.Column(db.Integer, default = 0)
     isTrained = db.Column(db.Integer, default = 0)
-    fitness = db.Column(db.Float, default = 100)
+    fitness = db.Column(db.Float, default = -1)
     run_name = db.Column(db.String(50), default = 'dummy')
     predictor_type = db.Column(db.Integer, default = 'classification')
     batch_size = db.Column(db.Integer, default = 128)
@@ -40,6 +40,10 @@ class Chromosome(db.Model):
     num_generations = db.Column(db.Integer, default = 100)
     time_stamp = db.Column(db.Integer, default = 0)
     hostname = db.Column(db.String(50), default = '127.0.0.1')
+    val_vae_reconstruction_loss = db.Column(db.Float, default = 1)
+    val_vae_latent_args_loss = db.Column(db.Float, default = 1)
+    val_dnn_latent_layer_loss = db.Column(db.Float, default = 1)
+    val_dnn_latent_mod_loss = db.Column(db.Float, default = 1)
     num_vae_layers = db.Column(db.Integer, default = 0)
     num_dnn_layers = db.Column(db.Integer, default = 0)
     size_vae_latent = db.Column(db.Integer, default = 0)

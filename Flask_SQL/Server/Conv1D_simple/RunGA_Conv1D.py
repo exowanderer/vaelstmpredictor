@@ -106,8 +106,20 @@ if __name__ == '__main__':
             help='Toggle whether to send the ckpt file + population local csv')
     parser.add_argument('--save_model', action='store_true',
             help='Save model ckpt.s and other stored values')
-    
+    #------------------------------------------
+    #-------------- Added Param ---------------
+    parser.add_argument('--original_dim', type=int, default=10,
+                help='Number of features')
+    parser.add_argument('--n_labels', type=int, default=10,
+                help='Number of Labels')
+    #------------------------------------------
+    #------------------------------------------
     clargs = parser.parse_args()
+
+    #for key,val in clargs.__dict__.items():
+    #    if 'dir' in key:
+    #        if not os.path.exists(val):
+    #            os.mkdir(val)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(("8.8.8.8", 80))

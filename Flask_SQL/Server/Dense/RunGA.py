@@ -190,7 +190,7 @@ if __name__ == '__main__':
 
     start = time()
     # while gen_num < num_generations:
-    for generationID in range(generationID+1,num_generations):
+    for generationID in range(1,num_generations):
 
         #Save Generation ID in the database
         CurrentGen = db.session.query(Variables).filter(Variables.name == "CurrentGen").first()

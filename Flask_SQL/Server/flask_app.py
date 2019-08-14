@@ -1,12 +1,13 @@
 
 # A very simple Flask Hello World app for you to get started with...
 
-from flask import request, jsonify
+from flask import request, jsonify, render_template
 from database import Chromosome, Variables, db, app
+from sqlalchemy import func
 
 @app.route('/')
 def index():
-    return 'Works!'
+    return render_template('index.html')
 
 @app.route('/AddChrom')
 def AddChrom():
@@ -39,6 +40,10 @@ def AddChrom():
         num_generations = request.args.get('num_generations')
         time_stamp = request.args.get('time_stamp')
         hostname = request.args.get('hostname')
+        val_vae_reconstruction_loss = request.args.get('val_vae_reconstruction_loss')
+        val_vae_latent_args_loss = request.args.get('val_vae_latent_args_loss')
+        val_dnn_latent_layer_loss = request.args.get('val_dnn_latent_layer_loss')
+        val_dnn_latent_mod_loss = request.args.get('val_dnn_latent_mod_loss')
         num_vae_layers = request.args.get('num_vae_layers')
         num_dnn_layers = request.args.get('num_dnn_layers')
         size_vae_latent = request.args.get('size_vae_latent')
@@ -89,6 +94,10 @@ def AddChrom():
         c.num_generations = num_generations
         c.time_stamp = time_stamp
         c.hostname = hostname
+        c.val_vae_reconstruction_loss = val_vae_reconstruction_loss
+        c.val_vae_latent_args_loss = val_vae_latent_args_loss
+        c.val_dnn_latent_layer_loss = val_dnn_latent_layer_loss
+        c.val_dnn_latent_mod_loss = val_dnn_latent_mod_loss
         c.num_vae_layers = num_vae_layers
         c.num_dnn_layers = num_dnn_layers
         c.size_vae_latent = size_vae_latent
@@ -109,6 +118,10 @@ def GetGeneration():
         generationID = db.session.query(Variables).filter(Variables.name == "CurrentGen").first().value
         chroms = db.session.query(Chromosome).filter(Chromosome.generationID == generationID).all()
         resp = []
+        trained = 0
+        taken = 0
+        not_taken = 0
+        generation = 0
         for c in chroms:
             resp.append({'chromosomeID': c.chromosomeID,
                         'generationID': c.generationID,
@@ -124,7 +137,13 @@ def GetGeneration():
                         'size_pool': c.size_pool,
                         'size_filter': c.size_filter,
             			'info': c.info})
-        return jsonify(resp)
+            trained += (c.isTrained == 2)
+            taken += (c.isTrained == 1)
+            not_taken += (c.isTrained == 0)
+            generation = (c.generationID +1)
+
+        dic = {"5-Chroms": resp, "3-Taken": taken, "2-Trained": trained, "4-Not Taken": not_taken, "1-Generation": generation}
+        return jsonify(dic)
     return '0'
 
 @app.route('/GetDatabase')
@@ -161,6 +180,10 @@ def GetDatabase():
             			'num_generations': c.num_generations,
             			'time_stamp': c.time_stamp,
             			'hostname': c.hostname,
+            			'val_vae_reconstruction_loss': c.val_vae_reconstruction_loss,
+                        'val_vae_latent_args_loss': c.val_vae_latent_args_loss,
+                        'val_dnn_latent_layer_loss': c.val_dnn_latent_layer_loss,
+                        'val_dnn_latent_mod_loss': c.val_dnn_latent_mod_loss,
             			'num_vae_layers': c.num_vae_layers,
             			'num_dnn_layers': c.num_dnn_layers,
             			'size_vae_latent': c.size_vae_latent,
@@ -212,6 +235,10 @@ def GetUnTrainedChrom():
             			'num_generations': c.num_generations,
             			'time_stamp': c.time_stamp,
             			'hostname': c.hostname,
+            			'val_vae_reconstruction_loss': c.val_vae_reconstruction_loss,
+                        'val_vae_latent_args_loss': c.val_vae_latent_args_loss,
+                        'val_dnn_latent_layer_loss': c.val_dnn_latent_layer_loss,
+                        'val_dnn_latent_mod_loss': c.val_dnn_latent_mod_loss,
             			'num_vae_layers': c.num_vae_layers,
             			'num_dnn_layers': c.num_dnn_layers,
             			'size_vae_latent': c.size_vae_latent,
@@ -231,3 +258,51 @@ def GetIsDone():
         if isDone == None:
             return "0"
         return isDone.value
+
+@app.route('/Visuals')
+def Visuals():
+    if request.method == 'GET':
+        resp = {}
+        chroms = db.session.query(Chromosome).order_by(Chromosome.generationID, Chromosome.chromosomeID).all()
+        population = chroms[0].population_size
+
+        def get_index(generationID, chromosomeID):
+            return generationID*population + chromosomeID
+
+        nodes = []
+        min_val = db.session.query(func.min(Chromosome.fitness)).filter(Chromosome.fitness > 0).first()[0]
+        max_val = db.session.query(func.max(Chromosome.fitness)).filter(Chromosome.fitness > 0).first()[0]
+        for c in chroms:
+            if(c.fitness < min_val):
+                c.fitness = min_val
+            c.fitness = ((1/c.fitness) - 1/max_val)/(1/min_val - 1/max_val)
+            nodes.append({"generation": c.generationID,
+                            "name": c.chromosomeID,
+                            "fitness": c.fitness,
+                            "size": c.num_conv_layers,
+                            "height": c.size_filter})
+        links = []
+        for c in chroms:
+            bold = 0 if ("Mutated" in c.info) else 1
+            if("Descendant" in c.info):
+                parentID = int(c.info.split(" ")[2])
+                links.append({"source": get_index(c.generationID -1, parentID),
+                                "target": get_index(c.generationID, c.chromosomeID),
+                                "op": bold})
+            elif("Child" in c.info):
+                parentID1 = int(c.info.split(" ")[2])
+                parentID2 = int(c.info.split(" ")[4])
+                links.append({"source": get_index(c.generationID -1, parentID1),
+                                "target": get_index(c.generationID, c.chromosomeID),
+                                "op": bold})
+                links.append({"source": get_index(c.generationID -1, parentID2),
+                                "target": get_index(c.generationID, c.chromosomeID),
+                                "op": bold})
+
+
+        resp["nodes"] = nodes
+        resp["links"] = links
+        resp["population"] = population
+        resp["max"] = max_val
+        resp["min"] = min_val
+        return jsonify(resp)
