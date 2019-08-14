@@ -1,3 +1,4 @@
+import joblib
 import json
 import numpy as np
 import scipy.stats
@@ -5,7 +6,7 @@ import scipy.stats
 from functools import partial, update_wrapper
 
 from keras import backend as K
-from keras.layers import Input, Lambda, concatenate, Dense, Conv1D 
+from keras.layers import Input, Lambda, concatenate, Dense, Conv1D #, MaxPooling1D
 from keras.layers import UpSampling1D, Flatten, Reshape
 from keras.models import Model, Sequential
 from keras.losses import binary_crossentropy, categorical_crossentropy
@@ -44,15 +45,14 @@ ITERABLES = (list, tuple, np.array)
 def debug_message(message): print('[DEBUG] {}'.format(message))
 def info_message(message): print('[INFO] {}'.format(message))
 
-def Conv1DTranspose(filters, kernel_size, strides = 1, padding='same', 
+def Conv1DTranspose(filters, ksize, strides = 1, padding='same', 
 						activation = 'relu', name = None):
 	
 	conv1D = Sequential(name = name)
 	conv1D.add(UpSampling1D(size=strides))
 
 	# FINDME maybe strides should be == 1 here? Check size ratios after decoder
-	conv1D.add(Conv1D(filters=filters, kernel_size=(kernel_size), 
-							padding=padding, activation = activation))
+	conv1D.add(Conv1D(filters, (ksize,), padding=padding, activation = activation))
 	return conv1D
 
 def vae_sampling(args, latent_dim, batch_size = 128, 
@@ -97,9 +97,11 @@ def dnn_sampling(args, latent_dim, batch_size = 128, channels = None,
 
 class ConvVAEPredictor(object):
 	def __init__(self, encoder_filters, encoder_kernel_sizes,
-					decoder_filters, decoder_kernel_sizes, 
+					vae_hidden_dims, dnn_hidden_dims, 
+					decoder_filters, decoder_kernel_sizes,
+					encoder_pool_sizes, dnn_pool_sizes, decoder_pool_sizes,
 					dnn_filters, dnn_kernel_sizes, dnn_strides = 2,
-					encoder_strides = 2, decoder_strides = 2, 
+					encoder_strides = 2, decoder_strides = 2,
 					vae_latent_dim = 2, encoder_top_size = 16, 
 					final_kernel_size = 3, data_shape = (784,1), 
 					batch_size = 128, run_all = False, 
@@ -109,7 +111,7 @@ class ConvVAEPredictor(object):
 					dnn_log_var_prior = 0.0, optimizer = 'adam-wn', 
 					predictor_type = 'classification', 
 					layer_type = 'Conv1D'):
-
+		K.clear_session()
 		self.n_channels = n_channels
 		self.data_shape = data_shape
 		self.batch_size = batch_size
@@ -118,22 +120,29 @@ class ConvVAEPredictor(object):
 		
 		self.encoder_filters = encoder_filters
 		self.encoder_kernel_sizes = encoder_kernel_sizes
+		self.encoder_pool_sizes = encoder_pool_sizes
 		self.encoder_strides = encoder_strides
 		self.encoder_top_size = encoder_top_size
 		
 		self.decoder_filters = decoder_filters
 		self.decoder_kernel_sizes = decoder_kernel_sizes
+		self.decoder_pool_sizes = decoder_pool_sizes
 		self.decoder_strides = decoder_strides
 		self.final_kernel_size = final_kernel_size
 
 		self.dnn_filters = dnn_filters
 		self.dnn_kernel_sizes = dnn_kernel_sizes
+		self.dnn_pool_sizes = dnn_pool_sizes
 		self.dnn_strides = dnn_strides
 		self.dnn_out_dim = dnn_out_dim
 
 		self.layer_type = layer_type
 		self.predictor_type = predictor_type
 		self.original_dim = original_dim
+		
+		self.vae_hidden_dims = vae_hidden_dims
+		self.dnn_hidden_dims = dnn_hidden_dims
+		self.vae_latent_dim = vae_latent_dim
 		
 		"""FINDME: Why is this dnn_out_dim-1(??)"""
 		if dnn_latent_dim is not None: self.dnn_latent_dim = dnn_out_dim - 1
@@ -151,22 +160,22 @@ class ConvVAEPredictor(object):
 		
 		zipper = zip(self.dnn_filters, 
 					self.dnn_kernel_sizes,
+					self.dnn_pool_sizes,
 					self.dnn_strides)
 		
-		for kb, (cfilter, ksize, stride) in enumerate(zipper):
+		for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
 			name = base_name.format(kb)
-			
-			x = Conv1D(filters = cfilter, 
-								kernel_size = ksize,
-								strides = stride, 
-								padding = padding,
-								activation = activation, 
-								name = name)(x)
+			x = Conv1D(cfilter, (ksize,),
+						strides = stride, 
+						padding = padding,
+						activation = activation, 
+						name = name)(x)
+			# x = MaxPooling1D(psize)(x)
 
 		x = Flatten()(x)
-		
-		x = Dense(units = self.dnn_out_dim, 
-						activation='relu', name = 'dnn_dense_0')(x)
+
+		for layer_size in self.dnn_hidden_dims:
+                        x = Dense(units = layer_size, activation='relu')(x)
 		
 		# The input image ends up being encoded into these two parameters
 		self.dnn_latent_mean = Dense(units = self.dnn_latent_dim, 
@@ -188,39 +197,6 @@ class ConvVAEPredictor(object):
 		
 		self.dnn_latent_mod = dnn_latent_mod(self.dnn_latent_layer)
 
-		# dnn_latent_shape = K.int_shape(self.dnn_latent_mod)[1:-1]
-		# self.dnn_latent_mod = Reshape(dnn_latent_shape, 
-		# 						name = 'dnn_latent_mod')(self.dnn_latent_mod)
-
-	""" # Previous Try
-	def orig_build_predictor(self):
-		if bool(sum(self.dnn_filter_sizes)):
-			''' Establish dnn Encoder layer structure '''
-			dnn_enc_hid_layer = build_hidden_conv_layers(
-									filter_sizes = self.dnn_filter_sizes,
-									kernel_sizes = self.dnn_kernel_sizes,
-									input_layer = self.input_layer, 
-									strides = self.dnn_strides,
-									base_layer_name = 'dnn_enc_hidden_layer',
-									activation  = self.hidden_activation,
-									Layer = self.layer_type)
-		else:
-			'''if there are no hidden layers, then the input to the 
-				dnn latent layers is the input_w_pred layer'''
-			dnn_enc_hid_layer = self.input_w_pred
-		
-		self.dnn_latent_mean = Dense(self.dnn_latent_dim,
-									name='dnn_latent_mean')(dnn_enc_hid_layer)
-		self.dnn_latent_log_var =Dense(self.dnn_latent_dim,
-								name = 'dnn_latent_log_var')(dnn_enc_hid_layer)
-		
-		dnn_latent_layer = Lambda(dnn_sampling, name='dnn_latent_layer',
-								arguments = {'latent_dim':self.dnn_latent_dim, 
-											'batch_size':self.batch_size})
-
-		self.dnn_latent_layer = dnn_latent_layer([self.dnn_latent_mean, 
-												  self.dnn_latent_log_var])
-	"""
 	def build_latent_encoder(self, padding='same', activation='relu', 
 								base_name = 'enc_conv1d_{}'):
 		
@@ -230,24 +206,25 @@ class ConvVAEPredictor(object):
 
 		zipper = zip(self.encoder_filters, 
 					self.encoder_kernel_sizes,
+					self.encoder_pool_sizes,
 					self.encoder_strides)
 
-		for kb, (cfilter, ksize, stride) in enumerate(zipper):
+		for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
 			name = base_name.format(kb)
 			
-			x = Conv1D(filters = cfilter, 
-								kernel_size = ksize,
-								strides = stride, 
-								padding = padding,
-								activation = activation, 
-								name = name)(x)
+			x = Conv1D(cfilter, (ksize,),
+						strides = stride, 
+						padding = padding,
+						activation = activation, 
+						name = name)(x)
+			# x = MaxPooling1D(psize)(x)
 
 		self.last_conv_shape = K.int_shape(x)
 		
 		x = Flatten()(x)
-		
-		x = Dense(units = self.encoder_top_size, 
-						activation='relu', name = 'enc_dense_0')(x)
+
+		for layer_size in self.vae_hidden_dims:
+                        x = Dense(units = layer_size, activation='relu')(x)
 
 		# The input image ends up being encoded into these two parameters
 		self.vae_latent_mean = Dense(units = self.vae_latent_dim, 
@@ -291,9 +268,12 @@ class ConvVAEPredictor(object):
 		numerator = self.data_shape[0]
 
 		shouldbe_last_conv_shape = (numerator//divisor, n_channels)
-		x = Dense(np.prod(shouldbe_last_conv_shape),
-							activation = 'relu', name = 'dec_dense_0')
-		x = x(reshaped_dnn_w_latent)
+		
+		x = reshaped_dnn_w_latent
+		for layer_size in self.vae_hidden_dims:
+                        x = Dense(units = layer_size, activation='relu')(x)
+
+		x = Dense(units = np.prod(shouldbe_last_conv_shape), activation='relu')(x)
 		
 		# Reshapes z into a feature map of the same shape as the feature map
 		#	just before the last Flatten layer in the encoder model
@@ -304,25 +284,25 @@ class ConvVAEPredictor(object):
 		'''
 		zipper = zip(self.decoder_filters, 
 					self.decoder_kernel_sizes,
+					self.decoder_pool_sizes,
 					self.decoder_strides)
 
-		for kb, (cfilter, ksize, stride) in enumerate(zipper):
+		for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
 			name = base_name.format(kb)
 			
-			x = Conv1DTranspose(filters = cfilter, 
-								kernel_size = ksize,
-								strides = stride,
-								padding = padding, 
-								activation = activation,
-								name = name)(x)
+			x = Conv1DTranspose(cfilter, ksize,
+							strides = stride,
+							padding = padding, 
+							activation = activation,
+							name = name)(x)
+			
+			# x = UpSampling1D(psize)(x)
 		
-		# Use a point-wise convolution on the top of the conv-stack
-		#	this is the image generation stage: sigmoid == images from 0-1
-		one = 1 # required to make a `point-wise` convolution
-		self.vae_reconstruction = Conv1DTranspose(filters =one, 
-							kernel_size =self.final_kernel_size, 
-							padding = 'same', activation = 'sigmoid',
-							name = 'vae_reconstruction')(x)
+		
+		self.vae_reconstruction = Conv1DTranspose(1, self.final_kernel_size,
+							padding='same',
+							activation='sigmoid',
+							name='vae_reconstruction')(x)
 
 	def dnn_kl_loss(self, labels, preds):
 		vs = 1 - self.dnn_log_var_prior + self.dnn_latent_log_var
@@ -332,12 +312,8 @@ class ConvVAEPredictor(object):
 		return -0.5*K.sum(vs, axis = -1)
 
 	def dnn_predictor_loss(self, labels, preds):
-		# pred_shape = (self.dnn_out_dim,)
-		# preds = Reshape(pred_shape)(preds)
-		
 		if self.predictor_type is 'classification':
 			reconstruction_loss = categorical_crossentropy(labels, preds)
-			# reconstruction_loss = self.dnn_latent_dim * reconstruction_loss
 		elif self.predictor_type is 'regression':
 			reconstruction_loss = mean_squared_error(labels, preds)
 		else:
@@ -346,7 +322,9 @@ class ConvVAEPredictor(object):
 		return reconstruction_loss
 
 	def build_model(self, batch_size = None, hidden_activation = 'relu', 
-				  output_activation = 'sigmoid'):
+				  output_activation = 'sigmoid',
+				  dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
+				  dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
 
 		batch_shape = (self.batch_size, self.original_dim, 1)
 		self.input_layer = Input(batch_shape = batch_shape, name='input_layer')
@@ -379,8 +357,8 @@ class ConvVAEPredictor(object):
 
 		self.model = Model([self.input_layer], output_stack)
 
-	def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
-				  dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
+		# def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
+		# 			  dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
 		metrics_ = {'dnn_prediction': ['acc', 'mse'],
 					'dnn_latent_layer': ['acc', 'mse'],
 					'vae_reconstruction': ['mse']}
@@ -402,7 +380,6 @@ class ConvVAEPredictor(object):
 				)
 	
 	def vae_reconstruction_loss(self, input_layer, vae_reconstruction):
-
 		# reshape_input_layer = Reshape((self.batch_size, self.data_shape[0]))
 		# input_layer = reshape_input_layer(input_layer)
 

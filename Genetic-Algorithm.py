@@ -92,7 +92,7 @@ class Chromosome:
 
 cross_prob = 0.7
 mutate_prob = 0.01
-net_size = 1000  #Preferably divisible by 2
+net_size = 10  #Preferably divisible by 2
 
 generation = generate_random_chromosomes(net_size)
 gen_num = 0
