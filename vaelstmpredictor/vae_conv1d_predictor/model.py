@@ -362,13 +362,17 @@ class ConvVAEPredictor(object):
 
 		# def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0, 
 		# 			  dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
-		metrics_ = {'dnn_prediction': ['acc', 'mse'],
-					'dnn_latent_layer': ['acc', 'mse'],
+		metrics_ = {'dnn_prediction': ['mse'],
+					'dnn_latent_layer': ['mse'],
 					'vae_reconstruction': ['mse']}
 
 		if self.predictor_type == 'classification':
+			debug_message('not regression!')
 			dnn_latent_loss = self.dnn_kl_loss
+			metrics_['dnn_prediction'].append('acc')
+			metrics_['dnn_latent_layer'].append('acc')
 		else:
+			debug_message('regression!')
 			dnn_latent_loss = self.vae_kl_loss
 
 		self.model.compile(
@@ -398,6 +402,7 @@ class ConvVAEPredictor(object):
 			inp_vae_loss = self.original_dim * inp_vae_loss
 		
 		elif self.predictor_type is 'classification':
+			debug_message('not regression!')
 			''' I am left to assume that the vae_reconstruction_loss for a 
 					non-binary data source (i.e. *not* piano keys) should be 
 					a regression problem. 
@@ -406,8 +411,10 @@ class ConvVAEPredictor(object):
 			inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
 		
 		elif self.predictor_type is 'regression':
+			debug_message('regression!')
 			inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
 		else:
+			debug_message('not regression!')
 			inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
 		
 		return inp_vae_loss

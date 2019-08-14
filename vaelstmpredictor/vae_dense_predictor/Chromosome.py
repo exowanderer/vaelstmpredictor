@@ -38,7 +38,7 @@ class Chromosome(VAEPredictor):
 
 		# to log device placement (on which device the operation ran)
 		# (nothing gets printed in Jupyter, only if you run it standalone)
-		config.log_device_placement = True  
+		config.log_device_placement = False
 		sess = tf.Session(config=config)
 
 		# set this TensorFlow session as the default session for Keras

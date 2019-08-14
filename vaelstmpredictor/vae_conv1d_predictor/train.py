@@ -73,7 +73,7 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 
 	# to log device placement (on which device the operation ran)
 	# (nothing gets printed in Jupyter, only if you run it standalone)
-	config.log_device_placement = True  
+	config.log_device_placement = False
 	sess = tf.Session(config=config)
 
 	# set this TensorFlow session as the default session for Keras
@@ -84,9 +84,11 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 	clargs.n_labels = len(np.unique(DI.train_labels))
 
 	if clargs.predictor_type is 'classification':
+		debug_message('not regression!')
 		predictor_train = to_categorical(DI.train_labels, clargs.n_labels)
 		predictor_validation = to_categorical(DI.valid_labels, clargs.n_labels)
 	else:
+		debug_message('regression!')
 		predictor_train = DI.train_labels
 		predictor_validation = DI.valid_labels
 	
