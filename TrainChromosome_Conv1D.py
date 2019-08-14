@@ -19,18 +19,32 @@ with warnings.catch_warnings():
 
 warnings.filterwarnings(action='ignore',module='.*paramiko.*')
 
-def debug_message(message): print('[DEBUG] {}'.format(message))
-def warning_message(message): print('[WARNING] {}'.format(message))
-def info_message(message): print('[INFO] {}'.format(message))
+
+def debug_message(message):
+	print('[DEBUG] {}'.format(message))
+
+
+def warning_message(message):
+	print('[WARNING] {}'.format(message))
+
+
+def info_message(message):
+	print('[INFO] {}'.format(message))
+
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
+	parser.add_argument('--sql_server', 
+		default='LAUDeepGenerativeGenetics.pythonanywhere.com',
+		help='The URL or IP of the SQL server')
 	clargs = parser.parse_args()
 
 	for key,val in clargs.__dict__.items(): 
 		if 'dir' in key: 
 			if not os.path.exists(val): 
 				os.mkdir(val)
+
+	base_url = clargs.sql_server
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8", 80))
@@ -39,15 +53,19 @@ if __name__ == '__main__':
 
 	while True:
 		try:
-			chromosome = requests.get(url="http://philippesaade11.pythonanywhere.com/GetUnTrainedChrom")
+			info_message('Grabbing Untrained Chromosome')
+			chromosome = requests.get(
+				url="http://{}/GetUnTrainedChrom".format(base_url))
 		except:
 			chromosome = None
+
 		if(chromosome != None and chromosome.text == "0"):
 			info_message("No more Chromosomes to train")
 			sleep(30)
 		elif(chromosome != None):
 			try:
-				params = chromosome.json()		
+				info_message('Accessing Params from Untrained Chromosome')
+				params = chromosome.json()
 			except:		
 				continue
 
@@ -134,11 +152,26 @@ if __name__ == '__main__':
 
 			info_message("Training Chromosome "+str(clargs.chromosomeID)+" Generation "+str(clargs.generationID))
 			try:
+				K.clear_session()
 				chromosome = Chromosome(**chrom_params)
 				chromosome.verbose = True
-				chromosome.train(verbose=True)
+
+				start_time = time()
+
+				if verbose:
+					info_message('Start Training: {}'.format(start_run))
+
 				chromosome.model.summary()
+				chromosome.train(verbose=True)
 				K.clear_session()
+
+				end_time = time()
+				run_time = end_time - start_time
+
+				if clargs.verbose:
+					info_message('End Training: {}'.format(end_time))
+					info_message('Runtime Training: {}'.format(run_time))
+
 			except Exception as e:
 				warning_message("Error has occured while training")
 				print(e)
@@ -158,12 +191,16 @@ if __name__ == '__main__':
 			params["val_dnn_latent_layer_loss"] = chromosome.best_loss['val_dnn_latent_layer_loss']
 			params["val_dnn_latent_mod_loss"] = chromosome.best_loss['val_dnn_latent_mod_loss']
 			params["hostname"] = clargs.hostname
-			params["time_stamp"] = clargs.time_stamp
+			params["start_time"] = start_time
+			params["end_time"] = end_time
+			params["run_time"] = run_time
 
 			sent = False
 			while(not sent):
 				try:
-					resp = requests.get(url="http://philippesaade11.pythonanywhere.com/AddChrom", params=params)
+					resp = requests.get(
+						url="http://{}/AddChrom".format(base_url), 
+						params=params)
 					info_message("Response: "+resp.text)
 					sent = (resp.text == "1")
 				except:

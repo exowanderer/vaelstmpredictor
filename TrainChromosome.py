@@ -25,6 +25,9 @@ def info_message(message): print('[INFO] {}'.format(message))
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
+	parser.add_argument('--sql_server', 
+		default='LAUDeepGenerativeGenetics.pythonanywhere.com',
+		help='The URL or IP of the SQL server')
 	clargs = parser.parse_args()
 
 	for key,val in clargs.__dict__.items(): 
@@ -37,9 +40,12 @@ if __name__ == '__main__':
 	hostname = s.getsockname()[0]
 	s.close()
 
+	base_url = clargs.sql_server
+
 	while True:
 		try:
-			chromosome = requests.get(url="http://philippesaade11.pythonanywhere.com/GetUnTrainedChrom")
+			chromosome = requests.get(
+				url="http://{}/GetUnTrainedChrom".format(base_url))
 		except:
 			chromosome = None
 		if(chromosome != None and chromosome.text == "0"):
@@ -143,7 +149,9 @@ if __name__ == '__main__':
 			sent = False
 			while(not sent):
 				try:
-					resp = requests.get(url="http://philippesaade11.pythonanywhere.com/AddChrom", params=params)
+					resp = requests.get(
+						url="http://{}/AddChrom".format(base_url), 
+						params=params)
 					info_message("Response: "+resp.text)
 					sent = (resp.text == "1")
 				except:
