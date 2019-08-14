@@ -239,7 +239,7 @@ def create_blank_dataframe(generationID, population_size):
 	generation['patience'] = zeros
 	generation['population_size'] = zeros
 	generation['prediction_log_var_prior'] = zeros
-	generation['predictor_type'] = ['classification'] * population_size
+	generation['predictor_type'] = ['regression'] * population_size
 	generation['run_name'] = ['run_name'] * population_size
 	generation['table_dir'] = ['../data/tables'] * population_size
 	generation['time_stamp'] = zeros

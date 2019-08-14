@@ -95,7 +95,7 @@ if __name__ == '__main__':
 			clargs.patience = params["patience"]
 			clargs.population_size = params["population_size"]
 			clargs.prediction_log_var_prior = params["prediction_log_var_prior"]
-			clargs.predictor_type = params["predictor_type"]
+			clargs.predictor_type = 'regression'  # params["predictor_type"]
 			clargs.run_name = params["run_name"]
 			clargs.size_dnn_hidden = params["size_dnn_hidden"]
 			clargs.size_vae_hidden = params["size_vae_hidden"]

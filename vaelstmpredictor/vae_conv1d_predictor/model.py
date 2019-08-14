@@ -109,7 +109,7 @@ class ConvVAEPredictor(object):
 					original_dim = None, dnn_out_dim = None, 
 					dnn_latent_dim = None, n_channels = 1,
 					dnn_log_var_prior = 0.0, optimizer = 'adam-wn', 
-					predictor_type = 'classification', 
+					predictor_type = 'regression', 
 					layer_type = 'Conv1D'):
 		K.clear_session()
 		self.n_channels = n_channels
@@ -313,10 +313,13 @@ class ConvVAEPredictor(object):
 
 	def dnn_predictor_loss(self, labels, preds):
 		if self.predictor_type is 'classification':
+			debug_message('WTF!! We Are In Classification???')
 			reconstruction_loss = categorical_crossentropy(labels, preds)
 		elif self.predictor_type is 'regression':
+			debug_message('Good Code!')
 			reconstruction_loss = mean_squared_error(labels, preds)
 		else:
+			debug_message('Bad Code!')
 			reconstruction_loss = categorical_crossentropy(labels, preds)
 		
 		return reconstruction_loss
@@ -366,8 +369,13 @@ class ConvVAEPredictor(object):
 		self.model.compile(
 				optimizer = optimizer or self.optimizer,
 
+				if self.predictor_type == 'classification':
+					dnn_latent_loss = self.dnn_kl_loss
+				else:
+					dnn_latent_loss = self.vae_kl_loss
+
 				loss = {'vae_reconstruction': self.vae_reconstruction_loss,
-						'dnn_latent_layer': self.dnn_kl_loss,
+						'dnn_latent_layer': dnn_latent_loss,
 						'dnn_latent_mod': self.dnn_predictor_loss,
 						'vae_latent_args': self.vae_kl_loss},
 
