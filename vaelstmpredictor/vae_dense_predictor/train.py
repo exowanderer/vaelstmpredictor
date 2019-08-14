@@ -20,7 +20,7 @@ from ..utils.weightnorm import data_based_init
 # =======
 from .model import VAEPredictor
 
->>>>>>> c59d0c290d3bf258142b4c60c3c21ab4be434b07:vaelstmpredictor/vae_dense_predictor/train.py
+# >>>>>>> c59d0c290d3bf258142b4c60c3c21ab4be434b07:vaelstmpredictor/vae_dense_predictor/train.py
 def info_message(message, end='\n'): 
 	print('[INFO] {}'.format(message), end=end)
 
