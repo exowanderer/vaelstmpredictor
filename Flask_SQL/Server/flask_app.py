@@ -38,7 +38,9 @@ def AddChrom():
         mutate_prob = request.args.get('mutate_prob')
         population_size = request.args.get('population_size')
         num_generations = request.args.get('num_generations')
-        time_stamp = request.args.get('time_stamp')
+        start_time = request.args.get('start_time')
+        end_time = request.args.get('end_time')
+        run_time = request.args.get('run_time')
         hostname = request.args.get('hostname')
         val_vae_reconstruction_loss = request.args.get('val_vae_reconstruction_loss')
         val_vae_latent_args_loss = request.args.get('val_vae_latent_args_loss')
@@ -92,7 +94,9 @@ def AddChrom():
         c.mutate_prob = mutate_prob
         c.population_size = population_size
         c.num_generations = num_generations
-        c.time_stamp = time_stamp
+        c.start_time = start_time
+        c.end_time = end_time
+        c.run_time = run_time
         c.hostname = hostname
         c.val_vae_reconstruction_loss = val_vae_reconstruction_loss
         c.val_vae_latent_args_loss = val_vae_latent_args_loss
@@ -178,7 +182,9 @@ def GetDatabase():
             			'mutate_prob': c.mutate_prob,
             			'population_size': c.population_size,
             			'num_generations': c.num_generations,
-            			'time_stamp': c.time_stamp,
+            			'start_time': c.start_time,
+            			'end_time': c.end_time,
+            			'run_time': c.run_time,
             			'hostname': c.hostname,
             			'val_vae_reconstruction_loss': c.val_vae_reconstruction_loss,
                         'val_vae_latent_args_loss': c.val_vae_latent_args_loss,
@@ -233,7 +239,9 @@ def GetUnTrainedChrom():
             			'mutate_prob': c.mutate_prob,
             			'population_size': c.population_size,
             			'num_generations': c.num_generations,
-            			'time_stamp': c.time_stamp,
+            			'start_time': c.start_time,
+            			'end_time': c.end_time,
+            			'run_time': c.run_time,
             			'hostname': c.hostname,
             			'val_vae_reconstruction_loss': c.val_vae_reconstruction_loss,
                         'val_vae_latent_args_loss': c.val_vae_latent_args_loss,

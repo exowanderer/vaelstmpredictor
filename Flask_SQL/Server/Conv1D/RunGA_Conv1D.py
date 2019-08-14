@@ -110,7 +110,7 @@ if __name__ == '__main__':
             help='Toggle whether to send the ckpt file + population local csv')
     parser.add_argument('--save_model', action='store_true',
             help='Save model ckpt.s and other stored values')
-    
+
     clargs = parser.parse_args()
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

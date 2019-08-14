@@ -86,7 +86,9 @@ def create_blank_dataframe(generationID, population_size):
     generation['predictor_type'] = ['classification']*population_size
     generation['run_name'] = ['run_name']*population_size
     generation['table_dir'] = ['../data/tables']*population_size
-    generation['time_stamp'] = zeros
+    generation['run_time'] = np.float32(zeros)
+    generation['start_time'] = np.float32(zeros)
+    generation['end_time'] = np.float32(zeros)
     generation['train_file'] = ['train_file']*population_size
     generation['dnn_weight'] = np.float32(zeros)
     generation['dnn_kl_weight'] = np.float32(zeros)
@@ -189,7 +191,9 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
             mutate_prob = clargs.mutate_prob
             population_size = clargs.population_size
             num_generations = clargs.num_generations
-            time_stamp = clargs.time_stamp
+            start_time = chromosome.start_time
+            end_time = chromosome.end_time
+            run_time = chromosome.end_time - chromosome.start_time
             hostname = clargs.hostname
             val_vae_reconstruction_loss = chromosome.val_vae_reconstruction_loss
             val_vae_latent_args_loss = chromosome.val_vae_latent_args_loss
@@ -233,7 +237,9 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
                                     mutate_prob = mutate_prob,
                                     population_size = population_size,
                                     num_generations = num_generations,
-                                    time_stamp = time_stamp,
+                                    start_time = start_time,
+                                    end_time = end_time,
+                                    run_time = run_time,
                                     hostname = hostname,
                                     val_vae_reconstruction_loss = val_vae_reconstruction_loss,
                                     val_vae_latent_args_loss = val_vae_latent_args_loss,
@@ -274,7 +280,9 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
                 c.mutate_prob = mutate_prob
                 c.population_size = population_size
                 c.num_generations = num_generations
-                c.time_stamp = time_stamp
+                c.start_time = start_time
+                c.end_time = end_time
+                c.run_time = run_time
                 c.hostname = hostname
                 c.val_vae_reconstruction_loss = val_vae_reconstruction_loss
                 c.val_vae_latent_args_loss = val_vae_latent_args_loss
@@ -359,7 +367,9 @@ def load_generation_from_sql(generationID, population_size):
         generation.set_value(chrom.chromosomeID, "val_dnn_latent_layer_loss", sql_chrom.val_dnn_latent_layer_loss)
         generation.set_value(chrom.chromosomeID, "val_dnn_latent_mod_loss", sql_chrom.val_dnn_latent_mod_loss)
         generation.set_value(chrom.chromosomeID, "hostname", sql_chrom.hostname)
-        generation.set_value(chrom.chromosomeID, "time_stamp", sql_chrom.time_stamp)
+        generation.set_value(chrom.chromosomeID, "start_time", sql_chrom.start_time)
+        generation.set_value(chrom.chromosomeID, "end_time", sql_chrom.end_time)
+        generation.set_value(chrom.chromosomeID, "run_time", sql_chrom.run_time)
         generation.set_value(chrom.chromosomeID, "num_generations", sql_chrom.num_generations)
         generation.set_value(chrom.chromosomeID, "population_size", sql_chrom.population_size)
         generation.set_value(chrom.chromosomeID, "mutate_prob", sql_chrom.mutate_prob)
@@ -466,7 +476,8 @@ def cross_over(new_generation, generation, parent1, parent2,
         p2_fitness = generation.ix[idx_parent2, 'fitness']
 
         idx_child = idx_parent1 if p1_fitness > p2_fitness else idx_parent1
-        params_copy = param_choices + ['fitness', 'hostname', 'time_stamp', 'isTrained']
+        params_copy = param_choices + ['fitness', 'hostname', 'start_time', 'end_time', 'run_time', 'isTrained',
+                                       'val_vae_reconstruction_loss', 'val_vae_latent_args_loss', 'val_dnn_latent_layer_loss', 'val_dnn_latent_mod_loss']
         parent_p = generation.loc[idx_child, params_copy]
         new_generation.set_value(chromosomeID, params_copy, parent_p)
         new_generation.set_value(chromosomeID, 'info', 'Descendant of '+str(generation.loc[idx_child, 'chromosomeID']))

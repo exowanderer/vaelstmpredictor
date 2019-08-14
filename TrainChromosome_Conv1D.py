@@ -158,8 +158,8 @@ if __name__ == '__main__':
 
 				start_time = time()
 
-				if verbose:
-					info_message('Start Training: {}'.format(start_run))
+				if clargs.verbose:
+					info_message('Start Training: {}'.format(start_time))
 
 				chromosome.model.summary()
 				chromosome.train(verbose=True)
