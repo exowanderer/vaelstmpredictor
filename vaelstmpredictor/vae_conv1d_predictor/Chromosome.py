@@ -134,7 +134,6 @@ class Chromosome(ConvVAEPredictor):
 		'''
 		self.model_dir = clargs.model_dir
 		self.run_name = clargs.run_name
-		self.predictor_type = clargs.predictor_type
 		self.original_dim = clargs.original_dim
 		self.dnn_weight = clargs.dnn_weight
 		

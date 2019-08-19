@@ -108,8 +108,7 @@ class ConvVAEPredictor(object):
 					verbose = False, plot_model = False,
 					original_dim = None, dnn_out_dim = None, 
 					dnn_latent_dim = None, n_channels = 1,
-					dnn_log_var_prior = 0.0, optimizer = 'adam-wn', 
-					predictor_type = 'regression', 
+					dnn_log_var_prior = 0.0, optimizer = 'adam-wn',
 					layer_type = 'Conv1D'):
 		K.clear_session()
 		self.n_channels = n_channels
@@ -137,7 +136,6 @@ class ConvVAEPredictor(object):
 		self.dnn_out_dim = dnn_out_dim
 
 		self.layer_type = layer_type
-		self.predictor_type = predictor_type
 		self.original_dim = original_dim
 		
 		self.vae_hidden_dims = vae_hidden_dims
@@ -312,15 +310,7 @@ class ConvVAEPredictor(object):
 		return -0.5*K.sum(vs, axis = -1)
 
 	def dnn_predictor_loss(self, labels, preds):
-		if self.predictor_type is 'classification':
-			debug_message('WTF!! We Are In Classification???')
-			reconstruction_loss = categorical_crossentropy(labels, preds)
-		elif self.predictor_type is 'regression':
-			debug_message('Good Code!')
-			reconstruction_loss = mean_squared_error(labels, preds)
-		else:
-			debug_message('Bad Code!')
-			reconstruction_loss = categorical_crossentropy(labels, preds)
+		reconstruction_loss = mean_squared_error(labels, preds)
 		
 		return reconstruction_loss
 
@@ -366,14 +356,7 @@ class ConvVAEPredictor(object):
 					'dnn_latent_layer': ['mse'],
 					'vae_reconstruction': ['mse']}
 
-		if self.predictor_type == 'classification':
-			debug_message('not regression!')
-			dnn_latent_loss = self.dnn_kl_loss
-			metrics_['dnn_prediction'].append('acc')
-			metrics_['dnn_latent_layer'].append('acc')
-		else:
-			debug_message('regression!')
-			dnn_latent_loss = self.vae_kl_loss
+		dnn_latent_loss = self.vae_kl_loss
 
 		self.model.compile(
 				optimizer = optimizer or self.optimizer,
@@ -395,27 +378,7 @@ class ConvVAEPredictor(object):
 		# reshape_input_layer = Reshape((self.batch_size, self.data_shape[0]))
 		# input_layer = reshape_input_layer(input_layer)
 
-		if self.predictor_type is 'binary':
-			'''This case is specific to binary input sequences
-				i.e. [0,1,1,0,0,0,....,0,1,1,1]'''
-			inp_vae_loss = binary_crossentropy(input_layer, vae_reconstruction)
-			inp_vae_loss = self.original_dim * inp_vae_loss
-		
-		elif self.predictor_type is 'classification':
-			debug_message('not regression!')
-			''' I am left to assume that the vae_reconstruction_loss for a 
-					non-binary data source (i.e. *not* piano keys) should be 
-					a regression problem. 
-				The prediction loss is still categorical crossentropy because 
-					the features being compared are discrete classes'''
-			inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
-		
-		elif self.predictor_type is 'regression':
-			debug_message('regression!')
-			inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
-		else:
-			debug_message('not regression!')
-			inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
+		inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
 		
 		return inp_vae_loss
 

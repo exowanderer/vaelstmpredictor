@@ -83,14 +83,8 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 
 	clargs.n_labels = len(np.unique(DI.train_labels))
 
-	if clargs.predictor_type is 'classification':
-		debug_message('not regression!')
-		predictor_train = to_categorical(DI.train_labels, clargs.n_labels)
-		predictor_validation = to_categorical(DI.valid_labels, clargs.n_labels)
-	else:
-		debug_message('regression!')
-		predictor_train = DI.train_labels
-		predictor_validation = DI.valid_labels
+	predictor_train = DI.train_labels
+	predictor_validation = DI.valid_labels
 	
 	callbacks = get_callbacks(clargs, patience=clargs.patience, 
 					min_epoch = max(clargs.kl_anneal, clargs.w_kl_anneal)+1, 
@@ -176,8 +170,7 @@ def train_vae_predictor(clargs, data_instance, network_type = 'Dense'):
 					dnn_out_dim = clargs.n_labels, 
 					dnn_latent_dim = clargs.dnn_latent_dim, 
 					dnn_log_var_prior = clargs.dnn_log_var_prior, 
-					optimizer = clargs.optimizer, 
-					predictor_type = clargs.predictor_type, 
+					optimizer = clargs.optimizer,
 					layer_type = clargs.network_type)
 	else:
 		ValueError('network_type must (currently) be either Dense or Conv1D')
