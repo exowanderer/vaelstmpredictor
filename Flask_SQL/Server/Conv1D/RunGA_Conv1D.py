@@ -27,10 +27,8 @@ if __name__ == '__main__':
                 help='number of epochs')
     parser.add_argument('--max_vae_hidden_layers', type=int, default=5,
                 help='Maximum number of VAE hidden layers')
-    parser.add_argument('--max_vae_latent', type=int, default=512,
+    parser.add_argument('--max_vae_latent', type=int, default=5,
                 help='Maximum number of VAE neurons per layer')
-    parser.add_argument('--max_dnn_latent', type=int, default=512,
-                help='Maximum number of DNN neurons per layer')
     parser.add_argument('--max_vae_hidden', type=int, default=512,
                 help='Maximum number of VAE neurons per layer')
     parser.add_argument('--max_dnn_hidden', type=int, default=512,
@@ -47,10 +45,8 @@ if __name__ == '__main__':
                 help='Maximum number of filters for each convolution layer')
     parser.add_argument('--min_vae_hidden_layers', type=int, default=1,
                 help='minimum number of VAE hidden layers')
-    parser.add_argument('--min_vae_latent', type=int, default=2,
+    parser.add_argument('--min_vae_latent', type=int, default=1,
                 help='minimum number of VAE neurons per layer')
-    parser.add_argument('--min_dnn_latent', type=int, default=2,
-                help='minimum number of DNN neurons per layer')
     parser.add_argument('--min_vae_hidden', type=int, default=2,
                 help='Maximum number of VAE neurons per layer')
     parser.add_argument('--min_dnn_hidden', type=int, default=2,
@@ -65,13 +61,13 @@ if __name__ == '__main__':
                 help='Minimum Max Pooling size (x2)')
     parser.add_argument('--min_filter_size', type=int, default=1,
                 help='Minimum number of filters for each convolution layer')
-    parser.add_argument('--dnn_weight', type=float, default=5880379,
+    parser.add_argument('--dnn_weight', type=float, default=1,
                 help='relative weight on prediction loss')
     parser.add_argument('--vae_weight', type=float, default=1,
                 help='relative weight on prediction loss')
-    parser.add_argument('--vae_kl_weight', type=float, default=165,
+    parser.add_argument('--vae_kl_weight', type=float, default=1,
                 help='relative weight on prediction loss')
-    parser.add_argument('--dnn_kl_weight', type=float, default=6925509,
+    parser.add_argument('--dnn_kl_weight', type=float, default=1,
                 help='relative weight on prediction loss')
     parser.add_argument('--prediction_log_var_prior', type=float, default=0.0,
                 help='w log var prior')
