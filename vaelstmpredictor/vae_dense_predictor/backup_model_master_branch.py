@@ -5,7 +5,6 @@ class VAEPredictor(object):
                     dnn_log_var_prior = 0.0, optimizer = 'adam-wn', 
                     use_prev_input = False, dnn_type = 'classification'):
         
-        self.predictor_type = predictor_type
         self.original_dim = original_dim
         
         self.vae_hidden_dims = vae_hidden_dims
@@ -123,11 +122,7 @@ class VAEPredictor(object):
         return -0.5*K.sum(vs, axis = -1)
 
     def dnn_rec_loss(self, labels, preds):
-        if self.predictor_type is 'classification':
-            rec_loss = categorical_crossentropy(labels, preds)
-            # rec_loss = self.dnn_latent_dim * rec_loss
-        if self.predictor_type is 'regression':
-            rec_loss = mean_squared_error(labels, preds)
+        rec_loss = mean_squared_error(labels, preds)
         return rec_loss
 
     def dnn_sampling(self, args):
@@ -253,22 +248,7 @@ class VAEPredictor(object):
         return self.vae_latent_mean + K.exp(self.vae_latent_log_var/2) * eps
 
     def vae_loss(self, input_layer, vae_reconstruction):
-        if self.predictor_type is 'binary':
-            '''This case is specific to binary input sequences
-                i.e. [0,1,1,0,0,0,....,0,1,1,1]'''
-            inp_vae_loss = binary_crossentropy(input_layer, vae_reconstruction)
-            inp_vae_loss = self.original_dim * inp_vae_loss
-        
-        if self.predictor_type is 'classification':
-            ''' I am left to assume that the vae_reconstruction_loss for a 
-                    non-binary data source (i.e. *not* piano keys) should be 
-                    a regression problem. 
-                The prediction loss is still categorical crossentropy because 
-                    the features being compared are discrete classes'''
-            inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
-        
-        if self.predictor_type is 'regression':
-            inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
+        inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
         
         return inp_vae_loss
 

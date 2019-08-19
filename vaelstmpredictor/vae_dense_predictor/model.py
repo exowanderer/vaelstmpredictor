@@ -137,9 +137,8 @@ class VAEPredictor(object):
 					vae_latent_dim, dnn_out_dim = None, 
 					dnn_latent_dim = None, batch_size = 128, 
 					dnn_log_var_prior = 0.0, optimizer = 'adam', 
-					use_prev_input = False, predictor_type = 'classification'):
+					use_prev_input = False):
 		
-		self.predictor_type = predictor_type
 		self.original_dim = original_dim
 		
 		self.vae_hidden_dims = vae_hidden_dims
@@ -247,15 +246,7 @@ class VAEPredictor(object):
 		return -0.5*K.sum(vs, axis = -1)
 
 	def dnn_rec_loss(self, labels, preds):
-		
-		if self.predictor_type is 'classification':
-			rec_loss = categorical_crossentropy(labels, preds)
-			# rec_loss = self.dnn_latent_dim * rec_loss
-		elif self.predictor_type is 'regression':
-			rec_loss = mean_squared_error(labels, preds)
-		else:
-			rec_loss = categorical_crossentropy(labels, preds)
-		
+		rec_loss = mean_squared_error(labels, preds)
 		return rec_loss
 	
 	def build_model(self, batch_size = None, original_dim = None, 
@@ -357,26 +348,7 @@ class VAEPredictor(object):
 				)
 	
 	def vae_loss(self, input_layer, vae_reconstruction):
-		
-		if self.predictor_type is 'binary':
-			'''This case is specific to binary input sequences
-				i.e. [0,1,1,0,0,0,....,0,1,1,1]'''
-			inp_vae_loss = binary_crossentropy(input_layer, vae_reconstruction)
-			inp_vae_loss = self.original_dim * inp_vae_loss
-		
-		elif self.predictor_type is 'classification':
-			''' I am left to assume that the vae_reconstruction_loss for a 
-					non-binary data source (i.e. *not* piano keys) should be 
-					a regression problem. 
-				The prediction loss is still categorical crossentropy because 
-					the features being compared are discrete classes'''
-			inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
-		
-		elif self.predictor_type is 'regression':
-			inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
-		else:
-			inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
-		
+		inp_vae_loss = mean_squared_error(input_layer, vae_reconstruction)
 		return inp_vae_loss
 
 	def vae_kl_loss(self, ztrue, zpred):
