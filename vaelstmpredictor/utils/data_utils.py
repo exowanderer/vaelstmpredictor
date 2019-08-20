@@ -128,12 +128,12 @@ class PianoData:
         self.use_rel_major = use_rel_major
 
         # sequences with song indices
-        self.data_train, self.labels_train, self.train_song_inds = self.make_xy(D[
-                                                                                'train'])
-        self.data_test, self.labels_test, self.test_song_inds = self.make_xy(D[
-                                                                             'test'])
-        self.data_valid, self.labels_valid, self.valid_song_inds = self.make_xy(D[
-                                                                                'valid'])
+        self.data_train, self.labels_train, self.train_song_inds = \
+            self.make_xy(D['train'])
+        self.data_test, self.labels_test, self.test_song_inds = \
+            self.make_xy(D['test'])
+        self.data_valid, self.labels_valid, self.valid_song_inds = \
+            self.make_xy(D['valid'])
 
         # # song index per sequence
         # self.train_song_inds = self.song_inds(D['train'])
