@@ -283,6 +283,10 @@ class ExoplanetData(object):
     exoplanet_filename = 'exoplanet_spectral_database_normalized.joblib.save'
     default_train_file = os.environ['HOME'] + '/.vaelstmpredictor/data/'
 
+    exoplanet_data_key = '1KIEDaGkDlcgZmL6t8rDlCp9PGN7glbWq'
+    exoplanet_data_online = 'https://drive.google.com/open?id={}'
+    exoplanet_data_online = exoplanet_data_online.format(exoplanet_data_key)
+
     def __init__(self, train_file=None, batch_size=128, test_size=0.30,
                  normalize_spec=False, skip_features=5):
         ''' set skip_features to 0 to use `all` of the data
@@ -296,6 +300,7 @@ class ExoplanetData(object):
                 self.default_train_file))
 
             train_file = self.default_train_file
+        if not os.path.exists(train_file):
 
         exoplanet_filename = '{}/{}'.format(train_file,
                                             self.exoplanet_filename)
