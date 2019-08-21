@@ -284,7 +284,8 @@ class MNISTData(object):
 
 
 class ExoplanetData(object):
-    exoplanet_filename = 'exoplanet_spectral_database_normalized.joblib.save'
+    exoplanet_filename = 'exoplanet_spectral_database.joblib.save'
+    # exoplanet_filename = 'exoplanet_spectral_database_normalized.joblib.save'
     default_train_file = os.environ['HOME'] + '/.vaelstmpredictor/data/'
 
     exoplanet_data_key = '1KIEDaGkDlcgZmL6t8rDlCp9PGN7glbWq'

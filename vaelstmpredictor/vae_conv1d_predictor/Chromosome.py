@@ -81,8 +81,8 @@ class Chromosome(ConvVAEPredictor):
         debug_message('data_shape: {}'.format(data_shape))
         assert(data_shape is not None)
         self.data_shape = data_shape
-        self.l1_coeff = 0.01
-        self.l2_coeff = 0.01
+        self.l1_coeff = 0
+        self.l2_coeff = 0
         self.dropout_rate = 0.25
 
         self.encoder_top_size = encoder_top_size
@@ -265,7 +265,7 @@ class Chromosome(ConvVAEPredictor):
 
         self.fitness = 1.0 / self.best_loss['val_loss']
 
-        if np.isnan(self.fitness):
+        if not np.isfinite(self.fitness):
             self.fitness = 0
 
         self.isTrained = True

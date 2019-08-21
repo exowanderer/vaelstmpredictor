@@ -167,33 +167,33 @@ if __name__ == '__main__':
 
             info_message("Training Chromosome " + str(clargs.chromosomeID) +
                          " Generation " + str(clargs.generationID))
-            # try:
-            K.clear_session()
-            chromosome = Chromosome(**chrom_params)
-            chromosome.verbose = True
+            try:
+                K.clear_session()
+                chromosome = Chromosome(**chrom_params)
+                chromosome.verbose = True
 
-            start_time = time()
+                start_time = time()
 
-            if clargs.verbose:
-                info_message('Start Training: {}'.format(start_time))
+                if clargs.verbose:
+                    info_message('Start Training: {}'.format(start_time))
 
-            chromosome.model.summary()
-            # break
-            chromosome.train(verbose=True)
-            K.clear_session()
+                chromosome.model.summary()
+                # break
+                chromosome.train(verbose=True)
+                K.clear_session()
 
-            end_time = time()
-            run_time = end_time - start_time
+                end_time = time()
+                run_time = end_time - start_time
 
-            if clargs.verbose:
-                info_message('End Training: {}'.format(end_time))
-                info_message('Runtime Training: {}'.format(run_time))
+                if clargs.verbose:
+                    info_message('End Training: {}'.format(end_time))
+                    info_message('Runtime Training: {}'.format(run_time))
 
-            # except Exception as e:
-            #     warning_message("Error has occured while training")
-            #     print(e)
-            #     chromosome = None
-            #     continue
+            except Exception as e:
+                warning_message("Error has occured while training")
+                print(e)
+                chromosome = None
+                continue
 
             info_message('\n')
             print('Result: ', end=" ")

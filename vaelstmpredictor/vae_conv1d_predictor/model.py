@@ -14,6 +14,7 @@ from keras.losses import binary_crossentropy, categorical_crossentropy
 from keras.losses import mean_squared_error
 from keras.models import Model, Sequential
 from keras.regularizers import l1_l2
+
 ITERABLES = (list, tuple, np.array)
 
 # try:
@@ -72,8 +73,8 @@ def Conv1DTranspose(filters, ksize, strides=1, pool_size=1, padding='same',
     # FINDME maybe strides should be == 1 here? Check size ratios after decoder
     conv1D.add(Conv1D(filters, (ksize,),
                       padding=padding,
-                      activation=activation,
-                      kernel_regularizer=kernel_regularizer))
+                      activation=activation))
+    # kernel_regularizer=kernel_regularizer))
 
     return conv1D
 
@@ -141,7 +142,7 @@ class ConvVAEPredictor(object):
                  batch_size=128, run_all=False,
                  verbose=False, plot_model=False,
                  original_dim=None, dnn_out_dim=None,
-                 dnn_latent_dim=None, n_channels=1, dropout_rate=0.5,
+                 dnn_latent_dim=None, n_channels=1, dropout_rate=0.25,
                  dnn_log_var_prior=0.0, optimizer='adam-wn',
                  layer_type='Conv1D'):
 
@@ -153,8 +154,8 @@ class ConvVAEPredictor(object):
         self.vae_latent_dim = vae_latent_dim
         self.verbose = verbose
         self.dropout_rate = 0.25
-        self.l1_coeff = 0.01
-        self.l2_coeff = 0.01
+        self.l1_coeff = 0
+        self.l2_coeff = 0
 
         self.encoder_filters = encoder_filters
         self.encoder_kernel_sizes = encoder_kernel_sizes
