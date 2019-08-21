@@ -69,7 +69,7 @@ def Conv1DTranspose(filters, ksize, strides=1, pool_size=1, padding='same',
                       padding=padding,
                       activation=activation,
                       kernel_regularization=l1_l2(l1=self.l1_coeff,
-                                                   l2=self.l2_coeff)))
+                                                  l2=self.l2_coeff)))
 
     x = BatchNormalization()(x)
 
@@ -211,7 +211,7 @@ class ConvVAEPredictor(object):
                                                    l2=self.l2_coeff),
                        name=name)(x)
 
-           x = BatchNormalization()(x)
+            x = BatchNormalization()(x)
 
             if False and pool_size > 0:
                 # Don't bothing MaxPooling if the pool_size is 1
