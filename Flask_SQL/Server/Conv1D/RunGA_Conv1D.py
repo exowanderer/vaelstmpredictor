@@ -85,7 +85,7 @@ if __name__ == '__main__':
                 help='basedir for saving model weights')
     parser.add_argument('--table_dir', type=str, default='../data/tables',
                 help='basedir for storing the table of params and fitnesses.')
-    parser.add_argument('--train_file', type=str, default='MNIST',
+    parser.add_argument('--train_file', type=str, default='exoplanet',
                 help='file of training data (.pickle)')
     parser.add_argument('--cross_prob', type=float, default=0.7,
                 help='Probability of crossover between generations')
