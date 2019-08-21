@@ -22,7 +22,6 @@ from tqdm import tqdm
 from vaelstmpredictor.utils.model_utils import get_callbacks, init_adam_wn
 from vaelstmpredictor.utils.model_utils import save_model_in_pieces
 from vaelstmpredictor.utils.model_utils import AnnealLossWeight
-from vaelstmpredictor.utils.data_utils import MNISTData
 from vaelstmpredictor.utils.weightnorm import data_based_init
 from vaelstmpredictor.vae_predictor.dense_model import VAEPredictor
 from vaelstmpredictor.vae_predictor.train import train_vae_predictor
@@ -287,8 +286,17 @@ if __name__ == '__main__':
     num_generations = clargs.num_generations
     verbose = clargs.verbose
 
-    clargs.data_type = 'MNIST'
-    data_instance = MNISTData(batch_size=clargs.batch_size)
+    # clargs.data_type = 'MNIST'
+    if clargs.data_type == 'exoplanet':
+        from vaelstmpredictor.utils.data_utils import ExoplanetData
+        data_instance = ExoplanetData(train_file=None,
+                                      batch_size=clargs.batch_size)
+    elif clargs.data_type == 'mnist':
+        from vaelstmpredictor.utils.data_utils import MNISTData
+        data_instance = MNISTData(batch_size=clargs.batch_size)
+    else:
+        raise Exception(
+            "clargs.data_type must be either `exoplanet` or `mnist`")
 
     n_train, n_features = data_instance.data_train.shape
     n_test, n_features = data_instance.data_valid.shape

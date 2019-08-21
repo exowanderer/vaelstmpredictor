@@ -8,7 +8,6 @@ import socket
 from vaelstmpredictor.vae_conv1d_predictor.GeneticAlgorithm import *
 
 from time import time, sleep
-# from vaelstmpredictor.utils.data_utils import MNISTData
 
 import warnings
 with warnings.catch_warnings():

@@ -109,7 +109,6 @@ if __name__ == '__main__':
                 from vaelstmpredictor.utils.data_utils import ExoplanetData
                 data_instance = ExoplanetData(train_file=None,
                                               batch_size=clargs.batch_size)
-
             elif clargs.data_type == 'mnist':
                 from vaelstmpredictor.utils.data_utils import MNISTData
                 data_instance = MNISTData(batch_size=clargs.batch_size)
