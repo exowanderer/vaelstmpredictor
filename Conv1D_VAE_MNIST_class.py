@@ -74,7 +74,7 @@ class ConvVAE(object):
                  decoder_filters, decoder_kernel_sizes,
                  encoder_strides=2, decoder_strides=2,
                  latent_dim=2, encoder_top_size=16,
-                 final_kernel_size=3, data_shape=(784, 1),
+                 final_kernel_size=3, data_shape=None,
                  batch_size=16, run_all=False,
                  verbose=False, plot_model=False):
 

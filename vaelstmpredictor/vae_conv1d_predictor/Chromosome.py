@@ -35,7 +35,7 @@ class Chromosome(ConvVAEPredictor):
                  #vae_filter_size, dnn_filter_size,
                  # vae_kernel_size = 3, dnn_kernel_size = 3,
                  dnn_strides=1, vae_strides=1, encoder_top_size=16,
-                 final_kernel_size=3, data_shape=(784, 1),
+                 final_kernel_size=3, data_shape=None,
                  generationID=0, chromosomeID=0,
                  vae_kl_weight=1.0, vae_weight=1.0,
                  dnn_weight=1.0, dnn_kl_weight=1.0,

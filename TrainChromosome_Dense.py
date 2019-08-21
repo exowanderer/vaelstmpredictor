@@ -137,6 +137,7 @@ if __name__ == '__main__':
             chrom_params['vae_kl_weight'] = clargs.vae_kl_weight
             chrom_params['dnn_weight'] = clargs.dnn_weight
             chrom_params['dnn_kl_weight'] = clargs.dnn_kl_weight
+            chrom_params['data_shape'] = (n_features, 1)
 
             info_message('\n\nParams for this VAE_NN:')
             for key, val in clargs.__dict__.items():

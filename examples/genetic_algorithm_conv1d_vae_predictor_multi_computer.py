@@ -23,8 +23,8 @@ from vaelstmpredictor.utils.model_utils import get_callbacks, init_adam_wn
 from vaelstmpredictor.utils.model_utils import save_model_in_pieces
 from vaelstmpredictor.utils.model_utils import AnnealLossWeight
 from vaelstmpredictor.utils.weightnorm import data_based_init
-from vaelstmpredictor.vae_predictor.conv1d_model import ConvVAEPredictor
-VAEPredictor = ConvVAEPredictor
+# from vaelstmpredictor.vae_predictor.conv1d_model import ConvVAEPredictor
+# VAEPredictor = ConvVAEPredictor
 
 from vaelstmpredictor.vae_predictor.train import train_vae_predictor
 
