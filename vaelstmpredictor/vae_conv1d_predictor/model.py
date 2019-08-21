@@ -9,10 +9,11 @@ from keras import backend as K
 from keras.layers import Input, Lambda, concatenate, Dense
 from keras.layers import Conv1D, MaxPooling1D
 from keras.layers import UpSampling1D, Flatten, Reshape
-from keras.models import Model, Sequential
+from keras.layers import BatchNormalization, Dropout
 from keras.losses import binary_crossentropy, categorical_crossentropy
 from keras.losses import mean_squared_error
-
+from keras.models import Model, Sequential
+from keras.regularization import l1_l2
 ITERABLES = (list, tuple, np.array)
 
 # try:
@@ -66,7 +67,12 @@ def Conv1DTranspose(filters, ksize, strides=1, pool_size=1, padding='same',
     # FINDME maybe strides should be == 1 here? Check size ratios after decoder
     conv1D.add(Conv1D(filters, (ksize,),
                       padding=padding,
-                      activation=activation))
+                      activation=activation,
+                      kernel_regularization=l1_l2(l1=self.l1_coeff,
+                                                   l2=self.l2_coeff)))
+
+    x = BatchNormalization()(x)
+
     return conv1D
 
 
@@ -133,7 +139,7 @@ class ConvVAEPredictor(object):
                  batch_size=128, run_all=False,
                  verbose=False, plot_model=False,
                  original_dim=None, dnn_out_dim=None,
-                 dnn_latent_dim=None, n_channels=1,
+                 dnn_latent_dim=None, n_channels=1, dropout_rate=0.5,
                  dnn_log_var_prior=0.0, optimizer='adam-wn',
                  layer_type='Conv1D'):
 
@@ -144,6 +150,9 @@ class ConvVAEPredictor(object):
         self.batch_size = batch_size
         self.vae_latent_dim = vae_latent_dim
         self.verbose = verbose
+        self.dropout_rate = 0.5
+        self.l1_coeff = 0.01
+        self.l2_coeff = 0.01
 
         self.encoder_filters = encoder_filters
         self.encoder_kernel_sizes = encoder_kernel_sizes
@@ -198,7 +207,11 @@ class ConvVAEPredictor(object):
                        strides=stride,
                        padding=padding,
                        activation=activation,
+                       kernel_regularization=l1_l2(l1=self.l1_coeff,
+                                                   l2=self.l2_coeff),
                        name=name)(x)
+
+           x = BatchNormalization()(x)
 
             if False and pool_size > 0:
                 # Don't bothing MaxPooling if the pool_size is 1
@@ -208,6 +221,7 @@ class ConvVAEPredictor(object):
 
         for layer_size in self.dnn_hidden_dims:
             x = Dense(units=layer_size, activation='relu')(x)
+            x = Dropout(self.dropout_rate)(x)
 
         # The input image ends up being encoded into these two parameters
         self.dnn_latent_mean = Dense(units=self.dnn_latent_dim,
@@ -248,7 +262,11 @@ class ConvVAEPredictor(object):
                        strides=stride,
                        padding=padding,
                        activation=activation,
+                       kernel_regularization=l1_l2(l1=self.l1_coeff,
+                                                   l2=self.l2_coeff),
                        name=name)(x)
+
+            x = BatchNormalization()(x)
 
             if False and pool_size > 1:
                 x = MaxPooling1D((pool_size,))(x)
@@ -336,7 +354,7 @@ class ConvVAEPredictor(object):
         self.vae_reconstruction = Conv1DTranspose(1,
                                                   self.final_kernel_size,
                                                   padding='same',
-                                                  activation='sigmoid',
+                                                  activation='linear',
                                                   name='vae_reconstruction')(x)
 
     def dnn_kl_loss(self, labels, preds):
