@@ -306,12 +306,20 @@ class ExoplanetData(object):
 
             train_file = self.default_train_file
 
-        assert(os.path.exists(train_file)), \
-            '{} does not exist; give me data or give me death'.format(
-                train_file)
-
         exoplanet_filename = '{}/{}'.format(train_file,
                                             self.exoplanet_filename)
+
+        if not os.path.exists(exoplanet_filename):
+            info_message('{} does not exist; give me data or give me death'.format(
+                            train_file))
+            info_message('Downloading Exoplanet Spectral Database')
+            print('\tThis could several minutes [~15 minutes?]')
+
+            if not os.path.exists(train_file):
+                os.mkdir(os.environ['HOME'] + '/.vaelstmpredictor')
+                os.mkdir(self.default_train_file)
+            
+            self.download_exoplanet_data()
 
         spectra, physics = joblib.load(exoplanet_filename)
 
@@ -356,6 +364,26 @@ class ExoplanetData(object):
         # This is a 'copy' because the output must equal the input
         self.labels_train = self.data_train
         self.labels_valid = self.data_valid
+
+    def download_exoplanet_data(self):
+        # os.system("git clone https://github.com/jeroenmeulenaar/python3-mega.git")
+        # os.system(os.environ['HOME']+"/anaconda3/envs/tf_gpu/bin/pip install -r python3-mega/requirements.txt")
+        os.system(os.environ['HOME']+'/anaconda3/envs/tf_gpu/bin/pip install git+https://github.com/jeroenmeulenaar/python3-mega.git')
+
+        from mega import Mega
+
+        mega = Mega()
+        m = Mega.from_ephemeral()
+        print("Downaling File...")
+        m.download_from_url('https://mega.nz/#!O6A3wS4a!vTsMQZxl3VnbPbbksfJ0243oWDxv5z1g1zy4XIow4HQ') #Download normalized data
+        # os.system('mv exoplanet_spectral_database_normalized.joblib.save '+os.environ['HOME']+'/.vaelstmpredictor/data')
+
+        spec_file_name = 'exoplanet_spectral_database_normalized.joblib.save'
+        os.rename(spec_file_name, self.default_train_file + spec_file_name)
+        # m.download_from_url('https://mega.nz/#!T7YjkayK!rLqsthYpbbN9dv2yAM6kkjt986soX0KaKsmEqdHeR3U') #Download not normalized data
+        
+        # spec_file_name = 'exoplanet_spectral_database.joblib.save'
+        # os.rename(spec_file_name, self.default_train_file + spec_file_name)
 
 
 def info_message(message, end='\n'):
