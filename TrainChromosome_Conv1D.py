@@ -101,7 +101,7 @@ if __name__ == '__main__':
             clargs.size_vae_hidden = params["size_vae_hidden"]
             clargs.vae_latent_dim = params["size_vae_latent"]
             clargs.table_dir = params["table_dir"]
-            clargs.train_file = params["train_file"]
+            clargs.train_file = 'mnist'  # params["train_file"]
             clargs.vae_kl_weight = params["vae_kl_weight"]
             clargs.vae_weight = params["vae_weight"]
             clargs.w_kl_anneal = params["w_kl_anneal"]
@@ -164,8 +164,6 @@ if __name__ == '__main__':
             for key, val in clargs.__dict__.items():
                 print('{:20}{}'.format(key, val))
 
-            import sys
-            sys.exit(-1)
             info_message("Training Chromosome " + str(clargs.chromosomeID) +
                          " Generation " + str(clargs.generationID))
             try:

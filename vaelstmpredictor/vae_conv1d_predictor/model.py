@@ -54,9 +54,14 @@ def info_message(message):
 
 def Conv1DTranspose(filters, ksize, strides=1, pool_size=1, padding='same',
                     activation='relu', name=None):
-
+    '''
+    if pool_size < 2:
+        pool_size == 1
+    else:
+        pool_size = pool_size // 2
+    '''
     conv1D = Sequential(name=name)
-    conv1D.add(UpSampling1D(size=strides * pool_size))
+    conv1D.add(UpSampling1D(size=strides))  # * pool_size
 
     # FINDME maybe strides should be == 1 here? Check size ratios after decoder
     conv1D.add(Conv1D(filters, (ksize,),
@@ -187,9 +192,9 @@ class ConvVAEPredictor(object):
                        activation=activation,
                        name=name)(x)
 
-            if pool_size > 1:
+            if False and pool_size > 0:
                 # Don't bothing MaxPooling if the pool_size is 1
-                x = MaxPooling1D(pool_size)(x)
+                x = MaxPooling1D((pool_size,))(x)
 
         x = Flatten()(x)
 
@@ -237,8 +242,8 @@ class ConvVAEPredictor(object):
                        activation=activation,
                        name=name)(x)
 
-            if pool_size > 1:
-                x = MaxPooling1D(pool_size)(x)
+            if False and pool_size > 1:
+                x = MaxPooling1D((pool_size,))(x)
 
         self.last_conv_shape = K.int_shape(x)
 
