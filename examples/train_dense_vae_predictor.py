@@ -156,7 +156,7 @@ if __name__ == '__main__':
         from vaelstmpredictor.utils.data_utils import ExoplanetData
 
         clargs.data_type = 'ExoplanetSpectra'
-        data_instance = ExoplanetData(train_file=clargs.train_file,
+        data_instance = ExoplanetData(train_file=None,  # clargs.train_file,
                                       batch_size=clargs.batch_size)
     else:
         raise ValueError("`data_type` must be in list {}".format(data_types))

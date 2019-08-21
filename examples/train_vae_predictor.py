@@ -147,14 +147,14 @@ if __name__ == '__main__':
     elif 'mnist' in clargs.data_type.lower():
         from vaelstmpredictor.utils.data_utils import MNISTData
 
-        clargs.data_type = 'MNIST'
+        clargs.data_type = 'mnist'
         data_instance = MNISTData(batch_size=clargs.batch_size)
 
     elif 'exoplanet' in clargs.data_type.lower():
         from vaelstmpredictor.utils.data_utils import ExoplanetData
 
-        clargs.data_type = 'ExoplanetSpectra'
-        data_instance = ExoplanetData(train_file=clargs.train_file,
+        clargs.data_type = 'exoplanet'
+        data_instance = ExoplanetData(train_file=None,  # clargs.train_file,
                                       batch_size=clargs.batch_size)
     else:
         raise ValueError("`data_type` must be in list {}".format(data_types))

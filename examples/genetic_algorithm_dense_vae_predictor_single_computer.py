@@ -87,7 +87,16 @@ if __name__ == '__main__':
     make_plots = clargs.make_plots
 
     clargs.data_type = 'MNIST'
-    data_instance = MNISTData(batch_size=clargs.batch_size)
+    if clargs.data_type == 'exoplanet':
+        from vaelstmpredictor.utils.data_utils import ExoplanetData
+        data_instance = ExoplanetData(train_file=None,
+                                      batch_size=clargs.batch_size)
+    elif clargs.data_type == 'mnist':
+        from vaelstmpredictor.utils.data_utils import MNISTData
+        data_instance = MNISTData(batch_size=clargs.batch_size)
+    else:
+        raise Exception(
+            "clargs.data_type must be either `exoplanet` or `mnist`")
 
     n_train, n_features = data_instance.data_train.shape
     n_test, n_features = data_instance.data_valid.shape
