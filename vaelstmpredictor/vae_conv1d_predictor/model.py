@@ -13,7 +13,7 @@ from keras.layers import BatchNormalization, Dropout
 from keras.losses import binary_crossentropy, categorical_crossentropy
 from keras.losses import mean_squared_error
 from keras.models import Model, Sequential
-from keras.regularization import l1_l2
+from keras.regularizers import l1_l2
 ITERABLES = (list, tuple, np.array)
 
 # try:

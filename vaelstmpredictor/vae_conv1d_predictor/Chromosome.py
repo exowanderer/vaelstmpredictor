@@ -81,6 +81,9 @@ class Chromosome(ConvVAEPredictor):
         debug_message('data_shape: {}'.format(data_shape))
         assert(data_shape is not None)
         self.data_shape = data_shape
+        self.l1_coeff = 0.01
+        self.l2_coeff = 0.01
+        self.dropout_rate = 0.5
 
         self.encoder_top_size = encoder_top_size
 
