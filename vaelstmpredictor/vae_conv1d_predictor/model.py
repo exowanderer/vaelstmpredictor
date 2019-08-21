@@ -54,7 +54,7 @@ def info_message(message):
 
 
 def Conv1DTranspose(filters, ksize, strides=1, pool_size=1, padding='same',
-                    activation='relu', name=None):
+                    l1_coeff=0, l2_coeff=0, activation='relu', name=None):
     '''
     if pool_size < 2:
         pool_size == 1
@@ -64,14 +64,16 @@ def Conv1DTranspose(filters, ksize, strides=1, pool_size=1, padding='same',
     conv1D = Sequential(name=name)
     conv1D.add(UpSampling1D(size=strides))  # * pool_size
 
+    if l1_coeff > 0 or l2_coeff > 0:
+        kernel_regularizer = l1_l2(l1=l1_coeff, l2=l2_coeff)
+    else:
+        kernel_regularizer = None
+
     # FINDME maybe strides should be == 1 here? Check size ratios after decoder
     conv1D.add(Conv1D(filters, (ksize,),
                       padding=padding,
                       activation=activation,
-                      kernel_regularization=l1_l2(l1=self.l1_coeff,
-                                                  l2=self.l2_coeff)))
-
-    x = BatchNormalization()(x)
+                      kernel_regularizer=kernel_regularizer))
 
     return conv1D
 
@@ -207,8 +209,8 @@ class ConvVAEPredictor(object):
                        strides=stride,
                        padding=padding,
                        activation=activation,
-                       kernel_regularization=l1_l2(l1=self.l1_coeff,
-                                                   l2=self.l2_coeff),
+                       kernel_regularizer=l1_l2(l1=self.l1_coeff,
+                                                l2=self.l2_coeff),
                        name=name)(x)
 
             x = BatchNormalization()(x)
@@ -262,8 +264,8 @@ class ConvVAEPredictor(object):
                        strides=stride,
                        padding=padding,
                        activation=activation,
-                       kernel_regularization=l1_l2(l1=self.l1_coeff,
-                                                   l2=self.l2_coeff),
+                       kernel_regularizer=l1_l2(l1=self.l1_coeff,
+                                                l2=self.l2_coeff),
                        name=name)(x)
 
             x = BatchNormalization()(x)
@@ -349,12 +351,18 @@ class ConvVAEPredictor(object):
                                 pool_size=pool_size,
                                 padding=padding,
                                 activation=activation,
+                                l1_coeff=self.l1_coeff,
+                                l2_coeff=self.l2_coeff,
                                 name=name)(x)
+
+            x = BatchNormalization()(x)
 
         self.vae_reconstruction = Conv1DTranspose(1,
                                                   self.final_kernel_size,
                                                   padding='same',
                                                   activation='linear',
+                                                  # l1_coeff=self.l1_coeff,
+                                                  # l2_coeff=self.l2_coeff,
                                                   name='vae_reconstruction')(x)
 
     def dnn_kl_loss(self, labels, preds):
