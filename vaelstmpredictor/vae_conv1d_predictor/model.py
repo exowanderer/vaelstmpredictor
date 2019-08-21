@@ -152,7 +152,7 @@ class ConvVAEPredictor(object):
         self.batch_size = batch_size
         self.vae_latent_dim = vae_latent_dim
         self.verbose = verbose
-        self.dropout_rate = 0.5
+        self.dropout_rate = 0.25
         self.l1_coeff = 0.01
         self.l2_coeff = 0.01
 
@@ -209,11 +209,11 @@ class ConvVAEPredictor(object):
                        strides=stride,
                        padding=padding,
                        activation=activation,
-                       # kernel_regularizer=l1_l2(l1=self.l1_coeff,
-                       #                          l2=self.l2_coeff),
+                       kernel_regularizer=l1_l2(l1=self.l1_coeff,
+                                                l2=self.l2_coeff),
                        name=name)(x)
 
-            # x = BatchNormalization()(x)
+            x = BatchNormalization()(x)
 
             if False and pool_size > 0:
                 # Don't bothing MaxPooling if the pool_size is 1
@@ -223,7 +223,7 @@ class ConvVAEPredictor(object):
 
         for layer_size in self.dnn_hidden_dims:
             x = Dense(units=layer_size, activation='relu')(x)
-            # x = Dropout(self.dropout_rate)(x)
+            x = Dropout(self.dropout_rate)(x)
 
         # The input image ends up being encoded into these two parameters
         self.dnn_latent_mean = Dense(units=self.dnn_latent_dim,
@@ -264,11 +264,11 @@ class ConvVAEPredictor(object):
                        strides=stride,
                        padding=padding,
                        activation=activation,
-                       # kernel_regularizer=l1_l2(l1=self.l1_coeff,
-                       #                          l2=self.l2_coeff),
+                       kernel_regularizer=l1_l2(l1=self.l1_coeff,
+                                                l2=self.l2_coeff),
                        name=name)(x)
 
-            # x = BatchNormalization()(x)
+            x = BatchNormalization()(x)
 
             if False and pool_size > 1:
                 x = MaxPooling1D((pool_size,))(x)
@@ -279,6 +279,7 @@ class ConvVAEPredictor(object):
 
         for layer_size in self.vae_hidden_dims:
             x = Dense(units=layer_size, activation='relu')(x)
+            x = Dropout(self.dropout_rate)(x)
 
         # The input image ends up being encoded into these two parameters
         self.vae_latent_mean = Dense(units=self.vae_latent_dim,
@@ -327,9 +328,11 @@ class ConvVAEPredictor(object):
         x = reshaped_dnn_w_latent
         for layer_size in self.vae_hidden_dims:
             x = Dense(units=layer_size, activation='relu')(x)
+            x = Dropout(self.dropout_rate)(x)
 
         x = Dense(units=np.prod(shouldbe_last_conv_shape),
                   activation='relu')(x)
+        x = Dropout(self.dropout_rate)(x)
 
         # Reshapes z into a feature map of the same shape as the feature map
         #	just before the last Flatten layer in the encoder model
@@ -351,11 +354,11 @@ class ConvVAEPredictor(object):
                                 pool_size=pool_size,
                                 padding=padding,
                                 activation=activation,
-                                # l1_coeff=self.l1_coeff,
-                                # l2_coeff=self.l2_coeff,
+                                l1_coeff=self.l1_coeff,
+                                l2_coeff=self.l2_coeff,
                                 name=name)(x)
 
-            # x = BatchNormalization()(x)
+            x = BatchNormalization()(x)
 
         self.vae_reconstruction = Conv1DTranspose(1,
                                                   self.final_kernel_size,
