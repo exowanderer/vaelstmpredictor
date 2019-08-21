@@ -209,11 +209,11 @@ class ConvVAEPredictor(object):
                        strides=stride,
                        padding=padding,
                        activation=activation,
-                       kernel_regularizer=l1_l2(l1=self.l1_coeff,
-                                                l2=self.l2_coeff),
+                       # kernel_regularizer=l1_l2(l1=self.l1_coeff,
+                       #                          l2=self.l2_coeff),
                        name=name)(x)
 
-            x = BatchNormalization()(x)
+            # x = BatchNormalization()(x)
 
             if False and pool_size > 0:
                 # Don't bothing MaxPooling if the pool_size is 1
@@ -223,7 +223,7 @@ class ConvVAEPredictor(object):
 
         for layer_size in self.dnn_hidden_dims:
             x = Dense(units=layer_size, activation='relu')(x)
-            x = Dropout(self.dropout_rate)(x)
+            # x = Dropout(self.dropout_rate)(x)
 
         # The input image ends up being encoded into these two parameters
         self.dnn_latent_mean = Dense(units=self.dnn_latent_dim,
@@ -264,11 +264,11 @@ class ConvVAEPredictor(object):
                        strides=stride,
                        padding=padding,
                        activation=activation,
-                       kernel_regularizer=l1_l2(l1=self.l1_coeff,
-                                                l2=self.l2_coeff),
+                       # kernel_regularizer=l1_l2(l1=self.l1_coeff,
+                       #                          l2=self.l2_coeff),
                        name=name)(x)
 
-            x = BatchNormalization()(x)
+            # x = BatchNormalization()(x)
 
             if False and pool_size > 1:
                 x = MaxPooling1D((pool_size,))(x)
@@ -351,11 +351,11 @@ class ConvVAEPredictor(object):
                                 pool_size=pool_size,
                                 padding=padding,
                                 activation=activation,
-                                l1_coeff=self.l1_coeff,
-                                l2_coeff=self.l2_coeff,
+                                # l1_coeff=self.l1_coeff,
+                                # l2_coeff=self.l2_coeff,
                                 name=name)(x)
 
-            x = BatchNormalization()(x)
+            # x = BatchNormalization()(x)
 
         self.vae_reconstruction = Conv1DTranspose(1,
                                                   self.final_kernel_size,
