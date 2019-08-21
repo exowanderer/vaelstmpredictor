@@ -80,6 +80,8 @@ class Chromosome(ConvVAEPredictor):
             self.decoder_strides = vae_strides
 
         ''' Store in `self` '''
+        debug_message('data_shape: {}'.format(data_shape))
+        assert(data_shape is not None)
         self.data_shape = data_shape
 
         self.encoder_top_size = encoder_top_size

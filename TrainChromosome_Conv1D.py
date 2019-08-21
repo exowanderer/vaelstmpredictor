@@ -129,12 +129,16 @@ if __name__ == '__main__':
             else:
                 raise Exception(
                     "clargs.train_file must be either `exoplanet` or `mnist`")
+            _, n_features = data_instance.data_train.shape
+            _, n_features = data_instance.data_valid.shape
+            _, n_labels = data_instance.train_labels.shape
+            n_channels = 1
 
-            n_train, n_features = data_instance.data_train.shape
-            n_test, n_features = data_instance.data_valid.shape
+            data_shape = (n_features, n_channels)
 
             clargs.original_dim = n_features
-            clargs.n_labels = len(np.unique(data_instance.train_labels))
+            clargs.n_labels = n_labels
+            # len(np.unique(data_instance.train_labels))
 
             chrom_params = {}
             chrom_params['data_instance'] = data_instance
@@ -154,11 +158,14 @@ if __name__ == '__main__':
             chrom_params['size_pool'] = size_pool
             chrom_params['size_filter'] = size_filter
             chrom_params['clargs'] = clargs
+            chrom_params['data_shape'] = data_shape
 
             info_message('\n\nParams for this VAE_NN:')
             for key, val in clargs.__dict__.items():
                 print('{:20}{}'.format(key, val))
 
+            import sys
+            sys.exit(-1)
             info_message("Training Chromosome " + str(clargs.chromosomeID) +
                          " Generation " + str(clargs.generationID))
             try:

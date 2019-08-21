@@ -292,7 +292,12 @@ class ExoplanetData(object):
         ''' set skip_features to 0 to use `all` of the data
         '''
 
-        if train_file is None or not os.path.exists(train_file):
+        if train_file is None:
+            info_message('`default_train_file`: {}'.format(
+                self.default_train_file))
+
+            train_file = self.default_train_file
+        elif not os.path.exists(train_file):
             print('[WARNING] `train_file` does not exist. '
                   'Using default location')
             print('[WARNING] `train_file`: {}'.format(train_file))

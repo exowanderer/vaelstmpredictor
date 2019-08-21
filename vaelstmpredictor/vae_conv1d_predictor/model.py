@@ -6,7 +6,8 @@ import scipy.stats
 from functools import partial, update_wrapper
 
 from keras import backend as K
-from keras.layers import Input, Lambda, concatenate, Dense, Conv1D  # , MaxPooling1D
+from keras.layers import Input, Lambda, concatenate, Dense
+from keras.layers import Conv1D, MaxPooling1D
 from keras.layers import UpSampling1D, Flatten, Reshape
 from keras.models import Model, Sequential
 from keras.losses import binary_crossentropy, categorical_crossentropy
@@ -43,20 +44,24 @@ ITERABLES = (list, tuple, np.array)
 # 		return input_data
 
 
-def debug_message(message): print('[DEBUG] {}'.format(message))
+def debug_message(message):
+    print('[DEBUG] {}'.format(message))
 
 
-def info_message(message): print('[INFO] {}'.format(message))
+def info_message(message):
+    print('[INFO] {}'.format(message))
 
 
-def Conv1DTranspose(filters, ksize, strides=1, padding='same',
+def Conv1DTranspose(filters, ksize, strides=1, pool_size=1, padding='same',
                     activation='relu', name=None):
 
     conv1D = Sequential(name=name)
-    conv1D.add(UpSampling1D(size=strides))
+    conv1D.add(UpSampling1D(size=strides * pool_size))
 
     # FINDME maybe strides should be == 1 here? Check size ratios after decoder
-    conv1D.add(Conv1D(filters, (ksize,), padding=padding, activation=activation))
+    conv1D.add(Conv1D(filters, (ksize,),
+                      padding=padding,
+                      activation=activation))
     return conv1D
 
 
@@ -118,7 +123,9 @@ class ConvVAEPredictor(object):
                  dnn_latent_dim=None, n_channels=1,
                  dnn_log_var_prior=0.0, optimizer='adam-wn',
                  layer_type='Conv1D'):
+
         K.clear_session()
+        assert(data_shape is not None)
         self.n_channels = n_channels
         self.data_shape = data_shape
         self.batch_size = batch_size
@@ -151,8 +158,9 @@ class ConvVAEPredictor(object):
         self.vae_latent_dim = vae_latent_dim
 
         """FINDME: Why is this dnn_out_dim-1(??)"""
-        if dnn_latent_dim is not None:
-            self.dnn_latent_dim = dnn_out_dim - 1
+        self.dnn_latent_dim = self.data_shape[0]
+        # if dnn_latent_dim is not None:
+        #     self.dnn_latent_dim = dnn_out_dim - 1
 
         self.dnn_log_var_prior = dnn_log_var_prior
         self.optimizer = optimizer
@@ -171,14 +179,17 @@ class ConvVAEPredictor(object):
                      self.dnn_pool_sizes,
                      self.dnn_strides)
 
-        for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
+        for kb, (cfilter, ksize, pool_size, stride) in enumerate(zipper):
             name = base_name.format(kb)
             x = Conv1D(cfilter, (ksize,),
                        strides=stride,
                        padding=padding,
                        activation=activation,
                        name=name)(x)
-            # x = MaxPooling1D(psize)(x)
+
+            if pool_size > 1:
+                # Don't bothing MaxPooling if the pool_size is 1
+                x = MaxPooling1D(pool_size)(x)
 
         x = Flatten()(x)
 
@@ -200,8 +211,7 @@ class ConvVAEPredictor(object):
         self.dnn_latent_layer = dnn_latent_layer(
             [self.dnn_latent_mean, self.dnn_latent_log_var])
 
-        dnn_latent_mod = Lambda(lambda inny: inny + 1e-10,
-                                name='dnn_latent_mod')
+        dnn_latent_mod = Lambda(lambda x: x + 1e-10, name='dnn_latent_mod')
 
         self.dnn_latent_mod = dnn_latent_mod(self.dnn_latent_layer)
 
@@ -218,7 +228,7 @@ class ConvVAEPredictor(object):
                      self.encoder_pool_sizes,
                      self.encoder_strides)
 
-        for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
+        for kb, (cfilter, ksize, pool_size, stride) in enumerate(zipper):
             name = base_name.format(kb)
 
             x = Conv1D(cfilter, (ksize,),
@@ -226,7 +236,9 @@ class ConvVAEPredictor(object):
                        padding=padding,
                        activation=activation,
                        name=name)(x)
-            # x = MaxPooling1D(psize)(x)
+
+            if pool_size > 1:
+                x = MaxPooling1D(pool_size)(x)
 
         self.last_conv_shape = K.int_shape(x)
 
@@ -298,18 +310,18 @@ class ConvVAEPredictor(object):
                      self.decoder_pool_sizes,
                      self.decoder_strides)
 
-        for kb, (cfilter, ksize, psize, stride) in enumerate(zipper):
+        for kb, (cfilter, ksize, pool_size, stride) in enumerate(zipper):
             name = base_name.format(kb)
 
             x = Conv1DTranspose(cfilter, ksize,
                                 strides=stride,
+                                pool_size=pool_size,
                                 padding=padding,
                                 activation=activation,
                                 name=name)(x)
 
-            # x = UpSampling1D(psize)(x)
-
-        self.vae_reconstruction = Conv1DTranspose(1, self.final_kernel_size,
+        self.vae_reconstruction = Conv1DTranspose(1,
+                                                  self.final_kernel_size,
                                                   padding='same',
                                                   activation='sigmoid',
                                                   name='vae_reconstruction')(x)

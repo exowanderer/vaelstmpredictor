@@ -119,7 +119,9 @@ if __name__ == '__main__':
 
             n_train, n_features = data_instance.data_train.shape
             n_test, n_features = data_instance.data_valid.shape
+            n_channels = 1
 
+            data_shape = (n_features, n_channels)
             clargs.original_dim = n_features
             clargs.n_labels = len(np.unique(data_instance.train_labels))
 
@@ -137,7 +139,7 @@ if __name__ == '__main__':
             chrom_params['vae_kl_weight'] = clargs.vae_kl_weight
             chrom_params['dnn_weight'] = clargs.dnn_weight
             chrom_params['dnn_kl_weight'] = clargs.dnn_kl_weight
-            chrom_params['data_shape'] = (n_features, 1)
+            chrom_params['data_shape'] = data_shape
 
             info_message('\n\nParams for this VAE_NN:')
             for key, val in clargs.__dict__.items():
