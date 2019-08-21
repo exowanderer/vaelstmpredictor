@@ -91,8 +91,6 @@ if __name__ == '__main__':
                         help='whether to squeeze the x dimension')
     parser.add_argument('--step_length', type=int, default=1,
                         help="Length of the step for overlap in song(s)")
-    parser.add_argument('--data_type', type=str, default='mnist',
-                        help="The type of data to fit ['piano', 'mnist', 'exoplanet']")
     parser.add_argument('--debug', action="store_true",
                         help="if debug; then stop before model.fit")
     parser.add_argument('--verbose', action='store_true',
@@ -124,12 +122,12 @@ if __name__ == '__main__':
     if clargs.predictor_type is 'regression':
         clargs.n_labels = 1
 
-    data_types = ['piano', 'mnist', 'exoplanet']
+    train_files = ['piano', 'mnist', 'exoplanet']
 
-    if 'piano' in clargs.data_type.lower():
+    if 'piano' in clargs.train_file.lower():
         from vaelstmpredictor.utils.data_utils import PianoData
 
-        clargs.data_type = 'PianoData'
+        clargs.train_file = 'PianoData'
 
         return_label_next = clargs.predict_next or clargs.use_prev_input
 
@@ -146,20 +144,20 @@ if __name__ == '__main__':
 
         data_instance = P
 
-    elif 'mnist' in clargs.data_type.lower():
+    elif 'mnist' in clargs.train_file.lower():
         from vaelstmpredictor.utils.data_utils import MNISTData
 
-        clargs.data_type = 'MNIST'
+        clargs.train_file = 'mnist'
         data_instance = MNISTData(batch_size=clargs.batch_size)
 
-    elif 'exoplanet' in clargs.data_type.lower():
+    elif 'exoplanet' in clargs.train_file.lower():
         from vaelstmpredictor.utils.data_utils import ExoplanetData
 
-        clargs.data_type = 'ExoplanetSpectra'
+        clargs.train_file = 'exoplanet'
         data_instance = ExoplanetData(train_file=None,  # clargs.train_file,
                                       batch_size=clargs.batch_size)
     else:
-        raise ValueError("`data_type` must be in list {}".format(data_types))
+        raise ValueError("`train_file` must be in list {}".format(train_files))
 
     n_train, n_features = data_instance.data_train.shape
     n_test, n_features = data_instance.data_valid.shape
@@ -169,7 +167,7 @@ if __name__ == '__main__':
 
     time_stmp = int(time())
     clargs.run_name = '{}_{}_{}'.format(
-        clargs.run_name, clargs.data_type, time_stmp)
+        clargs.run_name, clargs.train_file, time_stmp)
 
     print('\n\n[INFO] Run Base Name: {}\n'.format(clargs.run_name))
 

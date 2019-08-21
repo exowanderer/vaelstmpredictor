@@ -19,13 +19,16 @@ with warnings.catch_warnings():
 warnings.filterwarnings(action='ignore', module='.*paramiko.*')
 
 
-def debug_message(message): print('[DEBUG] {}'.format(message))
+def debug_message(message):
+    print('[DEBUG] {}'.format(message))
 
 
-def warning_message(message): print('[WARNING] {}'.format(message))
+def warning_message(message):
+    print('[WARNING] {}'.format(message))
 
 
-def info_message(message): print('[INFO] {}'.format(message))
+def info_message(message):
+    print('[INFO] {}'.format(message))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -107,16 +110,16 @@ if __name__ == '__main__':
             #size_pool = np.array(json.loads(clargs.size_pool))
             size_filter = json.loads(clargs.size_filter)
 
-            if clargs.data_type == 'exoplanet':
+            if clargs.train_file == 'exoplanet':
                 from vaelstmpredictor.utils.data_utils import ExoplanetData
                 data_instance = ExoplanetData(train_file=None,
                                               batch_size=clargs.batch_size)
-            elif clargs.data_type == 'mnist':
+            elif clargs.train_file == 'mnist':
                 from vaelstmpredictor.utils.data_utils import MNISTData
                 data_instance = MNISTData(batch_size=clargs.batch_size)
             else:
                 raise Exception(
-                    "clargs.data_type must be either `exoplanet` or `mnist`")
+                    "clargs.train_file must be either `exoplanet` or `mnist`")
 
             n_train, n_features = data_instance.data_train.shape
             n_test, n_features = data_instance.data_valid.shape

@@ -287,7 +287,7 @@ class ExoplanetData(object):
     exoplanet_data_online = 'https://drive.google.com/open?id={}'
     exoplanet_data_online = exoplanet_data_online.format(exoplanet_data_key)
 
-    def __init__(self, train_file=None, batch_size=128, test_size=0.30,
+    def __init__(self, train_file=None, batch_size=128, test_size=0.20,
                  normalize_spec=False, skip_features=5):
         ''' set skip_features to 0 to use `all` of the data
         '''
@@ -300,7 +300,10 @@ class ExoplanetData(object):
                 self.default_train_file))
 
             train_file = self.default_train_file
-        if not os.path.exists(train_file):
+
+        assert(os.path.exists(train_file)), \
+            '{} does not exist; give me data or give me death'.format(
+                train_file)
 
         exoplanet_filename = '{}/{}'.format(train_file,
                                             self.exoplanet_filename)
@@ -368,8 +371,8 @@ def test_data_shapes(batch_size=128):
 
     print()
     info_message('train_labels')
-    print(mnistdata.train_labels.shape)
-    print(exospec.train_labels.shape)
+    print('MINST', mnistdata.train_labels.shape)
+    print('ExoSpec', exospec.train_labels.shape)
     print()
 
     info_message('valid_labels')

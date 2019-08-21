@@ -275,7 +275,7 @@ def generate_random_chromosomes(population_size, geneationID=0,
     generation = create_blank_dataframe(geneationID, population_size)
 
     info_message('Training Conv1D VAE Predictor'.format())
-    data_shape = (784, 1)  # MNIST
+    data_shape = DI.data_train.shape[1:] + (1,)  # (784,1) for MNIST
 
     # Overwrite chromosome parameters to evolve with random choices
     vae_nLayers_choices = range(min_vae_num_layers, max_vae_num_layers)

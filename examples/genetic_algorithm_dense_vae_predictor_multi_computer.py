@@ -215,7 +215,7 @@ if __name__ == '__main__':
                         help='basedir for saving model weights')
     parser.add_argument('--table_dir', type=str, default='../data/tables',
                         help='basedir for storing the table of params and fitnesses.')
-    parser.add_argument('--train_file', type=str, default='MNIST',
+    parser.add_argument('--train_file', type=str, default='exoplanet',
                         help='file of training data (.pickle)')
     parser.add_argument('--cross_prob', type=float, default=0.7,
                         help='Probability of crossover between generations')
@@ -286,17 +286,16 @@ if __name__ == '__main__':
     num_generations = clargs.num_generations
     verbose = clargs.verbose
 
-    # clargs.data_type = 'MNIST'
-    if clargs.data_type == 'exoplanet':
+    if clargs.train_file == 'exoplanet':
         from vaelstmpredictor.utils.data_utils import ExoplanetData
         data_instance = ExoplanetData(train_file=None,
                                       batch_size=clargs.batch_size)
-    elif clargs.data_type == 'mnist':
+    elif clargs.train_file == 'mnist':
         from vaelstmpredictor.utils.data_utils import MNISTData
         data_instance = MNISTData(batch_size=clargs.batch_size)
     else:
         raise Exception(
-            "clargs.data_type must be either `exoplanet` or `mnist`")
+            "clargs.train_file must be either `exoplanet` or `mnist`")
 
     n_train, n_features = data_instance.data_train.shape
     n_test, n_features = data_instance.data_valid.shape
@@ -305,7 +304,7 @@ if __name__ == '__main__':
 
     clargs.time_stamp = int(time())
     clargs.run_name = '{}_{}_{}'.format(clargs.run_name,
-                                        clargs.data_type, clargs.time_stamp)
+                                        clargs.train_file, clargs.time_stamp)
 
     if verbose:
         info_message('\n\nRun Base Name: {}\n'.format(clargs.run_name))
