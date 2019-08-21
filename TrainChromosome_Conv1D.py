@@ -101,7 +101,7 @@ if __name__ == '__main__':
             clargs.size_vae_hidden = params["size_vae_hidden"]
             clargs.vae_latent_dim = params["size_vae_latent"]
             clargs.table_dir = params["table_dir"]
-            clargs.train_file = 'mnist'  # params["train_file"]
+            clargs.train_file = params["train_file"]  # 'mnist'  #
             clargs.vae_kl_weight = params["vae_kl_weight"]
             clargs.vae_weight = params["vae_weight"]
             clargs.w_kl_anneal = params["w_kl_anneal"]
@@ -131,6 +131,7 @@ if __name__ == '__main__':
                     "clargs.train_file must be either `exoplanet` or `mnist`")
             _, n_features = data_instance.data_train.shape
             _, n_features = data_instance.data_valid.shape
+            print(data_instance.train_labels.shape)
             _, n_labels = data_instance.train_labels.shape
             n_channels = 1
 
@@ -177,6 +178,7 @@ if __name__ == '__main__':
                     info_message('Start Training: {}'.format(start_time))
 
                 chromosome.model.summary()
+                # break
                 chromosome.train(verbose=True)
                 K.clear_session()
 

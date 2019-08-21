@@ -7,8 +7,6 @@ import tensorflow as tf
 
 from keras import backend as K
 from keras.backend.tensorflow_backend import set_session
-from keras.utils import to_categorical
-# from time import time
 
 from ..utils.model_utils import get_callbacks, save_model_in_pieces
 from ..utils.model_utils import init_adam_wn, AnnealLossWeight

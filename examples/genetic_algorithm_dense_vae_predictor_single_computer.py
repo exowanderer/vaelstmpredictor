@@ -86,7 +86,6 @@ if __name__ == '__main__':
     verbose = clargs.verbose
     make_plots = clargs.make_plots
 
-    # clargs.train_file = 'MNIST'
     if clargs.train_file == 'exoplanet':
         from vaelstmpredictor.utils.data_utils import ExoplanetData
         data_instance = ExoplanetData(train_file=None,

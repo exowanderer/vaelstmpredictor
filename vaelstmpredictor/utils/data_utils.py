@@ -5,6 +5,7 @@ import numpy as np
 import os
 import joblib
 
+from keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 
 try:
@@ -245,6 +246,9 @@ class MNISTData(object):
 
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
+        y_train = to_categorical(y_train)
+        y_test = to_categorical(y_test)
+
         n_samples_test = x_test.shape[0]
         n_samples_test = (n_samples_test // batch_size) * batch_size
 
@@ -311,14 +315,14 @@ class ExoplanetData(object):
 
         if not os.path.exists(exoplanet_filename):
             info_message('{} does not exist; give me data or give me death'.format(
-                            train_file))
+                train_file))
             info_message('Downloading Exoplanet Spectral Database')
             print('\tThis could several minutes [~15 minutes?]')
 
             if not os.path.exists(train_file):
                 os.mkdir(os.environ['HOME'] + '/.vaelstmpredictor')
                 os.mkdir(self.default_train_file)
-            
+
             self.download_exoplanet_data()
 
         spectra, physics = joblib.load(exoplanet_filename)
@@ -368,20 +372,32 @@ class ExoplanetData(object):
     def download_exoplanet_data(self):
         # os.system("git clone https://github.com/jeroenmeulenaar/python3-mega.git")
         # os.system(os.environ['HOME']+"/anaconda3/envs/tf_gpu/bin/pip install -r python3-mega/requirements.txt")
-        os.system(os.environ['HOME']+'/anaconda3/envs/tf_gpu/bin/pip install git+https://github.com/jeroenmeulenaar/python3-mega.git')
+        import subprocess
+
+        pip = os.environ['HOME'] + '/anaconda3/envs/tf_env/bin/pip'
+        git = 'git+https://github.com/jeroenmeulenaar/python3-mega.git'
+        command = pip + ' install ' + git
+
+        prog = subprocess.Popen(command,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        out, err = prog.communicate()
 
         from mega import Mega
 
         mega = Mega()
         m = Mega.from_ephemeral()
         print("Downaling File...")
-        m.download_from_url('https://mega.nz/#!O6A3wS4a!vTsMQZxl3VnbPbbksfJ0243oWDxv5z1g1zy4XIow4HQ') #Download normalized data
+        # Download normalized data
+        m.download_from_url(
+            'https://mega.nz/#!O6A3wS4a!vTsMQZxl3VnbPbbksfJ0243oWDxv5z1g1zy4XIow4HQ')
         # os.system('mv exoplanet_spectral_database_normalized.joblib.save '+os.environ['HOME']+'/.vaelstmpredictor/data')
 
         spec_file_name = 'exoplanet_spectral_database_normalized.joblib.save'
         os.rename(spec_file_name, self.default_train_file + spec_file_name)
-        # m.download_from_url('https://mega.nz/#!T7YjkayK!rLqsthYpbbN9dv2yAM6kkjt986soX0KaKsmEqdHeR3U') #Download not normalized data
-        
+        # m.download_from_url('https://mega.nz/#!T7YjkayK!rLqsthYpbbN9dv2yAM6kkjt986soX0KaKsmEqdHeR3U')
+        # #Download not normalized data
+
         # spec_file_name = 'exoplanet_spectral_database.joblib.save'
         # os.rename(spec_file_name, self.default_train_file + spec_file_name)
 
@@ -394,13 +410,13 @@ def test_data_shapes(batch_size=128):
     # Compare mnist data shapes to exospec data shapes
     #   to confirm that exospec data is formated 'the same' as mnist data
     #   so far so good!
-    from keras.utils import to_categorical
+
     # Load MNIST Data
     mnistdata = MNISTData(batch_size=batch_size)
     exospec = ExoplanetData(batch_size=batch_size)
 
-    mnistdata.train_labels = to_categorical(mnistdata.train_labels)
-    mnistdata.valid_labels = to_categorical(mnistdata.valid_labels)
+    # mnistdata.train_labels = to_categorical(mnistdata.train_labels)
+    # mnistdata.valid_labels = to_categorical(mnistdata.valid_labels)
 
     print()
     info_message('train_labels')

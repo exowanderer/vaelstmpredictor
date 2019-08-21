@@ -5,7 +5,7 @@ import tensorflow as tf
 from contextlib import redirect_stdout
 
 from keras import backend as K
-from keras.utils import to_categorical
+# from keras.utils import to_categorical
 
 import joblib
 from time import time
@@ -86,11 +86,13 @@ class Chromosome(ConvVAEPredictor):
 
         self.final_kernel_size = final_kernel_size
 
-        """FINDME: Why is this dnn_out_dim-1(??)"""
-        if dnn_latent_dim is not None:
-            self.dnn_latent_dim = dnn_latent_dim
-        else:
-            self.dnn_latent_dim = clargs.n_labels - 1
+        self.dnn_latent_dim = clargs.n_labels
+
+        # """FINDME: Why is this dnn_out_dim-1(??)"""
+        # if dnn_latent_dim is not None:
+        #     self.dnn_latent_dim = dnn_latent_dim
+        # else:
+        #     self.dnn_latent_dim = clargs.n_labels - 1
 
         self.dnn_log_var_prior = dnn_log_var_prior
 
@@ -199,9 +201,11 @@ class Chromosome(ConvVAEPredictor):
 
         DI = self.data_instance
 
-        predictor_train = to_categorical(DI.train_labels, self.clargs.n_labels)
-        predictor_validation = to_categorical(DI.valid_labels,
-                                              self.clargs.n_labels)
+        # predictor_train = to_categorical(DI.train_labels, self.clargs.n_labels)
+        # predictor_validation = to_categorical(DI.valid_labels,
+        # self.clargs.n_labels)
+        predictor_train = DI.train_labels
+        predictor_validation = DI.valid_labels
 
         # Need to expand dimensions to follow Conv1D syntax
         DI.data_train = np.expand_dims(DI.data_train, axis=2)

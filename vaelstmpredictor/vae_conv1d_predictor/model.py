@@ -87,29 +87,37 @@ def vae_sampling(args, latent_dim, batch_size=128,
 def dnn_sampling(args, latent_dim, batch_size=128, channels=None,
                  mean=0.0, stddev=1.0,  name='dnn_norm'):
 
-    latent_mean, latent_log_var = args
+    output = vae_sampling(args, latent_dim, batch_size=batch_size,
+                          mean=mean, stddev=stddev, channels=channels)
 
-    # if channels is not None:
-    # 	batch_shape = (batch_size, channels, latent_dim)
-    # else:
-    batch_shape = (batch_size, latent_dim)  # , channels
-
-    eps = K.random_normal(shape=batch_shape, mean=mean, stddev=stddev)
-
-    gamma_ = K.exp(latent_log_var / 2) * eps
-
-    mean_norm = latent_mean + gamma_
-
-    # need to add 0's so we can sum it all to 1
-    padding = K.tf.zeros(batch_size, 1)[:, None]
-
-    mean_norm = concatenate([mean_norm, padding], name=name)
-
-    sum_exp_dnn_norm = K.sum(K.exp(mean_norm), axis=-1)[:, None]
-
-    output = K.exp(mean_norm) / sum_exp_dnn_norm
     current_shape = K.int_shape(output)
     return Reshape(current_shape[1:] + (1,))(output)
+
+# def dnn_sampling(args, latent_dim, batch_size=128, channels=None,
+#                  mean=0.0, stddev=1.0,  name='dnn_norm'):
+    # latent_mean, latent_log_var = args
+
+    # # if channels is not None:
+    # # 	batch_shape = (batch_size, channels, latent_dim)
+    # # else:
+    # batch_shape = (batch_size, latent_dim)  # , channels
+
+    # eps = K.random_normal(shape=batch_shape, mean=mean, stddev=stddev)
+
+    # gamma_ = K.exp(latent_log_var / 2) * eps
+
+    # mean_norm = latent_mean + gamma_
+
+    # # need to add 0's so we can sum it all to 1
+    # padding = K.tf.zeros(batch_size, 1)[:, None]
+
+    # mean_norm = concatenate([mean_norm, padding], name=name)
+
+    # sum_exp_dnn_norm = K.sum(K.exp(mean_norm), axis=-1)[:, None]
+
+    # output = K.exp(mean_norm) / sum_exp_dnn_norm
+    # current_shape = K.int_shape(output)
+    # return Reshape(current_shape[1:] + (1,))(output)
 
 
 class ConvVAEPredictor(object):
@@ -226,7 +234,7 @@ class ConvVAEPredictor(object):
         if self.verbose:
             info_message('Building Encoder')
 
-        x = self.input_w_pred
+        x = self.input_layer  # x = self.input_w_pred
 
         zipper = zip(self.encoder_filters,
                      self.encoder_kernel_sizes,
@@ -355,9 +363,9 @@ class ConvVAEPredictor(object):
 
         self.build_predictor()
 
-        self.input_w_pred = concatenate(
-            [self.input_layer, self.dnn_latent_layer],
-            axis=-2, name='data_input_w_dnn_latent_out')
+        # self.input_w_pred = concatenate(
+        #     [self.input_layer, self.dnn_latent_layer],
+        #     axis=-2, name='data_input_w_dnn_latent_out')
 
         self.build_latent_encoder()
 

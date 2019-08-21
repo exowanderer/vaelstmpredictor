@@ -13,7 +13,6 @@ import tensorflow as tf
 from contextlib import redirect_stdout
 from glob import glob
 from keras import backend as K
-from keras.utils import to_categorical
 from numpy import array, arange, vstack, reshape, loadtxt, zeros, random
 
 import warnings

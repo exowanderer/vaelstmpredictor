@@ -5,7 +5,7 @@ import tensorflow as tf
 from contextlib import redirect_stdout
 
 from keras import backend as K
-from keras.utils import to_categorical
+# from keras.utils import to_categorical
 
 import joblib
 from time import time
@@ -133,9 +133,12 @@ class Chromosome(VAEPredictor):
 
         DI = self.data_instance
 
-        predictor_train = to_categorical(DI.train_labels, self.clargs.n_labels)
-        predictor_validation = to_categorical(
-            DI.valid_labels, self.clargs.n_labels)
+        # predictor_train = to_categorical(DI.train_labels, self.clargs.n_labels)
+        # predictor_validation = to_categorical(
+        #     DI.valid_labels, self.clargs.n_labels)
+
+        predictor_train = DI.train_labels
+        predictor_validation = DI.valid_labels
 
         min_epoch = max(self.clargs.kl_anneal, self.clargs.w_kl_anneal) + 1
         callbacks = get_callbacks(self.clargs, patience=self.clargs.patience,
