@@ -263,7 +263,8 @@ class Chromosome(ConvVAEPredictor):
         # self.best_val_loss = sum([val for key,val in self.best_loss.items() \
         #							 if 'val_' in key and 'loss' in key])
 
-        self.fitness = 1.0 / self.best_loss['val_loss']
+        # Forcing fitness to be 0 and (mostly) finite
+        self.fitness = max(0, 1.0 / self.best_loss['val_loss'])
 
         if not np.isfinite(self.fitness):
             self.fitness = 0
