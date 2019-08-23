@@ -321,7 +321,7 @@ class ConvVAEPredictor(object):
 
         # Upsamples the input
         n_channels = self.n_channels
-        divisor = np.prod(self.encoder_strides)
+        divisor = int(np.prod(self.encoder_strides))
         numerator = self.data_shape[0]
 
         shouldbe_last_conv_shape = (numerator // divisor, n_channels)
@@ -341,7 +341,7 @@ class ConvVAEPredictor(object):
 
         ''' Uses a Conv1DTranspose layer and a Conv1D layer to decode z into
 				a feature map that is the same size as the original image input
-		'''
+		    '''
         zipper = zip(self.decoder_filters,
                      self.decoder_kernel_sizes,
                      self.decoder_pool_sizes,
