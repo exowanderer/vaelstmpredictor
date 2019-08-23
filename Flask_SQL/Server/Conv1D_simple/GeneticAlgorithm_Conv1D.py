@@ -337,6 +337,8 @@ def refactor_weights(new_generation, generation):
     vae_weights = []
     vae_kl_weights = []
     for chrom in generation.itertuples():
+        if(chrom.val_vae_reconstruction_loss == 0 or chrom.val_vae_latent_args_loss == 0 or chrom.val_dnn_latent_layer_loss == 0 or chrom.val_dnn_latent_mod_loss == 0):
+            continue
         val_loss = chrom.val_vae_reconstruction_loss + chrom.val_vae_latent_args_loss + chrom.val_dnn_latent_layer_loss + chrom.val_dnn_latent_mod_loss
         dnn_weight_ = val_loss / chrom.val_dnn_latent_mod_loss
         dnn_kl_weight_ = val_loss / chrom.val_dnn_latent_layer_loss

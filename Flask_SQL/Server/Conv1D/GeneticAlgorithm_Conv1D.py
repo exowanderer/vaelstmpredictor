@@ -352,6 +352,8 @@ def refactor_weights(new_generation, generation):
     vae_weights = []
     vae_kl_weights = []
     for chrom in generation.itertuples():
+        if(chrom.val_vae_reconstruction_loss == 0 or chrom.val_vae_latent_args_loss == 0 or chrom.val_dnn_latent_layer_loss == 0 or chrom.val_dnn_latent_mod_loss == 0):
+            continue
         val_loss = chrom.val_vae_reconstruction_loss + chrom.val_vae_latent_args_loss + chrom.val_dnn_latent_layer_loss + chrom.val_dnn_latent_mod_loss
         dnn_weight_ = val_loss / chrom.val_dnn_latent_mod_loss
         dnn_kl_weight_ = val_loss / chrom.val_dnn_latent_layer_loss
@@ -425,11 +427,14 @@ def select_parents(generation):
     '''Generate two random numbers between 0 and total_fitness
         not including total_fitness'''
 
-    a = 0.5
-    c = 40
-    b = -10
-    d = 10
-    total_fitness = sum(np.exp(generation.fitness*a + b)*c+d)
+    min_val = min(generation.fitness)
+    max_val = max(generation.fitness)
+
+    def selection_fitness(fitness):
+        fitness = (fitness - min_val)/(max_val - min_val)
+        return np.exp(fitness*5)
+
+    total_fitness = sum(selection_fitness(generation.fitness))
     assert(total_fitness >= 0), '`total_fitness` should not be negative'
 
     rand_parent1 = random.random()*total_fitness
@@ -441,7 +446,7 @@ def select_parents(generation):
     fitness_count = 0
     for chromosome in generation.itertuples():
         #fitness_count += chromosome.fitness
-        fitness_count += np.exp(chromosome.fitness*a + b)*c+d
+        fitness_count += selection_fitness(chromosome.fitness)
 
         if(parent1 is None and fitness_count >= rand_parent1):
             parent1 = chromosome

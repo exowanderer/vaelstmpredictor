@@ -277,16 +277,20 @@ def Visuals():
         def get_index(generationID, chromosomeID):
             return generationID*population + chromosomeID
 
+        def sum_loss(chrom):
+            return chrom.val_dnn_latent_layer_loss + chrom.val_dnn_latent_mod_loss + chrom.val_vae_latent_args_loss + chrom.val_vae_reconstruction_loss
+
         nodes = []
-        min_val = db.session.query(func.min(Chromosome.fitness)).filter(Chromosome.fitness > 0).first()[0]
-        max_val = db.session.query(func.max(Chromosome.fitness)).filter(Chromosome.fitness > 0).first()[0]
+        min_val = db.session.query(func.min(sum_loss(Chromosome))).filter(sum_loss(Chromosome) > 0).first()[0]
+        max_val = db.session.query(func.max(sum_loss(Chromosome))).filter(sum_loss(Chromosome) > 0).first()[0]
         for c in chroms:
-            if(c.fitness < min_val):
-                c.fitness = min_val
-            c.fitness = ((1/c.fitness) - 1/max_val)/(1/min_val - 1/max_val)
+            fitness = sum_loss(c)
+            if(fitness < min_val):
+                fitness = min_val
+            fitness = (fitness - min_val)/(max_val - min_val)
             nodes.append({"generation": c.generationID,
                             "name": c.chromosomeID,
-                            "fitness": c.fitness,
+                            "fitness": fitness,
                             "size": c.num_conv_layers,
                             "height": c.size_filter})
         links = []
