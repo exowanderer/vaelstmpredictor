@@ -44,7 +44,7 @@ def AddChrom():
         hostname = request.args.get('hostname')
         val_vae_reconstruction_loss = request.args.get('val_vae_reconstruction_loss')
         val_vae_latent_args_loss = request.args.get('val_vae_latent_args_loss')
-        val_dnn_latent_layer_loss = request.args.get('val_dnn_latent_layer_loss')
+        val_dnn_latent_args_loss = request.args.get('val_dnn_latent_args_loss')
         val_dnn_predictor_layer_loss = request.args.get('val_dnn_predictor_layer_loss')
         num_vae_layers = request.args.get('num_vae_layers')
         num_dnn_layers = request.args.get('num_dnn_layers')
@@ -100,7 +100,7 @@ def AddChrom():
         c.hostname = hostname
         c.val_vae_reconstruction_loss = val_vae_reconstruction_loss
         c.val_vae_latent_args_loss = val_vae_latent_args_loss
-        c.val_dnn_latent_layer_loss = val_dnn_latent_layer_loss
+        c.val_dnn_latent_args_loss = val_dnn_latent_args_loss
         c.val_dnn_predictor_layer_loss = val_dnn_predictor_layer_loss
         c.num_vae_layers = num_vae_layers
         c.num_dnn_layers = num_dnn_layers
@@ -188,7 +188,7 @@ def GetDatabase():
             			'hostname': c.hostname,
             			'val_vae_reconstruction_loss': c.val_vae_reconstruction_loss,
                         'val_vae_latent_args_loss': c.val_vae_latent_args_loss,
-                        'val_dnn_latent_layer_loss': c.val_dnn_latent_layer_loss,
+                        'val_dnn_latent_args_loss': c.val_dnn_latent_args_loss,
                         'val_dnn_predictor_layer_loss': c.val_dnn_predictor_layer_loss,
             			'num_vae_layers': c.num_vae_layers,
             			'num_dnn_layers': c.num_dnn_layers,
@@ -245,7 +245,7 @@ def GetUnTrainedChrom():
             			'hostname': c.hostname,
             			'val_vae_reconstruction_loss': c.val_vae_reconstruction_loss,
                         'val_vae_latent_args_loss': c.val_vae_latent_args_loss,
-                        'val_dnn_latent_layer_loss': c.val_dnn_latent_layer_loss,
+                        'val_dnn_latent_args_loss': c.val_dnn_latent_args_loss,
                         'val_dnn_predictor_layer_loss': c.val_dnn_predictor_layer_loss,
             			'num_vae_layers': c.num_vae_layers,
             			'num_dnn_layers': c.num_dnn_layers,

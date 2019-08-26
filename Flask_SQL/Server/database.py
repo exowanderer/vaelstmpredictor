@@ -52,7 +52,7 @@ class Chromosome(db.Model):
     hostname = db.Column(db.String(50), default='127.0.0.1')
     val_vae_reconstruction_loss = db.Column(db.Float, default=1)
     val_vae_latent_args_loss = db.Column(db.Float, default=1)
-    val_dnn_latent_layer_loss = db.Column(db.Float, default=1)
+    val_dnn_latent_args_loss = db.Column(db.Float, default=1)
     val_dnn_predictor_layer_loss = db.Column(db.Float, default=1)
     num_vae_layers = db.Column(db.Integer, default=0)
     num_dnn_layers = db.Column(db.Integer, default=0)
