@@ -24,14 +24,14 @@ def save_sql_to_csv(table_dir,
         info_message('No Database To Save at {}'.format(getDatabase))
         return
 
-    time_stamp = sql_table['time_stamp'][0]
+    start_time = sql_table['start_time'][0]
     run_name = sql_table['run_name'][0]
 
-    info_message('Found table with time_stamp SQL {}'.format(time_stamp))
+    info_message('Found table with start_time SQL {}'.format(start_time))
 
     table_dir = clargs.table_dir
     table_name = '{}/{}_fitness_table_{}.csv'
-    table_name = table_name.format(table_dir, run_name, time_stamp)
+    table_name = table_name.format(table_dir, run_name, start_time)
 
     info_message('Storing table to {}'.format(table_name))
 

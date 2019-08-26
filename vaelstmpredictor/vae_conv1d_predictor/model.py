@@ -10,19 +10,11 @@ from keras.layers import Input, Lambda, concatenate, Dense
 from keras.layers import Conv1D, MaxPooling1D
 from keras.layers import UpSampling1D, Flatten, Reshape
 from keras.layers import BatchNormalization, Dropout
-from keras.losses import binary_crossentropy, categorical_crossentropy
 from keras.losses import mean_squared_error
 from keras.models import Model, Sequential
 from keras.regularizers import l1_l2
 
 ITERABLES = (list, tuple, np.array)
-
-# try:
-# 	# Python 2
-# 	range
-# except:
-# 	# Python 3
-# 	def range(tmp): return iter(range(tmp))
 
 '''HERE WHERE I STARTED'''
 # class CustomVariationalLayer(keras.Layer):
@@ -241,6 +233,17 @@ class ConvVAEPredictor(object):
         self.dnn_latent_layer = dnn_latent_layer(
             [self.dnn_latent_mean, self.dnn_latent_log_var])
 
+        self.dnn_latent_args = concatenate([self.dnn_latent_mean,
+                                            self.dnn_latent_log_var],
+                                           axis=-1,
+                                           name='pre_dnn_latent_args')
+
+        shape_dnn_latent_args = K.int_shape(self.dnn_latent_args)[1:] + (1,)
+        reshape_dnn_latent_args = Reshape(shape_dnn_latent_args,
+                                          name='dnn_latent_args')
+
+        self.dnn_latent_args = reshape_dnn_latent_args(self.dnn_latent_args)
+
         dnn_latent_mod = Lambda(lambda x: x + 1e-10, name='dnn_latent_mod')
 
         self.dnn_latent_mod = dnn_latent_mod(self.dnn_latent_layer)
@@ -369,18 +372,23 @@ class ConvVAEPredictor(object):
                                                   # l2_coeff=self.l2_coeff,
                                                   name='vae_reconstruction')(x)
 
+    # REGRESSION ONLY!
+    # def dnn_kl_loss(self, labels, preds):
+    #     vs = 1 - self.dnn_log_var_prior + self.dnn_latent_log_var
+    #     vs = vs - K.exp(self.dnn_latent_log_var) / \
+    #         K.exp(self.dnn_log_var_prior)
+    #     vs = vs - K.square(self.dnn_latent_mean) / \
+    #         K.exp(self.dnn_log_var_prior)
+
+    #     return -0.5 * K.sum(vs, axis=-1)
     def dnn_kl_loss(self, labels, preds):
-        vs = 1 - self.dnn_log_var_prior + self.dnn_latent_log_var
-        vs = vs - K.exp(self.dnn_latent_log_var) / \
-            K.exp(self.dnn_log_var_prior)
-        vs = vs - K.square(self.dnn_latent_mean) / \
-            K.exp(self.dnn_log_var_prior)
+        Z_mean = self.dnn_latent_args[:, :self.dnn_latent_dim]
+        Z_log_var = self.dnn_latent_args[:, self.dnn_latent_dim:]
+        k_summer = 1 + Z_log_var - K.square(Z_mean) - K.exp(Z_log_var)
+        return -0.5 * K.sum(k_summer, axis=-1)
 
-        return -0.5 * K.sum(vs, axis=-1)
-
-    def dnn_predictor_loss(self, labels, preds):
-        reconstruction_loss = mean_squared_error(labels, preds)
-
+    def dnn_predictor_loss(self, y_true, y_pred):
+        reconstruction_loss = mean_squared_error(y_true, y_pred)
         return reconstruction_loss
 
     def build_model(self, batch_size=None, hidden_activation='relu',
@@ -426,13 +434,11 @@ class ConvVAEPredictor(object):
                     'dnn_latent_layer': ['mse'],
                     'vae_reconstruction': ['mse']}
 
-        dnn_latent_loss = self.vae_kl_loss
-
         self.model.compile(
             optimizer=optimizer or self.optimizer,
 
             loss={'vae_reconstruction': self.vae_reconstruction_loss,
-                  'dnn_latent_layer': dnn_latent_loss,
+                  'dnn_latent_layer': self.vae_kl_loss,  # Regression: Norm
                   'dnn_latent_mod': self.dnn_predictor_loss,
                   'vae_latent_args': self.vae_kl_loss},
 
@@ -457,6 +463,18 @@ class ConvVAEPredictor(object):
         Z_log_var = self.vae_latent_args[:, self.vae_latent_dim:]
         k_summer = 1 + Z_log_var - K.square(Z_mean) - K.exp(Z_log_var)
         return -0.5 * K.sum(k_summer, axis=-1)
+
+    # REGRESSION ONLY!
+    # def dnn_kl_loss(self, labels, preds):
+    #     vs = 1 - self.dnn_log_var_prior + self.dnn_latent_log_var
+
+    #     vs = vs - K.exp(self.dnn_latent_log_var) / \
+    #         K.exp(self.dnn_log_var_prior)
+
+    #     vs = vs - K.square(self.dnn_latent_mean) / \
+    #         K.exp(self.dnn_log_var_prior)
+
+    #     return -0.5 * K.sum(vs, axis=-1)
 
     def load_model(self, model_file):
         ''' there's a currently bug in the way keras loads models 

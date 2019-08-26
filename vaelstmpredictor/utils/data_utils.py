@@ -293,7 +293,7 @@ class ExoplanetData(object):
     exoplanet_data_online = exoplanet_data_online.format(exoplanet_data_key)
 
     def __init__(self, train_file=None, batch_size=128, test_size=0.20,
-                 normalize_spec=False, skip_features=5):
+                 normalize_spec=False, skip_features=5, use_all_data=True):
         ''' set skip_features to 0 to use `all` of the data
         '''
 
@@ -330,6 +330,11 @@ class ExoplanetData(object):
 
         if skip_features:
             spectra = spectra[:, ::skip_features]
+
+            if use_all_data:
+                for k in range(1, skip_features):
+                    physics = np.r_[physics, physics]
+                    spectra = np.r_[spectra, spectra[:, k::skip_features]]
 
         idx_train, idx_test = train_test_split(np.arange(len(spectra)),
                                                test_size=test_size)
