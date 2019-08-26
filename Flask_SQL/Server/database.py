@@ -53,7 +53,7 @@ class Chromosome(db.Model):
     val_vae_reconstruction_loss = db.Column(db.Float, default=1)
     val_vae_latent_args_loss = db.Column(db.Float, default=1)
     val_dnn_latent_layer_loss = db.Column(db.Float, default=1)
-    val_dnn_latent_mod_loss = db.Column(db.Float, default=1)
+    val_dnn_predictor_layer_loss = db.Column(db.Float, default=1)
     num_vae_layers = db.Column(db.Integer, default=0)
     num_dnn_layers = db.Column(db.Integer, default=0)
     size_vae_latent = db.Column(db.Integer, default=0)

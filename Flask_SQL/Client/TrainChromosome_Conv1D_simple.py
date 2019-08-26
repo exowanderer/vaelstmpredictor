@@ -178,8 +178,8 @@ if __name__ == '__main__':
                 'val_vae_latent_args_loss']
             params["val_dnn_latent_layer_loss"] = chromosome.best_loss[
                 'val_dnn_latent_layer_loss']
-            params["val_dnn_latent_mod_loss"] = chromosome.best_loss[
-                'val_dnn_latent_mod_loss']
+            params["val_dnn_predictor_layer_loss"] = chromosome.best_loss[
+                'val_dnn_predictor_layer_loss']
             params["hostname"] = clargs.hostname
             params["time_stamp"] = clargs.time_stamp
 

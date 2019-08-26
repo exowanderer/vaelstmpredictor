@@ -100,7 +100,7 @@ def create_blank_dataframe(generationID, population_size):
     generation['val_vae_reconstruction_loss'] = np.float32(zeros)
     generation['val_vae_latent_args_loss'] = np.float32(zeros)
     generation['val_dnn_latent_layer_loss'] = np.float32(zeros)
-    generation['val_dnn_latent_mod_loss'] = np.float32(zeros)
+    generation['val_dnn_predictor_layer_loss'] = np.float32(zeros)
 
     return generation
 
@@ -211,7 +211,7 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
             val_vae_reconstruction_loss = chromosome.val_vae_reconstruction_loss
             val_vae_latent_args_loss = chromosome.val_vae_latent_args_loss
             val_dnn_latent_layer_loss = chromosome.val_dnn_latent_layer_loss
-            val_dnn_latent_mod_loss = chromosome.val_dnn_latent_mod_loss
+            val_dnn_predictor_layer_loss = chromosome.val_dnn_predictor_layer_loss
             num_vae_layers = chromosome.num_vae_layers
             num_dnn_layers = chromosome.num_dnn_layers
             size_vae_latent = chromosome.size_vae_latent
@@ -254,7 +254,7 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
                                     val_vae_reconstruction_loss = val_vae_reconstruction_loss,
                                     val_vae_latent_args_loss = val_vae_latent_args_loss,
                                     val_dnn_latent_layer_loss = val_dnn_latent_layer_loss,
-                                    val_dnn_latent_mod_loss = val_dnn_latent_mod_loss,
+                                    val_dnn_predictor_layer_loss = val_dnn_predictor_layer_loss,
                                     num_vae_layers = num_vae_layers,
                                     num_dnn_layers = num_dnn_layers,
                                     size_vae_latent = size_vae_latent,
@@ -294,7 +294,7 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
                 c.val_vae_reconstruction_loss = val_vae_reconstruction_loss
                 c.val_vae_latent_args_loss = val_vae_latent_args_loss
                 c.val_dnn_latent_layer_loss = val_dnn_latent_layer_loss
-                c.val_dnn_latent_mod_loss = val_dnn_latent_mod_loss
+                c.val_dnn_predictor_layer_loss = val_dnn_predictor_layer_loss
                 c.num_vae_layers = num_vae_layers
                 c.num_dnn_layers = num_dnn_layers
                 c.size_vae_latent = size_vae_latent
@@ -323,7 +323,7 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
         generation.set_value(chrom.chromosomeID, "isTrained", sql_chrom.isTrained)
         generation.set_value(chrom.chromosomeID, "fitness", sql_chrom.fitness)
         generation.set_value(chrom.chromosomeID, "val_dnn_latent_layer_loss", sql_chrom.val_dnn_latent_layer_loss)
-        generation.set_value(chrom.chromosomeID, "val_dnn_latent_mod_loss", sql_chrom.val_dnn_latent_mod_loss)
+        generation.set_value(chrom.chromosomeID, "val_dnn_predictor_layer_loss", sql_chrom.val_dnn_predictor_layer_loss)
         generation.set_value(chrom.chromosomeID, "val_vae_latent_args_loss", sql_chrom.val_vae_latent_args_loss)
         generation.set_value(chrom.chromosomeID, "val_vae_reconstruction_loss", sql_chrom.val_vae_reconstruction_loss)
     return generation
@@ -334,8 +334,8 @@ def refactor_weights(new_generation, generation):
     vae_weights = []
     vae_kl_weights = []
     for chrom in generation.itertuples():
-        val_loss = chrom.val_vae_reconstruction_loss + chrom.val_vae_latent_args_loss + chrom.val_dnn_latent_layer_loss + chrom.val_dnn_latent_mod_loss
-        dnn_weight_ = val_loss / chrom.val_dnn_latent_mod_loss
+        val_loss = chrom.val_vae_reconstruction_loss + chrom.val_vae_latent_args_loss + chrom.val_dnn_latent_layer_loss + chrom.val_dnn_predictor_layer_loss
+        dnn_weight_ = val_loss / chrom.val_dnn_predictor_layer_loss
         dnn_kl_weight_ = val_loss / chrom.val_dnn_latent_layer_loss
         vae_weight_ = val_loss / chrom.val_vae_reconstruction_loss
         vae_kl_weight_ = val_loss / chrom.val_vae_latent_args_loss
@@ -372,7 +372,7 @@ def load_generation_from_sql(generationID, population_size):
         generation.set_value(chrom.chromosomeID, "val_vae_reconstruction_loss", sql_chrom.val_vae_reconstruction_loss)
         generation.set_value(chrom.chromosomeID, "val_vae_latent_args_loss", sql_chrom.val_vae_latent_args_loss)
         generation.set_value(chrom.chromosomeID, "val_dnn_latent_layer_loss", sql_chrom.val_dnn_latent_layer_loss)
-        generation.set_value(chrom.chromosomeID, "val_dnn_latent_mod_loss", sql_chrom.val_dnn_latent_mod_loss)
+        generation.set_value(chrom.chromosomeID, "val_dnn_predictor_layer_loss", sql_chrom.val_dnn_predictor_layer_loss)
         generation.set_value(chrom.chromosomeID, "hostname", sql_chrom.hostname)
         generation.set_value(chrom.chromosomeID, "time_stamp", sql_chrom.time_stamp)
         generation.set_value(chrom.chromosomeID, "num_generations", sql_chrom.num_generations)
