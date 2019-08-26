@@ -230,9 +230,16 @@ class ConvVAEPredictor(object):
                                              'batch_size': self.batch_size,
                                              'channels': self.n_channels})
 
+        # ?? The input to the dnn_predictor_loss
         self.dnn_latent_layer = dnn_latent_layer(
             [self.dnn_latent_mean, self.dnn_latent_log_var])
 
+        dnn_predictor_layer = Lambda(lambda x: x + 1e-10,
+                                     name='dnn_predictor_layer')
+
+        self.dnn_predictor_layer = dnn_predictor_layer(self.dnn_latent_layer)
+
+        # ?? The input to the dnn_kl_loss
         self.dnn_latent_args = concatenate([self.dnn_latent_mean,
                                             self.dnn_latent_log_var],
                                            axis=-1,
@@ -244,13 +251,8 @@ class ConvVAEPredictor(object):
 
         self.dnn_latent_args = reshape_dnn_latent_args(self.dnn_latent_args)
 
-        dnn_latent_mod = Lambda(lambda x: x + 1e-10, name='dnn_latent_mod')
-
-        self.dnn_latent_mod = dnn_latent_mod(self.dnn_latent_layer)
-
     def build_latent_encoder(self, padding='same', activation='relu',
                              base_name='enc_conv1d_{}'):
-
         if self.verbose:
             info_message('Building Encoder')
 
@@ -419,32 +421,31 @@ class ConvVAEPredictor(object):
         self.build_latent_decoder()
 
         output_stack = {'vae_reconstruction': self.vae_reconstruction,
-                        'dnn_latent_layer': self.dnn_latent_layer,
-                        'dnn_latent_mod': self.dnn_latent_mod,
+                        'dnn_latent_args': self.dnn_latent_args,
+                        'dnn_predictor_layer': self.dnn_predictor_layer,
                         'vae_latent_args': self.vae_latent_args}
 
-        output_stack = [self.vae_reconstruction, self.dnn_latent_layer,
-                        self.dnn_latent_mod, self.vae_latent_args]
+        # output_stack = [self.vae_reconstruction, self.dnn_latent_layer,
+        #                 self.dnn_predictor_layer, self.vae_latent_args]
 
         self.model = Model([self.input_layer], output_stack)
 
         # def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0,
         # 			  dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
-        metrics_ = {'dnn_prediction': ['mse'],
-                    'dnn_latent_layer': ['mse'],
+        metrics_ = {'dnn_predictor_layer': ['mse'],
                     'vae_reconstruction': ['mse']}
 
         self.model.compile(
             optimizer=optimizer or self.optimizer,
 
             loss={'vae_reconstruction': self.vae_reconstruction_loss,
-                  'dnn_latent_layer': self.vae_kl_loss,  # Regression: Norm
-                  'dnn_latent_mod': self.dnn_predictor_loss,
+                  'dnn_latent_args': self.dnn_kl_loss,
+                  'dnn_predictor_layer': self.dnn_predictor_loss,
                   'vae_latent_args': self.vae_kl_loss},
 
             loss_weights={'vae_reconstruction': vae_weight,
-                          'dnn_latent_layer': dnn_kl_weight,
-                          'dnn_latent_mod': dnn_weight,
+                          'dnn_latent_args': dnn_kl_weight,
+                          'dnn_predictor_layer': dnn_weight,
                           'vae_latent_args': vae_kl_weight},
 
             metrics=metrics or metrics_
