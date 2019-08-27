@@ -220,8 +220,10 @@ class Chromosome(ConvVAEPredictor):
         predictor_validation = np.expand_dims(predictor_validation, axis=2)
 
         min_epoch = max(self.clargs.kl_anneal, self.clargs.w_kl_anneal) + 1
-        callbacks = get_callbacks(self.clargs, patience=self.clargs.patience,
-                                  min_epoch=min_epoch, do_log=self.clargs.do_log,
+        callbacks = get_callbacks(self.clargs,
+                                  patience=self.clargs.patience,
+                                  min_epoch=min_epoch,
+                                  do_log=self.clargs.do_log,
                                   do_ckpt=self.clargs.do_ckpt)
 
         if self.clargs.kl_anneal > 0:
@@ -232,26 +234,42 @@ class Chromosome(ConvVAEPredictor):
         if self.save_model:
             save_model_in_pieces(self.model, self.clargs)
 
-        vae_train = DI.data_train
+        vae_features_train = DI.data_train
         vae_features_val = DI.data_valid
 
         data_based_init(self.model, DI.data_train[:self.clargs.batch_size])
 
-        vae_labels_val = [DI.labels_valid, predictor_validation,
-                          predictor_validation, DI.labels_valid]
+        validation_labels = [DI.labels_valid, predictor_validation,
+                             predictor_validation, DI.labels_valid]
 
-        validation_data = (vae_features_val, vae_labels_val)
+        validation_data = (vae_features_val, validation_labels)
         train_labels = [DI.labels_train, predictor_train,
                         predictor_train, DI.labels_train]
 
         print('\n\nFITTING MODEL\n\n')
 
-        self.history = self.model.fit(vae_train, train_labels,
+        # debug_message('Checking training shapes')
+        # debug_message('vae_features_train.shape:{}'.format(
+        #     vae_features_train.shape))
+        # for k, thing in enumerate(train_labels):
+        #     debug_message('train thing{}.shape: {}'.format(k + 1, thing.shape))
+
+        # debug_message('Checking validation shapes')
+        # debug_message('vae_features_val.shape:{}'.format(
+        #     validation_data[0].shape))
+        # for k, thing in enumerate(validation_data[1]):
+        #     debug_message('val thing{}.shape: {}'.format(k + 1, thing.shape))
+
+        # import sys
+        # sys.exit(-1)
+
+        self.history = self.model.fit(vae_features_train, train_labels,
                                       shuffle=True,
-                                      epochs=self.clargs.num_epochs,
+                                      epochs=1,  # self.clargs.num_epochs,
                                       batch_size=self.clargs.batch_size,
                                       callbacks=callbacks,
                                       validation_data=validation_data)
+        # validation_data=(vae_features_val, validation_labels))
 
         max_kl_anneal = max(self.clargs.kl_anneal, self.clargs.w_kl_anneal)
         self.best_ind = np.argmin([x if i >= max_kl_anneal + 1 else np.inf

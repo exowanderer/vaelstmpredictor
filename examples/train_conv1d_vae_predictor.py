@@ -7,7 +7,7 @@ from sklearn.externals import joblib
 from time import time
 from tqdm import tqdm
 
-from vaelstmpredictor.vae_predictor.train import train_vae_predictor
+from vaelstmpredictor.vae_conv1d_predictor.train import train_vae_predictor
 
 if __name__ == '__main__':
 
@@ -84,8 +84,7 @@ if __name__ == '__main__':
                         help='basedir for saving log files')
     parser.add_argument('--model_dir', type=str, default='../data/models',
                         help='basedir for saving model weights')
-    parser.add_argument('--train_file', type=str,
-                        default='../data/input/JSB Chorales_Cs.pickle',
+    parser.add_argument('--train_file', type=str, default='exoplanet',
                         help='file of training data (.pickle)')
     parser.add_argument('--no_squeeze_x', action="store_true",
                         help='whether to squeeze the x dimension')

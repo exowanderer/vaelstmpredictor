@@ -40,6 +40,14 @@ rel_keys = {'a': 'C',
             }
 
 
+def debug_message(message, end='\n'):
+    print('[DEBUG] {}'.format(message), end=end)
+
+
+def warning_message(message, end='\n'):
+    print('[WARNING] {}'.format(message), end=end)
+
+
 def relative_major(k):
     return k if k.isupper() else rel_keys[k]
 
@@ -284,8 +292,8 @@ class MNISTData(object):
 
 
 class ExoplanetData(object):
-    exoplanet_filename = 'exoplanet_spectral_database.joblib.save'
-    # exoplanet_filename = 'exoplanet_spectral_database_normalized.joblib.save'
+    exoplanet_filename = 'exoplanet_spectral_folded_database.joblib.save'
+    # exoplanet_filename = 'exoplanet_spectral_folded_database_normalized.joblib.save'
     default_train_file = os.environ['HOME'] + '/.vaelstmpredictor/data/'
 
     exoplanet_data_key = '1KIEDaGkDlcgZmL6t8rDlCp9PGN7glbWq'
@@ -303,10 +311,11 @@ class ExoplanetData(object):
 
             train_file = self.default_train_file
         elif not os.path.exists(train_file):
-            print('[WARNING] `train_file` does not exist. '
-                  'Using default location')
-            print('[WARNING] `train_file`: {}'.format(train_file))
-            print('[WARNING] `default_train_file`: {}'.format(
+            warning_message('`train_file` does not exist. '
+                            'Using default location')
+
+            warning_message('`train_file`: {}'.format(train_file))
+            warning_message('`default_train_file`: {}'.format(
                 self.default_train_file))
 
             train_file = self.default_train_file
@@ -315,8 +324,8 @@ class ExoplanetData(object):
                                             self.exoplanet_filename)
 
         if not os.path.exists(exoplanet_filename):
-            info_message('{} does not exist; give me data or give me death'.format(
-                train_file))
+            info_message('{} does not exist; '
+                         'give me data or give me death'.format(train_file))
             info_message('Downloading Exoplanet Spectral Database')
             print('\tThis could several minutes [~15 minutes?]')
 
@@ -328,15 +337,27 @@ class ExoplanetData(object):
 
         spectra, physics = joblib.load(exoplanet_filename)
 
-        if skip_features:
-            spectra = spectra[:, ::skip_features]
+        # if skip_features:
+        #     spectra_ = spectra[:, ::skip_features]
 
-            if use_all_data:
-                for k in range(1, skip_features):
-                    physics = np.r_[physics, physics]
-                    spectra = np.r_[spectra, spectra[:, k::skip_features]]
+        #     if use_all_data:
+        #         physics_ = physics.copy()
+        #         for k in range(1, skip_features):
+        #             debug_message('Physics: {}'.format(physics.shape))
+        #             debug_message('Spectra_: {}'.format(spectra_.shape))
+        #             debug_message('Spectra: {}'.format(spectra.shape))
 
-        idx_train, idx_test = train_test_split(np.arange(len(spectra)),
+        #             physics_ = np.r_[physics_, physics]
+        #             spectra_ = np.r_[spectra_, spectra[:, k::skip_features]]
+
+        #     spectra = spectra_
+
+        # idx_shuffle = np.random.shuffle(np.arange(physics.shape[0]))
+
+        # spectra = spectra[idx_shuffle]
+        # physics = physics[idx_shuffle]
+
+        idx_train, idx_test = train_test_split(np.arange(physics.shape[0]),
                                                test_size=test_size)
 
         if normalize_spec:
@@ -399,12 +420,12 @@ class ExoplanetData(object):
             'https://mega.nz/#!O6A3wS4a!vTsMQZxl3VnbPbbksfJ0243oWDxv5z1g1zy4XIow4HQ')
         # os.system('mv exoplanet_spectral_database_normalized.joblib.save '+os.environ['HOME']+'/.vaelstmpredictor/data')
 
-        spec_file_name = 'exoplanet_spectral_database_normalized.joblib.save'
+        spec_file_name = 'exoplanet_spectral_folded_database_normalized.joblib.save'
         os.rename(spec_file_name, self.default_train_file + spec_file_name)
         # m.download_from_url('https://mega.nz/#!T7YjkayK!rLqsthYpbbN9dv2yAM6kkjt986soX0KaKsmEqdHeR3U')
         # #Download not normalized data
 
-        # spec_file_name = 'exoplanet_spectral_database.joblib.save'
+        # spec_file_name = 'exoplanet_spectral_folded_database.joblib.save'
         # os.rename(spec_file_name, self.default_train_file + spec_file_name)
 
 

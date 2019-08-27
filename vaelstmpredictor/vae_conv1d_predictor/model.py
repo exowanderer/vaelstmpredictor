@@ -16,26 +16,33 @@ from keras.regularizers import l1_l2
 
 ITERABLES = (list, tuple, np.array)
 
+# try:
+#   # Python 2
+#   range
+# except:
+#   # Python 3
+#   def range(tmp): return iter(range(tmp))
+
 '''HERE WHERE I STARTED'''
 # class CustomVariationalLayer(keras.Layer):
-# 	def vae_loss(self, x, z_decoded, z_mean, z_log_var, kl_loss_coeff=5e-4):
-# 		x = K.flatten(x)
-# 		z_decoded = K.flatten(z_decoded)
+#   def vae_loss(self, x, z_decoded, z_mean, z_log_var, kl_loss_coeff=5e-4):
+#     x = K.flatten(x)
+#     z_decoded = K.flatten(z_decoded)
 
-# 		xent_loss = metrics.binary_crossentropy(x, z_decoded)
-# 		kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
-# 		kl_loss = -kl_loss_coeff*K.mean(kl_loss,axis=-1)
+#     xent_loss = metrics.binary_crossentropy(x, z_decoded)
+#     kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
+#     kl_loss = -kl_loss_coeff*K.mean(kl_loss,axis=-1)
 
-# 		return K.mean(xent_loss + kl_loss)
+#     return K.mean(xent_loss + kl_loss)
 
-# 	def call(self, inputs):
-# 		# We have to implement custom layers by writing a call method
-# 		input_data, z_decoded, z_mean, z_log_var = inputs
-# 		loss = self.vae_loss(input_data, z_decoded, z_mean, z_log_var)
-# 		self.add_loss(loss, inputs = inputs)
+#   def call(self, inputs):
+#     # We have to implement custom layers by writing a call method
+#     input_data, z_decoded, z_mean, z_log_var = inputs
+#     loss = self.vae_loss(input_data, z_decoded, z_mean, z_log_var)
+#     self.add_loss(loss, inputs = inputs)
 
-# 		# you don't use this output; but the layer must return something
-# 		return input_data
+#     # you don't use this output; but the layer must return something
+#     return input_data
 
 
 def debug_message(message):
@@ -76,7 +83,7 @@ def vae_sampling(args, latent_dim, batch_size=128,
     latent_mean, latent_log_var = args
 
     # if channels is not None:
-    # 	batch_shape = (batch_size, channels, latent_dim)
+    #   batch_shape = (batch_size, channels, latent_dim)
     # else:
     batch_shape = (batch_size, latent_dim)  # , channels
 
@@ -88,10 +95,18 @@ def vae_sampling(args, latent_dim, batch_size=128,
 def dnn_sampling(args, latent_dim, batch_size=128, channels=None,
                  mean=0.0, stddev=1.0,  name='dnn_norm'):
 
-    output = vae_sampling(args, latent_dim, batch_size=batch_size,
-                          mean=mean, stddev=stddev, channels=channels)
+    latent_mean, latent_log_var = args
 
+    # if channels is not None:
+    #   batch_shape = (batch_size, channels, latent_dim)
+    # else:
+    batch_shape = (batch_size, latent_dim)  # , channels
+
+    eps = K.random_normal(shape=batch_shape, mean=mean, stddev=stddev)
+
+    output = latent_mean + K.exp(latent_log_var / 2) * eps
     current_shape = K.int_shape(output)
+
     return Reshape(current_shape[1:] + (1,))(output)
 
 # def dnn_sampling(args, latent_dim, batch_size=128, channels=None,
@@ -99,7 +114,7 @@ def dnn_sampling(args, latent_dim, batch_size=128, channels=None,
     # latent_mean, latent_log_var = args
 
     # # if channels is not None:
-    # # 	batch_shape = (batch_size, channels, latent_dim)
+    # #   batch_shape = (batch_size, channels, latent_dim)
     # # else:
     # batch_shape = (batch_size, latent_dim)  # , channels
 
@@ -225,21 +240,15 @@ class ConvVAEPredictor(object):
                                         name='dnn_latent_log_var')(x)
 
         # Draws a latent point using a small random epsilon
+        #   Turns output of encoder (i.e. mean+std layers) into a prediction
         dnn_latent_layer = Lambda(dnn_sampling, name='dnn_latent_layer',
                                   arguments={'latent_dim': self.dnn_latent_dim,
                                              'batch_size': self.batch_size,
                                              'channels': self.n_channels})
 
-        # ?? The input to the dnn_predictor_loss
-        self.dnn_latent_layer = dnn_latent_layer(
-            [self.dnn_latent_mean, self.dnn_latent_log_var])
+        self.dnn_latent_layer = dnn_latent_layer([self.dnn_latent_mean,
+                                                  self.dnn_latent_log_var])
 
-        dnn_predictor_layer = Lambda(lambda x: x + 1e-10,
-                                     name='dnn_predictor_layer')
-
-        self.dnn_predictor_layer = dnn_predictor_layer(self.dnn_latent_layer)
-
-        # ?? The input to the dnn_kl_loss
         self.dnn_latent_args = concatenate([self.dnn_latent_mean,
                                             self.dnn_latent_log_var],
                                            axis=-1,
@@ -248,11 +257,27 @@ class ConvVAEPredictor(object):
         shape_dnn_latent_args = K.int_shape(self.dnn_latent_args)[1:] + (1,)
         reshape_dnn_latent_args = Reshape(shape_dnn_latent_args,
                                           name='dnn_latent_args')
-
         self.dnn_latent_args = reshape_dnn_latent_args(self.dnn_latent_args)
+
+        '''
+        # Draws a latent point using a small random epsilon
+        dnn_latent_layer = Lambda(dnn_sampling, name='dnn_latent_layer',
+                                  arguments={'latent_dim': self.dnn_latent_dim,
+                                             'batch_size': self.batch_size,
+                                             'channels': self.n_channels})
+
+        self.dnn_latent_layer = dnn_latent_layer(
+            [self.dnn_latent_mean, self.dnn_latent_log_var])
+        '''
+
+        dnn_predictor_layer = Lambda(
+            lambda x: x + 1e-10, name='dnn_predictor_layer')
+
+        self.dnn_predictor_layer = dnn_predictor_layer(self.dnn_latent_layer)
 
     def build_latent_encoder(self, padding='same', activation='relu',
                              base_name='enc_conv1d_{}'):
+
         if self.verbose:
             info_message('Building Encoder')
 
@@ -320,7 +345,7 @@ class ConvVAEPredictor(object):
         # Input where you'll feed z
         # z_shape = K.int_shape(self.vae_latent_layer)[1:]
         # decoder_input = Input(shape = (self.vae_latent_dim,),
-        # 						name = 'dec_input')
+        #             name = 'dec_input')
         shape_dnn_w_latent = K.int_shape(self.dnn_w_latent)[1:-1]
         reshaped_dnn_w_latent = Reshape(shape_dnn_w_latent)(self.dnn_w_latent)
 
@@ -341,12 +366,12 @@ class ConvVAEPredictor(object):
         x = Dropout(self.dropout_rate)(x)
 
         # Reshapes z into a feature map of the same shape as the feature map
-        #	just before the last Flatten layer in the encoder model
+        # just before the last Flatten layer in the encoder model
         x = Reshape(shouldbe_last_conv_shape)(x)
 
         ''' Uses a Conv1DTranspose layer and a Conv1D layer to decode z into
-				a feature map that is the same size as the original image input
-		    '''
+        a feature map that is the same size as the original image input
+        '''
         zipper = zip(self.decoder_filters,
                      self.decoder_kernel_sizes,
                      self.decoder_pool_sizes,
@@ -374,23 +399,23 @@ class ConvVAEPredictor(object):
                                                   # l2_coeff=self.l2_coeff,
                                                   name='vae_reconstruction')(x)
 
-    # REGRESSION ONLY!
+    def dnn_kl_loss(self, ztrue, zpred):
+        Z_mean = self.dnn_latent_args[:, :self.dnn_latent_dim]
+        Z_log_var = self.dnn_latent_args[:, self.dnn_latent_dim:]
+        k_summer = 1 + Z_log_var - K.square(Z_mean) - K.exp(Z_log_var)
+        return -0.5 * K.sum(k_summer, axis=-1)
+
     # def dnn_kl_loss(self, labels, preds):
     #     vs = 1 - self.dnn_log_var_prior + self.dnn_latent_log_var
     #     vs = vs - K.exp(self.dnn_latent_log_var) / \
     #         K.exp(self.dnn_log_var_prior)
     #     vs = vs - K.square(self.dnn_latent_mean) / \
     #         K.exp(self.dnn_log_var_prior)
-
     #     return -0.5 * K.sum(vs, axis=-1)
-    def dnn_kl_loss(self, labels, preds):
-        Z_mean = self.dnn_latent_args[:, :self.dnn_latent_dim]
-        Z_log_var = self.dnn_latent_args[:, self.dnn_latent_dim:]
-        k_summer = 1 + Z_log_var - K.square(Z_mean) - K.exp(Z_log_var)
-        return -0.5 * K.sum(k_summer, axis=-1)
 
-    def dnn_predictor_loss(self, y_true, y_pred):
-        reconstruction_loss = mean_squared_error(y_true, y_pred)
+    def dnn_predictor_loss(self, labels, preds):
+        reconstruction_loss = mean_squared_error(labels, preds)
+
         return reconstruction_loss
 
     def build_model(self, batch_size=None, hidden_activation='relu',
@@ -421,30 +446,31 @@ class ConvVAEPredictor(object):
         self.build_latent_decoder()
 
         output_stack = {'vae_reconstruction': self.vae_reconstruction,
-                        'dnn_latent_args': self.dnn_latent_args,
+                        'dnn_latent_layer': self.dnn_latent_layer,
                         'dnn_predictor_layer': self.dnn_predictor_layer,
                         'vae_latent_args': self.vae_latent_args}
 
-        # output_stack = [self.vae_reconstruction, self.dnn_latent_layer,
-        #                 self.dnn_predictor_layer, self.vae_latent_args]
+        output_stack = [self.vae_reconstruction, self.dnn_latent_layer,
+                        self.dnn_predictor_layer, self.vae_latent_args]
 
         self.model = Model([self.input_layer], output_stack)
 
         # def compile(self, dnn_weight = 1.0, vae_weight = 1.0, vae_kl_weight = 1.0,
-        # 			  dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
-        metrics_ = {'dnn_predictor_layer': ['mse'],
+        #         dnn_kl_weight = 1.0, optimizer = 'adam', metrics = None):
+        metrics_ = {'dnn_prediction': ['mse'],
+                    'dnn_latent_layer': ['mse'],
                     'vae_reconstruction': ['mse']}
 
         self.model.compile(
             optimizer=optimizer or self.optimizer,
 
             loss={'vae_reconstruction': self.vae_reconstruction_loss,
-                  'dnn_latent_args': self.dnn_kl_loss,
+                  'dnn_latent_layer': self.dnn_kl_loss,
                   'dnn_predictor_layer': self.dnn_predictor_loss,
                   'vae_latent_args': self.vae_kl_loss},
 
             loss_weights={'vae_reconstruction': vae_weight,
-                          'dnn_latent_args': dnn_kl_weight,
+                          'dnn_latent_layer': dnn_kl_weight,
                           'dnn_predictor_layer': dnn_weight,
                           'vae_latent_args': vae_kl_weight},
 
@@ -464,18 +490,6 @@ class ConvVAEPredictor(object):
         Z_log_var = self.vae_latent_args[:, self.vae_latent_dim:]
         k_summer = 1 + Z_log_var - K.square(Z_mean) - K.exp(Z_log_var)
         return -0.5 * K.sum(k_summer, axis=-1)
-
-    # REGRESSION ONLY!
-    # def dnn_kl_loss(self, labels, preds):
-    #     vs = 1 - self.dnn_log_var_prior + self.dnn_latent_log_var
-
-    #     vs = vs - K.exp(self.dnn_latent_log_var) / \
-    #         K.exp(self.dnn_log_var_prior)
-
-    #     vs = vs - K.square(self.dnn_latent_mean) / \
-    #         K.exp(self.dnn_log_var_prior)
-
-    #     return -0.5 * K.sum(vs, axis=-1)
 
     def load_model(self, model_file):
         ''' there's a currently bug in the way keras loads models 
