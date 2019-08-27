@@ -265,7 +265,7 @@ class Chromosome(ConvVAEPredictor):
 
         self.history = self.model.fit(vae_features_train, train_labels,
                                       shuffle=True,
-                                      epochs=1,  # self.clargs.num_epochs,
+                                      epochs=self.clargs.num_epochs,
                                       batch_size=self.clargs.batch_size,
                                       callbacks=callbacks,
                                       validation_data=validation_data)
