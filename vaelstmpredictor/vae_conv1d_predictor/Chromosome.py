@@ -268,8 +268,9 @@ class Chromosome(ConvVAEPredictor):
                                       epochs=self.clargs.num_epochs,
                                       batch_size=self.clargs.batch_size,
                                       callbacks=callbacks,
-                                      validation_data=validation_data)
-        # validation_data=(vae_features_val, validation_labels))
+                                      # validation_data=validation_data)
+                                      validation_data=(vae_features_val,
+                                                       validation_labels))
 
         max_kl_anneal = max(self.clargs.kl_anneal, self.clargs.w_kl_anneal)
         self.best_ind = np.argmin([x if i >= max_kl_anneal + 1 else np.inf
