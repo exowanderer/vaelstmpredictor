@@ -71,9 +71,9 @@ if __name__ == '__main__':
             clargs.batch_size = params["batch_size"]
             clargs.chromosomeID = params["chromosomeID"]
             clargs.cross_prob = params["cross_prob"]
-            clargs.dnn_kl_weight = params["dnn_kl_weight"]
+            clargs.dnn_kl_weight = 1 # params["dnn_kl_weight"]
             clargs.dnn_log_var_prior = params["dnn_log_var_prior"]
-            clargs.dnn_weight = params["dnn_weight"]
+            clargs.dnn_weight = 1 # params["dnn_weight"]
             clargs.fitness = params["fitness"]
             clargs.generationID = params["generationID"]
             clargs.isTrained = params["isTrained"]
@@ -101,9 +101,9 @@ if __name__ == '__main__':
             clargs.size_vae_hidden = params["size_vae_hidden"]
             clargs.vae_latent_dim = params["size_vae_latent"]
             clargs.table_dir = params["table_dir"]
-            clargs.train_file = params["train_file"]  # 'mnist'  #
-            clargs.vae_kl_weight = params["vae_kl_weight"]
-            clargs.vae_weight = params["vae_weight"]
+            clargs.train_file = 'dummydata' # params["train_file"]
+            clargs.vae_kl_weight = 1 # params["vae_kl_weight"]
+            clargs.vae_weight = 1 # params["vae_weight"]
             clargs.w_kl_anneal = params["w_kl_anneal"]
             clargs.num_conv_layers = params["num_conv_layers"]
             clargs.size_kernel = params["size_kernel"]
@@ -126,6 +126,9 @@ if __name__ == '__main__':
             elif clargs.train_file == 'mnist':
                 from vaelstmpredictor.utils.data_utils import MNISTData
                 data_instance = MNISTData(batch_size=clargs.batch_size)
+            elif clargs.train_file == 'dummydata':
+                from vaelstmpredictor.utils.data_utils import dummyData
+                data_instance = dummyData(batch_size=clargs.batch_size)
             else:
                 raise Exception(
                     "clargs.train_file must be either `exoplanet` or `mnist`")
@@ -208,7 +211,7 @@ if __name__ == '__main__':
             params["val_vae_latent_args_loss"] = chromosome.best_loss[
                 'val_vae_latent_args_loss']
             params["val_dnn_latent_args_loss"] = chromosome.best_loss[
-                'val_dnn_latent_args_loss']
+                'val_dnn_latent_layer_loss']
             params["val_dnn_predictor_layer_loss"] = chromosome.best_loss[
                 'val_dnn_predictor_layer_loss']
 
