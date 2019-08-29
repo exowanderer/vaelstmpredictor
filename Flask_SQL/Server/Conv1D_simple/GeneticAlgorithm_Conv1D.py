@@ -124,6 +124,7 @@ def generate_random_chromosomes(population_size, clargs, geneationID = 0,
     generation['vae_kl_weight'] = np.repeat(clargs.vae_kl_weight, population_size)
     generation['vae_weight'] = np.repeat(clargs.vae_weight, population_size)
 
+    '''
     # Overwrite chromosome parameters to evolve with random choices
     vae_nLayers_choices = range(min_vae_hidden_layers, max_vae_hidden_layers)
     dnn_nLayers_choices = range(min_dnn_hidden_layers, max_dnn_hidden_layers)
@@ -152,6 +153,7 @@ def generate_random_chromosomes(population_size, clargs, geneationID = 0,
                                                         size = population_size)
 
     '''
+
     generation['num_vae_layers'] = loguniform(low=min_vae_hidden_layers, high=max_vae_hidden_layers,
                                                 size = population_size).astype(int)
     generation['num_dnn_layers'] = loguniform(low=min_dnn_hidden_layers, high=max_dnn_hidden_layers,
@@ -168,11 +170,11 @@ def generate_random_chromosomes(population_size, clargs, geneationID = 0,
                                                 size = population_size).astype(int)
     generation['size_filter'] = loguniform(low=min_filter_size, high=max_filter_size,
                                                 size = population_size).astype(int)
-    '''
+
     return generation
 
 def loguniform(low=0, high=1, size=None):
-    return np.exp(np.random.loguniform(low, high, size))
+    return np.exp(np.random.uniform(np.log(low+1), np.log(high+1), size)).astype(int) -1
 
 def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=True):
     generationID = generation['generationID'][0]

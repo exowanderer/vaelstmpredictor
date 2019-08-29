@@ -128,6 +128,7 @@ def generate_random_chromosomes(population_size, clargs, geneationID = 0,
     generation['vae_kl_weight'] = np.repeat(clargs.vae_kl_weight, population_size)
     generation['vae_weight'] = np.repeat(clargs.vae_weight, population_size)
 
+    '''
     # Overwrite chromosome parameters to evolve with random choices
     vae_nLayers_choices = range(min_vae_hidden_layers, max_vae_hidden_layers)
     dnn_nLayers_choices = range(min_dnn_hidden_layers, max_dnn_hidden_layers)
@@ -156,8 +157,29 @@ def generate_random_chromosomes(population_size, clargs, geneationID = 0,
         generation.set_value(i, "size_kernel",  np.random.choice(kernel_nUnits_choices, size = (generation.loc[i, 'num_conv_layers'])))
         generation.set_value(i, "size_pool",  np.random.choice(pool_nUnits_choices, size = (generation.loc[i, 'num_conv_layers'])))
         generation.set_value(i, "size_filter",  np.random.choice(filter_nUnits_choices, size = (generation.loc[i, 'num_conv_layers'])))
+    '''
+    generation['num_vae_layers'] = loguniform(low=min_vae_hidden_layers, high=max_vae_hidden_layers,
+                                                        size = population_size)
+    generation['num_dnn_layers'] = loguniform(low=min_dnn_hidden_layers, high=max_dnn_hidden_layers,
+                                                        size = population_size)
+    generation['size_vae_latent'] = loguniform(low=min_vae_latent, high=max_vae_latent,
+                                                        size = population_size)
+    generation['size_vae_hidden'] = loguniform(low=min_vae_hidden, high=max_vae_hidden,
+                                                        size = population_size)
+    generation['size_dnn_hidden'] = loguniform(low=min_dnn_hidden, high=max_dnn_hidden,
+                                                        size = population_size)
+    generation['num_conv_layers'] = loguniform(low=min_conv_layers, high=max_conv_layers,
+                                                        size = population_size)
+
+    for i in range(population_size):
+        generation.set_value(i, "size_kernel",  loguniform(low=min_kernel_size, high=max_kernel_size, size = (generation.loc[i, 'num_conv_layers'])))
+        generation.set_value(i, "size_pool",  loguniform(low=min_pool_size, high=max_pool_size, size = (generation.loc[i, 'num_conv_layers'])))
+        generation.set_value(i, "size_filter",  loguniform(low=min_filter_size, high=max_filter_size, size = (generation.loc[i, 'num_conv_layers'])))
 
     return generation
+
+def loguniform(low=0, high=1, size=None):
+    return np.exp(np.random.uniform(np.log(low+1), np.log(high+2), size)).astype(int) -1
 
 def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=True):
     generationID = generation['generationID'][0]
