@@ -162,7 +162,8 @@ class Chromosome(object):
 
             x = BatchNormalization()(x)
             x = Activation('relu')(x)
-            x = MaxPooling1D((psize, ), padding='same')(x)
+            if(psize != 0):
+            	x = MaxPooling1D((psize, ), padding='same')(x)
         #-------------------------------------------
         last_dense_dim = K.int_shape(x)[1]
         x = Flatten()(x)
@@ -215,7 +216,8 @@ class Chromosome(object):
 
             x = BatchNormalization()(x)
             x = Activation('relu')(x)
-            x = UpSampling1D(psize)(x)
+            if(psize != 0):
+            	x = UpSampling1D(psize)(x)
         #------------------------------------------
         x = Conv1D(1, (3, ), padding='same', kernel_regularizer=kernel_regularizer)(x)
         x = Flatten()(x)
@@ -247,7 +249,8 @@ class Chromosome(object):
 
             x = BatchNormalization()(x)
             x = Activation('relu')(x)
-            x = MaxPooling1D((psize, ), padding='same')(x)
+            if(psize != 0):
+            	x = MaxPooling1D((psize, ), padding='same')(x)
         #---------------------------------
         x = Flatten()(x)
 
