@@ -275,7 +275,8 @@ class Chromosome(object):
 
     def train(self, verbose=False):
         callbacks = [TerminateOnNaN()]
-        callbacks.append(ModelCheckpoint(filepath='conv_dnn_only_weights.hdf5', verbose=self.verbose, save_best_only=True))
+        if(self.save_model):
+        	callbacks.append(ModelCheckpoint(filepath='conv_dnn_only_weights.hdf5', verbose=self.verbose, save_best_only=True))
         callbacks.append(TensorBoard(log_dir=self.log_dir, histogram_freq=0, batch_size=32, write_graph=True, 
             write_grads=False, write_images=False, embeddings_freq=0, embeddings_layer_names=None, 
             embeddings_metadata=None, embeddings_data=None, update_freq='epoch'))
