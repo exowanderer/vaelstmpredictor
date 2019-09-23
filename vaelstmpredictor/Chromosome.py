@@ -154,25 +154,27 @@ class Chromosome(object):
                      self.size_pool)
 
         for i, (fsize, ksize, psize) in enumerate(zipper):
-            name = "Encoder_CNN_{}".format(i)
+            cnn_name = "Encoder_{}_{}".format("CNN", i)
+            pool_name = "Encoder_{}_{}".format("MaxPool", i)
             x = Conv1D(fsize, (ksize,),
                        padding='same',
                        kernel_regularizer=kernel_regularizer,
-                       name=name)(x)
+                       name=cnn_name)(x)
 
             x = BatchNormalization()(x)
             x = Activation('relu')(x)
             if(psize != 0):
-            	x = MaxPooling1D((psize, ), padding='same')(x)
+            	x = MaxPooling1D((psize, ), padding='same', name=pool_name)(x)
         #-------------------------------------------
         last_dense_dim = K.int_shape(x)[1]
-        x = Flatten()(x)
+        x = Flatten(name="Encoder_Flatten")(x)
         #--------- Encoder Dense Layers ------------
         for i, dense_size in enumerate(self.vae_hidden_dims):
+            dense_name = "Encoder_{}_{}".format("Dense", i)
             if(i < len(self.vae_hidden_dims) -1):
-                x = Dense(dense_size, activation='relu')(x)
+                x = Dense(dense_size, activation='relu', name=dense_name)(x)
             else:
-                x = Dense(dense_size, activation='sigmoid')(x)
+                x = Dense(dense_size, activation='sigmoid', name=dense_name)(x)
             # x = Dropout(self.dropout_rate)(x)
         #-------------------------------------------
 
@@ -195,7 +197,8 @@ class Chromosome(object):
         x = latent_inputs
         #--------- Decoder Dense Layers ------------
         for dense_size in self.vae_hidden_dims[::-1]:
-            x = Dense(dense_size, activation='relu')(x)
+            dense_name = "Decoder_{}_{}".format("Dense", i)
+            x = Dense(dense_size, activation='relu', name=dense_name)(x)
             # x = Dropout(self.dropout_rate)(x)
         #-------------------------------------------
 
@@ -208,22 +211,32 @@ class Chromosome(object):
                      self.size_pool[::-1])
 
         for i, (fsize, ksize, psize) in enumerate(zipper):
-            name = "Decoder_CNN_{}".format(i)
+            cnn_name = "Decoder_{}_{}".format("CNN", i)
+            pool_name = "Decoder_{}_{}".format("UpSample", i)
             x = Conv1D(fsize, (ksize,),
                        padding='same',
                        kernel_regularizer=kernel_regularizer,
-                       name=name)(x)
+                       name=cnn_name)(x)
 
             x = BatchNormalization()(x)
             x = Activation('relu')(x)
             if(psize != 0):
-            	x = UpSampling1D(psize)(x)
+            	x = UpSampling1D(psize, name=pool_name)(x)
         #------------------------------------------
-        x = Conv1D(1, (3, ), padding='same', kernel_regularizer=kernel_regularizer)(x)
-        x = Flatten()(x)
+        x = Conv1D(1, (3, ), padding='same', kernel_regularizer=kernel_regularizer, name="Decoder_CNN_final")(x)
+        x = Flatten(name="Decoder_Flatten")(x)
+
+        #----------- Test please ---------------
+        if(K.int_shape(x)[1] != K.int_shape(inputs)[1]):
+        	x = Dense(K.int_shape(inputs)[1], activation='relu', name="Decoder_Extra_Dense")(x)
+        #----------- Test please ---------------
 
         # instantiate decoder model
         decoder = Model(latent_inputs, x, name='vae_reconstruction')
+
+        if(self.verbose):
+            encoder.summary()
+            decoder.summary()
 
         # instantiate VAE model
         outputs_vae = decoder(encoder(inputs))
@@ -241,25 +254,27 @@ class Chromosome(object):
                      self.size_pool)
 
         for i, (fsize, ksize, psize) in enumerate(zipper):
-            name = "Predictor_CNN_{}".format(i)
+            cnn_name = "Predictor_{}_{}".format("CNN", i)
+            pool_name = "Predictor_{}_{}".format("MaxPool", i)
             x = Conv1D(fsize, (ksize,),
                        padding='same',
                        kernel_regularizer=kernel_regularizer,
-                       name=name)(x)
+                       name=cnn_name)(x)
 
             x = BatchNormalization()(x)
             x = Activation('relu')(x)
             if(psize != 0):
-            	x = MaxPooling1D((psize, ), padding='same')(x)
+            	x = MaxPooling1D((psize, ), padding='same', name=pool_name)(x)
         #---------------------------------
-        x = Flatten()(x)
+        x = Flatten(name="Predictor_Flatten")(x)
 
         #--------- Predictor Dense Layers ------------
         for i, dense_size in enumerate(self.dnn_hidden_dims):
+            dense_name = "Predictor_{}_{}".format("Dense", i)
             if(i < len(self.dnn_hidden_dims) -1):
-                x = Dense(dense_size, activation='relu')(x)
+                x = Dense(dense_size, activation='relu', name=dense_name)(x)
             else:
-                x = Dense(dense_size, activation='sigmoid')(x)
+                x = Dense(dense_size, activation='sigmoid', name=dense_name)(x)
             # x = Dropout(self.dropout_rate)(x)
         #-------------------------------------------
 
@@ -300,8 +315,6 @@ class Chromosome(object):
                           'dnn_predictor_layer': dnn_weight,
                           'vae_latent_layer': vae_kl_weight},
         )
-        if(self.verbose):
-            self.model.summary()
         
         self.history = self.model.fit(self.x_train,
                 [self.x_train, self.x_train, self.y_train, self.y_train],
