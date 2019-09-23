@@ -196,7 +196,7 @@ class Chromosome(object):
 
         x = latent_inputs
         #--------- Decoder Dense Layers ------------
-        for dense_size in self.vae_hidden_dims[::-1]:
+        for i, dense_size in enumerate(self.vae_hidden_dims[::-1]):
             dense_name = "Decoder_{}_{}".format("Dense", i)
             x = Dense(dense_size, activation='relu', name=dense_name)(x)
             # x = Dropout(self.dropout_rate)(x)
