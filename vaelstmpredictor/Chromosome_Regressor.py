@@ -44,7 +44,7 @@ def write(string):
 
 class Chromosome(object):
 
-    def __init__(self, size_filter, size_kernel, size_pool,
+    def __init__(self, data, size_filter, size_kernel, size_pool,
                 dnn_hidden_dims, num_conv_layers,
                 batch_size=128, num_epochs=50, dropout_rate=0.7,
                 dnn_kl_weight=1, dnn_weight=1,
@@ -77,8 +77,6 @@ class Chromosome(object):
         self.save_model = save_model
 
         np.random.seed(42)
-        from vaelstmpredictor.utils.data_utils import bostonHousingData
-        data = bostonHousingData(self.batch_size)
         self.x_train = data.data_train
         self.y_train = data.train_labels
         self.x_test = data.data_valid

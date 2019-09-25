@@ -44,7 +44,7 @@ def write(string):
 
 class Chromosome(object):
 
-    def __init__(self, size_filter, size_kernel, size_pool,
+    def __init__(self, data, size_filter, size_kernel, size_pool,
                 vae_latent_dim, dnn_hidden_dims, vae_hidden_dims, num_conv_layers,
                 batch_size=128, num_epochs=50, dropout_rate=0.7,
                 dnn_kl_weight=1, dnn_weight=1, vae_kl_weight=1, vae_weight=1,
@@ -82,9 +82,6 @@ class Chromosome(object):
 
         np.random.seed(42)
         if(train_file == "exoplanet"):
-            from vaelstmpredictor.utils.data_utils import ExoplanetData
-            data = ExoplanetData(self.batch_size, normalize_spec = True)
-
             condensation_category_train = data.train_labels[:,0] == int(rainout)
             condensation_category_validation = data.valid_labels[:,0] == int(rainout)
 
@@ -96,8 +93,6 @@ class Chromosome(object):
             self.x_test = data.data_valid[condensation_category_validation]
 
         elif(train_file == "dummyData"):
-            from vaelstmpredictor.utils.data_utils import dummyData
-            data = dummyData(self.batch_size)
             min_val = -1000
             max_val = 1000
             self.x_train = (data.data_train - min_val)/(max_val - min_val)
@@ -106,8 +101,7 @@ class Chromosome(object):
             self.y_test = data.valid_labels
 
         elif(train_file == "mnist"):
-            from keras.datasets import mnist
-            (self.x_train, self.y_train), (self.x_test, self.y_test) = mnist.load_data()
+            (self.x_train, self.y_train), (self.x_test, self.y_test) = data
 
             self.image_size = self.x_train.shape[1]
             self.original_dim = self.image_size * self.image_size
@@ -117,8 +111,6 @@ class Chromosome(object):
             self.x_test = self.x_test.astype('float32') / 255
 
         elif(train_file == "bostonHousing"):
-            from vaelstmpredictor.utils.data_utils import bostonHousingData
-            data = bostonHousingData(self.batch_size)
             self.x_train = data.data_train
             self.y_train = data.train_labels
             self.x_test = data.data_valid

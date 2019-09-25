@@ -133,6 +133,25 @@ if __name__ == '__main__':
             chrom_params['size_pool'] = size_pool
             chrom_params['size_filter'] = size_filter
 
+            data = None
+            if(clargs.train_file == "exoplanet"):
+                from vaelstmpredictor.utils.data_utils import ExoplanetData
+                data = ExoplanetData(clargs.batch_size, normalize_spec = True)
+            elif(clargs.train_file == "dummyData"):
+                from vaelstmpredictor.utils.data_utils import dummyData
+                data = dummyData(clargs.batch_size)
+            elif(clargs.train_file == "mnist"):
+                from keras.datasets import mnist
+                data = mnist.load_data()
+            elif(clargs.train_file == "bostonHousing"):
+                from vaelstmpredictor.utils.data_utils import bostonHousingData
+                data = bostonHousingData(clargs.batch_size)
+            else:
+                if(self.verbose):
+                    print("Train File \"{}\" not recognized".format(clargs.train_file))
+                    continue
+            chrom_params["data"] = data
+
             info_message('\n\nParams for this VAE_NN:')
             for key, val in clargs.__dict__.items():
                 print('{:20}{}'.format(key, val))
