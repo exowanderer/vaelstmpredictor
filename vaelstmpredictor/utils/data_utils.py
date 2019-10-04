@@ -64,8 +64,6 @@ class MNISTData(object):
 		self.data_valid = x_test
 		self.data_test = np.arange(0)  # irrelevant(?)
 
-		self.labels_train = self.data_train
-		self.labels_valid = self.data_valid
 
 class bostonHousingData(object):
 
@@ -95,8 +93,6 @@ class bostonHousingData(object):
 		self.data_valid = x_test
 		self.data_test = np.arange(0)  # irrelevant(?)
 
-		self.labels_train = self.data_train
-		self.labels_valid = self.data_valid
 
 class dummyData(object):
 
@@ -124,8 +120,32 @@ class dummyData(object):
 		self.data_valid = x_test.astype('float32') / 1000
 		self.data_test = np.arange(0)  # irrelevant(?)
 
-		self.labels_train = self.data_train
-		self.labels_valid = self.data_valid
+
+class dummyData2(object):
+
+	def __init__(self, batch_size, n_features, n_windows, n_steps):
+		n_samples = batch_size*100
+
+		features = np.random.normal(0, 1, size=(n_samples, n_features))
+		labels = np.random.normal(0, 1, size=(n_samples, 1))
+
+		features_split = np.array([features[0:(n_windows), :]])
+		labels_split = np.array([labels[0:(n_windows)]])
+		for i in range(1, n_samples, n_steps):
+			if(i+n_windows < len(features)):
+				fsplit = features[i:(i+n_windows), :]
+				features_split = np.r_[features_split,[fsplit]]
+
+				lsplit = labels[i:(i+n_windows)]
+				labels_split = np.r_[labels_split,[lsplit]]
+
+		(x_train, x_test, y_train, y_test) = train_test_split(features_split, labels_split, test_size=0.2)
+
+		self.train_labels = np.reshape(y_train, (y_train.shape[0], n_windows))
+		self.valid_labels = np.reshape(y_test, (y_test.shape[0], n_windows))
+
+		self.data_train = x_train
+		self.data_valid = x_test
 
 
 class ExoplanetData(object):
@@ -230,9 +250,6 @@ class ExoplanetData(object):
 		self.data_valid = y_test
 		self.data_test = np.array([])  # irrelevant(?)
 
-		# This is a 'copy' because the output must equal the input
-		self.labels_train = self.data_train
-		self.labels_valid = self.data_valid
 
 	def download_exoplanet_data(self):
 		# os.system("git clone https://github.com/jeroenmeulenaar/python3-mega.git")

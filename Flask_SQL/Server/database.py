@@ -58,8 +58,11 @@ class Chromosome(db.Model):
     num_dnn_layers = db.Column(db.Integer, default=0)
     size_vae_latent = db.Column(db.Integer, default=0)
     size_vae_hidden = db.Column(db.Integer, default=0)
-    size_dnn_hidden = db.Column(db.Integer, default=0)
     num_conv_layers = db.Column(db.Integer, default=0)
+
+    size_dnn_hidden = db.Column(db.Integer, default=0)
+    # size_dnn_hidden = db.Column(db.String(50), default='[]')
+
     size_kernel = db.Column(db.String(50), default='[]')
     size_pool = db.Column(db.String(50), default='[]')
     size_filter = db.Column(db.String(50), default='[]')

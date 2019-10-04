@@ -288,7 +288,7 @@ def Visuals():
                             "name": c.chromosomeID,
                             "fitness": c.fitness,
                             "size": c.num_conv_layers,
-                            "height": c.size_filter})
+                            "height": c.num_dnn_layers})
         links = []
         for c in chroms:
             bold = 0 if ("Mutated" in c.info) else 1

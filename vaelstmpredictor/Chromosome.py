@@ -238,7 +238,7 @@ class Chromosome(object):
 
     def DNN(self, inputs_dnn):
 
-        kernel_regularizer = l1_l2(l1 = 0, l2 = 0)
+        kernel_regularizer = l1_l2(l1 = 0.001, l2 = 0.001)
         x = Reshape(self.input_shape+(1,))(inputs_dnn)
         #--------- Predictor CNN Layers ------------
         zipper = zip(self.size_filter,
@@ -290,10 +290,6 @@ class Chromosome(object):
         callbacks.append(EarlyStopping(patience=20))
         callbacks.append(History())
 
-        vae_weight = 1
-        dnn_kl_weight = 1
-        dnn_weight = 1
-        vae_kl_weight = 1
         self.model.compile(
             optimizer=self.optimizer,
 
@@ -302,10 +298,10 @@ class Chromosome(object):
                   'dnn_predictor_layer': self.dnn_predictor_loss,
                   'vae_latent_layer': self.vae_kl_loss},
 
-            loss_weights={'vae_reconstruction': vae_weight,
-                          'dnn_latent_layer': dnn_kl_weight,
-                          'dnn_predictor_layer': dnn_weight,
-                          'vae_latent_layer': vae_kl_weight},
+            loss_weights={'vae_reconstruction': self.vae_weight,
+                          'dnn_latent_layer': self.dnn_kl_weight,
+                          'dnn_predictor_layer': self.dnn_weight,
+                          'vae_latent_layer': self.vae_kl_weight},
         )
         
         self.history = self.model.fit(self.x_train,

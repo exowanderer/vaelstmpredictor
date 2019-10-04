@@ -5,7 +5,7 @@ import os
 import requests
 import socket
 
-from vaelstmpredictor.Chromosome import Chromosome
+from vaelstmpredictor.Chromosome_Regressor import Chromosome
 
 from time import time, sleep
 from keras import backend as K
@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
             clargs.hostname = hostname
 
-            dnn_hidden_dims = [clargs.size_dnn_hidden] * clargs.num_dnn_layers
+            dnn_hidden_dims = np.array(json.loads(clargs.size_dnn_hidden))
             size_kernel = np.array(json.loads(clargs.size_kernel))*2 +1
             size_pool = np.array(json.loads(clargs.size_pool))*2
             size_filter = np.array(json.loads(clargs.size_filter))
@@ -108,7 +108,6 @@ if __name__ == '__main__':
             chrom_params['batch_size'] = clargs.batch_size
             chrom_params['optimizer'] = clargs.optimizer
             chrom_params['num_epochs'] = clargs.num_epochs
-            chrom_params['train_file'] = clargs.train_file
             chrom_params['save_model'] = clargs.save_model
             chrom_params['verbose'] = clargs.verbose
             chrom_params['log_dir'] = clargs.log_dir
@@ -124,8 +123,8 @@ if __name__ == '__main__':
             chrom_params['size_pool'] = size_pool
             chrom_params['size_filter'] = size_filter
 
-            from vaelstmpredictor.utils.data_utils import bostonHousingData
-            data = bostonHousingData(self.batch_size)
+            from vaelstmpredictor.utils.data_utils import dummyData2
+            data = dummyData2(clargs.batch_size, 19, 100, 10)
             chrom_params['data'] = data
 
             info_message('\n\nParams for this VAE_NN:')
@@ -167,8 +166,6 @@ if __name__ == '__main__':
 
             params["isTrained"] = 2
             params["fitness"] = chromosome.fitness
-            params["val_dnn_latent_args_loss"] = chromosome.best_losses['val_dnn_latent_layer_loss']
-            params["val_dnn_predictor_layer_loss"] = chromosome.best_losses['val_dnn_predictor_layer_loss']
 
             params["hostname"] = clargs.hostname
             params["start_time"] = start_time

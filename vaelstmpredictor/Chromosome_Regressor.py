@@ -4,8 +4,8 @@ from keras import backend as K
 # from keras.callbacks import CSVLogger, ReduceLROnPlateau, LambdaCallback
 from keras.callbacks import TerminateOnNaN, EarlyStopping, ModelCheckpoint, TensorBoard, History
 from keras.layers import Input, Lambda, concatenate, Dense
-from keras.layers import Conv2D, MaxPooling2D, Layer, Add, Multiply
-from keras.layers import UpSampling2D, Flatten, Reshape
+from keras.layers import Conv1D, MaxPooling1D, Layer, Add, Multiply
+from keras.layers import UpSampling1D, Flatten, Reshape
 from keras.layers import BatchNormalization, Dropout, Activation
 from keras.losses import mse, mean_squared_error, binary_crossentropy, categorical_crossentropy
 from keras.models import Model, Sequential
@@ -48,7 +48,7 @@ class Chromosome(object):
                 dnn_hidden_dims, num_conv_layers,
                 batch_size=128, num_epochs=50, dropout_rate=0.7,
                 dnn_kl_weight=1, dnn_weight=1,
-                optimizer="adam", predictor_type="prediction", train_file="exoplanet",
+                optimizer="adam", predictor_type="prediction",
                 log_dir="./logs", model_dir="../data/models", table_dir="../data/tables",
                 save_model=False, verbose=True, rainout=False):
         ''' Configure dnn '''
@@ -69,8 +69,6 @@ class Chromosome(object):
         self.dnn_weight = dnn_weight
 
         self.optimizer = optimizer
-        self.predictor_type = predictor_type
-        self.train_file = train_file
         self.log_dir = log_dir
         self.model_dir = model_dir
         self.table_dir = table_dir
@@ -82,8 +80,8 @@ class Chromosome(object):
         self.x_test = data.data_valid
         self.y_test = data.valid_labels
         
-        self.original_dim = data.data_train.shape[1]
-        self.input_shape = (self.original_dim, )
+        self.original_dim = data.data_train.shape
+        self.input_shape = (self.original_dim[1], self.original_dim[2])
 
         if(len(self.y_train.shape) == 1):
             self.dnn_latent_dim = 1
@@ -95,9 +93,9 @@ class Chromosome(object):
     def DNN(self):
 
         inputs_dnn = Input(shape=self.input_shape, name='inputs_dnn')
-        kernel_regularizer = l1_l2(l1 = 0, l2 = 0)
+        kernel_regularizer = l1_l2(l1 = 0.01, l2 = 0.01)
 
-        x = Reshape(self.input_shape+(100,))(inputs_dnn)
+        x = Reshape(self.input_shape)(inputs_dnn)
         #--------- Predictor CNN Layers ------------
         zipper = zip(self.size_filter,
                      self.size_kernel,
@@ -106,7 +104,7 @@ class Chromosome(object):
         for i, (fsize, ksize, psize) in enumerate(zipper):
             cnn_name = "Predictor_{}_{}".format("CNN", i)
             pool_name = "Predictor_{}_{}".format("MaxPool", i)
-            x = Conv2D(fsize, (ksize, 1),
+            x = Conv1D(fsize, (ksize, ),
                        padding='same',
                        kernel_regularizer=kernel_regularizer,
                        name=cnn_name)(x)
@@ -114,7 +112,7 @@ class Chromosome(object):
             x = BatchNormalization()(x)
             x = Activation('relu')(x)
             if(psize != 0):
-            	x = MaxPooling1D((psize, 1), padding='same', name=pool_name)(x)
+            	x = MaxPooling1D((psize, ), padding='same', name=pool_name)(x)
         #---------------------------------
         x = Flatten(name="Predictor_Flatten")(x)
 
@@ -125,12 +123,13 @@ class Chromosome(object):
                 x = Dense(dense_size, activation='relu', name=dense_name)(x)
             else:
                 x = Dense(dense_size, activation='sigmoid', name=dense_name)(x)
-            # x = Dropout(self.dropout_rate)(x)
+            x = Dropout(self.dropout_rate)(x)
         #-------------------------------------------
 
         outputs_dnn = Dense(self.dnn_latent_dim, name='outputs_dnn')(x)
         # instantiate encoder model
         self.model = Model(inputs_dnn, outputs_dnn, name='dnn')
+        self.model.summary()
 
     def train(self, verbose=False):
         callbacks = [TerminateOnNaN()]
@@ -145,7 +144,7 @@ class Chromosome(object):
         self.model.compile(
             optimizer=self.optimizer,
 
-            loss={'dnn_predictor_layer': self.dnn_predictor_loss}
+            loss={'outputs_dnn': self.dnn_predictor_loss}
         )
         
         self.history = self.model.fit(self.x_train, self.y_train,
