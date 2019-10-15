@@ -1,5 +1,6 @@
 .DS_Store
 *.pyc
+*.0
 
 data/models/*
 !data/models/.gitkeep
