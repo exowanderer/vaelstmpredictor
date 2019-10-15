@@ -138,7 +138,7 @@ class Chromosome(object):
         callbacks.append(TensorBoard(log_dir=self.log_dir, histogram_freq=0, batch_size=32, write_graph=True, 
             write_grads=False, write_images=False, embeddings_freq=0, embeddings_layer_names=None, 
             embeddings_metadata=None, embeddings_data=None, update_freq='epoch'))
-        callbacks.append(EarlyStopping(patience=20))
+        callbacks.append(EarlyStopping(patience=10))
         callbacks.append(History())
 
         self.model.compile(

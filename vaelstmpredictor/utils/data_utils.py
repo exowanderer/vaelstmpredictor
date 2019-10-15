@@ -2,6 +2,7 @@
 Code to load pianoroll data (.pickle)
 """
 import numpy as np
+import pandas as pd
 import os
 import joblib
 
@@ -138,6 +139,70 @@ class dummyData2(object):
 
 				lsplit = labels[i:(i+n_windows)]
 				labels_split = np.r_[labels_split,[lsplit]]
+
+		(x_train, x_test, y_train, y_test) = train_test_split(features_split, labels_split, test_size=0.2)
+
+		self.train_labels = np.reshape(y_train, (y_train.shape[0], n_windows))
+		self.valid_labels = np.reshape(y_test, (y_test.shape[0], n_windows))
+
+		self.data_train = x_train
+		self.data_valid = x_test
+
+
+class tempora(object):
+
+	def __init__(self, n_windows, n_steps):
+		keep_cols = ['xpos', 'ypos', 'fluxerr', 'xfwhm', 'yfwhm', 'bg_flux',
+			'sigma_bg_flux', 'pix1', 'pix2', 'pix3', 'pix4', 'pix5', 'pix6',
+			'pix7', 'pix8', 'pix9']
+
+		pmap_filename = 'pmap_ch2_0p1s_x4_rmulti_s3_7.csv'
+		default_train_file = os.environ['HOME'] + '/.vaelstmpredictor/data/'
+
+		df = pd.read_csv(default_train_file+pmap_filename)
+		df.dropna(inplace=True)
+
+		# adjust the pixel values to be normalized
+		# by the mean of the sum of all pixel values
+		df['pixsum'] = df['pix1'] + df['pix2'] + df['pix3'] + df['pix4'] + df['pix5'] + df['pix6'] + df['pix7'] + df['pix8'] + df['pix9']
+		medflux = np.median(df['pixsum'])
+		meanflux = np.mean(df['pixsum'])
+		df['pix1'] /= meanflux
+		df['pix2'] /= meanflux
+		df['pix3'] /= meanflux
+		df['pix4'] /= meanflux
+		df['pix5'] /= meanflux
+		df['pix6'] /= meanflux
+		df['pix7'] /= meanflux
+		df['pix8'] /= meanflux
+		df['pix9'] /= meanflux
+
+		# normalize bg_flux in some way as well.
+		meanbgflux = np.mean(df['bg_flux'])
+		df['bg_flux'] /= meanbgflux
+
+		# normalize xerr & yerr in some way as well
+		meanxerr = np.mean(df['xerr'])
+		meanyerr = np.mean(df['yerr'])
+		df['xerr'] /= meanxerr
+		df['yerr'] /= meanyerr
+
+		# choose feature set 16 feature feature set
+		features = np.array(df[keep_cols])
+
+		# normalize y
+		labels = df['flux'] / np.median(df['flux'])
+		labels = np.array(labels).reshape((-1, 1)) 
+
+		features_split = features[:(len(features)//n_windows)*n_windows, :].reshape((-1, n_windows, features.shape[1])) 
+		labels_split = labels[:(len(labels)//n_windows)*n_windows, :].reshape((-1, n_windows, 1))
+
+		for i in range(1, n_windows, n_steps):
+			f_split = features[i:((len(features)-i)//n_windows)*n_windows +i, :].reshape((-1, n_windows, features.shape[1])) 
+			l_split = labels[i:((len(labels)-i)//n_windows)*n_windows +i, :].reshape((-1, n_windows, 1))
+
+			features_split = np.r_[features_split, f_split]
+			labels_split = np.r_[labels_split, l_split]
 
 		(x_train, x_test, y_train, y_test) = train_test_split(features_split, labels_split, test_size=0.2)
 
