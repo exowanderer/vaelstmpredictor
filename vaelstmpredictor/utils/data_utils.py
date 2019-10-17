@@ -149,12 +149,12 @@ class dummyData2(object):
 		self.data_valid = x_test
 
 
-class tempora(object):
+class SpitzerCal(object):
 
 	def __init__(self, n_windows, n_steps):
-		keep_cols = ['xpos', 'ypos', 'fluxerr', 'xfwhm', 'yfwhm', 'bg_flux',
-			'sigma_bg_flux', 'pix1', 'pix2', 'pix3', 'pix4', 'pix5', 'pix6',
-			'pix7', 'pix8', 'pix9']
+		keep_cols = ['xpos', 'ypos', 'xfwhm', 'yfwhm', 'bg_flux',
+				  	 'pix1', 'pix2', 'pix3', 'pix4', 'pix5', 'pix6',
+					 'pix7', 'pix8', 'pix9']# 'fluxerr', 'sigma_bg_flux', 
 
 		pmap_filename = 'pmap_ch2_0p1s_x4_rmulti_s3_7.csv'
 		default_train_file = os.environ['HOME'] + '/.vaelstmpredictor/data/'

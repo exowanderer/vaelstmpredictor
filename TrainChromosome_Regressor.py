@@ -123,8 +123,8 @@ if __name__ == '__main__':
             chrom_params['size_pool'] = size_pool
             chrom_params['size_filter'] = size_filter
 
-            from vaelstmpredictor.utils.data_utils import tempora
-            data = tempora(100, 10)
+            from vaelstmpredictor.utils.data_utils import SpitzerCal
+            data = SpitzerCal(100, 10)
             chrom_params['data'] = data
 
             info_message('\n\nParams for this VAE_NN:')
