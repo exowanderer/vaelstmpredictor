@@ -63,7 +63,8 @@ class Chromosome(object):
         self.verbose = verbose
         self.batch_size = batch_size
         self.num_epochs = num_epochs
-        self.dropout_rate = dropout_rate
+        # self.dropout_rate = dropout_rate
+        self.dropout_rate = 0
 
         self.dnn_kl_weight = dnn_kl_weight
         self.dnn_weight = dnn_weight
@@ -93,7 +94,7 @@ class Chromosome(object):
     def DNN(self):
 
         inputs_dnn = Input(shape=self.input_shape, name='inputs_dnn')
-        kernel_regularizer = l1_l2(l1 = 0.01, l2 = 0.01)
+        kernel_regularizer = l1_l2(l1 = 0, l2 = 0)
 
         x = Reshape(self.input_shape)(inputs_dnn)
         #--------- Predictor CNN Layers ------------
@@ -109,7 +110,7 @@ class Chromosome(object):
                        kernel_regularizer=kernel_regularizer,
                        name=cnn_name)(x)
 
-            x = BatchNormalization()(x)
+            # x = BatchNormalization()(x)
             x = Activation('relu')(x)
             if(psize != 0):
             	x = MaxPooling1D((psize, ), padding='same', name=pool_name)(x)
