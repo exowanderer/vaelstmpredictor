@@ -191,8 +191,8 @@ class SpitzerCal(object):
 		features = np.array(df[keep_cols])
 
 		# normalize y
-		#labels = df['flux'] / np.median(df['flux'])
-		labels = np.random.uniform(0.5, 1.5, len(df))
+		labels = df['flux'] / np.median(df['flux'])
+		# labels = np.random.uniform(0.5, 1.5, len(df))
 		labels = np.array(labels).reshape((-1, 1)) 
 
 		features_split = features[:(len(features)//n_windows)*n_windows, :].reshape((-1, n_windows, features.shape[1])) 
