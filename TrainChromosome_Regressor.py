@@ -124,7 +124,8 @@ if __name__ == '__main__':
             chrom_params['size_filter'] = size_filter
 
             from vaelstmpredictor.utils.data_utils import SpitzerCal
-            data = SpitzerCal(100, 10)
+            data = SpitzerCal(lookback=1440, delay=144, step=6, 
+                              batch_size=128, test_size=0.2, shuffle=True)
             chrom_params['data'] = data
 
             info_message('\n\nParams for this VAE_NN:')
@@ -133,30 +134,30 @@ if __name__ == '__main__':
 
             info_message("Training Chromosome " + str(clargs.chromosomeID) +
                          " Generation " + str(clargs.generationID))
-            try:
-                K.clear_session()
-                chromosome = Chromosome(**chrom_params)
+            # try:
+            K.clear_session()
+            chromosome = Chromosome(**chrom_params)
 
-                start_time = time()
+            start_time = time()
 
-                if clargs.verbose:
-                    info_message('Start Training: {}'.format(start_time))
+            if clargs.verbose:
+                info_message('Start Training: {}'.format(start_time))
 
-                chromosome.train()
-                K.clear_session()
+            chromosome.train()
+            K.clear_session()
 
-                end_time = time()
-                run_time = end_time - start_time
+            end_time = time()
+            run_time = end_time - start_time
 
-                if clargs.verbose:
-                    info_message('End Training: {}'.format(end_time))
-                    info_message('Runtime Training: {}'.format(run_time))
+            if clargs.verbose:
+                info_message('End Training: {}'.format(end_time))
+                info_message('Runtime Training: {}'.format(run_time))
 
-            except Exception as e:
-                warning_message("Error has occured while training")
-                warning_message(e)
-                chromosome = None
-                continue
+            # except Exception as e:
+            #     warning_message("Error has occured while training")
+            #     warning_message(e)
+            #     chromosome = None
+            #     continue
 
             info_message('\n')
             print('Result: ', end=" ")

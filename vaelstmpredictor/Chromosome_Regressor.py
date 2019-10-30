@@ -64,6 +64,7 @@ class Chromosome(object):
         self.batch_size = batch_size
         self.num_epochs = num_epochs
         self.dropout_rate = dropout_rate
+        self.steps_per_epoch = 500
 
         self.dnn_kl_weight = dnn_kl_weight
         self.dnn_weight = dnn_weight
@@ -79,15 +80,20 @@ class Chromosome(object):
         self.y_train = data.train_labels
         self.x_test = data.data_valid
         self.y_test = data.valid_labels
-        
+        self.data = data
+
+        '''
         self.original_dim = data.data_train.shape
         self.input_shape = (self.original_dim[1], self.original_dim[2])
-
+        
         if(len(self.y_train.shape) == 1):
             self.dnn_latent_dim = 1
         else:
             self.dnn_latent_dim = self.y_train.shape[1]
+        '''
         
+        self.dnn_latent_dim = self.data.output_shape
+        self.input_shape = self.data.input_shape
         self.DNN()
 
     def DNN(self):
@@ -147,11 +153,19 @@ class Chromosome(object):
             loss={'outputs_dnn': self.dnn_predictor_loss}
         )
         
-        self.history = self.model.fit(self.x_train, self.y_train,
-                epochs=self.num_epochs,
-                batch_size=self.batch_size,
-                validation_data=(self.x_test, self.y_test),
-                callbacks=callbacks)
+        if hasattr(self.data, "train_gen"):
+	        self.history = self.model.fit_generator(self.data.train_gen,
+	                steps_per_epoch=self.steps_per_epoch,
+	                epochs=self.num_epochs,
+	                validation_data=self.data.val_gen,
+	                validation_steps=self.data.val_steps,
+	                callbacks=callbacks)
+        else:
+        	self.history = self.model.fit(self.x_train, self.y_train,
+	                epochs=self.num_epochs,
+	                batch_size=self.batch_size,
+	                validation_data=(self.x_test, self.y_test),
+	                callbacks=callbacks)
 
         best_loss = None
         best_loss_index = None
