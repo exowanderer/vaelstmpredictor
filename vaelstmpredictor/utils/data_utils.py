@@ -326,7 +326,7 @@ class SpitzerCal(object):
         train_max_idx = int((1-test_size) * labels.size)
 
         test_min_idx = train_max_idx + 1
-        test_max_idx = labels.size
+        test_max_idx = len(labels) - delay - 1
         
         self.train_gen = generator(features, labels,
                               lookback=lookback,
