@@ -37,16 +37,12 @@ def sampling(args):
     epsilon = K.random_normal(shape=(batch, dim))
     return z_mean + K.exp(0.5 * z_log_var) * epsilon
 
-def write(string):
-    f = open("output.txt", "a")
-    f.write(str(string)+"\n")
-    f.close()
-
 class Chromosome(object):
 
     def __init__(self, data, size_filter, size_kernel, size_pool,
                 dnn_hidden_dims, num_conv_layers,
-                batch_size=128, num_epochs=50, dropout_rate=0.7,
+                batch_size=128, num_epochs=50,
+                dropout_rate=0.7, l1_coef = 0.01, l2_coef = 0.01,
                 dnn_kl_weight=1, dnn_weight=1,
                 optimizer="adam", predictor_type="prediction",
                 log_dir="./logs", model_dir="../data/models", table_dir="../data/tables",
@@ -64,6 +60,8 @@ class Chromosome(object):
         self.batch_size = batch_size
         self.num_epochs = num_epochs
         self.dropout_rate = dropout_rate
+        self.l1 = l1_coef
+        self.l2 = l2_coef
         self.steps_per_epoch = 500
 
         self.dnn_kl_weight = dnn_kl_weight
@@ -91,7 +89,7 @@ class Chromosome(object):
         else:
             self.dnn_latent_dim = self.y_train.shape[1]
         '''
-        
+
         self.dnn_latent_dim = self.data.output_shape
         self.input_shape = self.data.input_shape
         self.DNN()
@@ -99,7 +97,7 @@ class Chromosome(object):
     def DNN(self):
 
         inputs_dnn = Input(shape=self.input_shape, name='inputs_dnn')
-        kernel_regularizer = l1_l2(l1 = 0.01, l2 = 0.01)
+        kernel_regularizer = l1_l2(l1 = self.l1, l2 = self.l2)
 
         x = Reshape(self.input_shape)(inputs_dnn)
         #--------- Predictor CNN Layers ------------

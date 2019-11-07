@@ -46,7 +46,8 @@ class Chromosome(object):
 
     def __init__(self, data, size_filter, size_kernel, size_pool,
                 vae_latent_dim, dnn_hidden_dims, vae_hidden_dims, num_conv_layers,
-                batch_size=128, num_epochs=50, dropout_rate=0.7,
+                batch_size=128, num_epochs=50,
+                dropout_rate=0.7, l1_coef = 0.01, l2_coef = 0.01,
                 dnn_kl_weight=1, dnn_weight=1, vae_kl_weight=1, vae_weight=1,
                 optimizer="adam", predictor_type="prediction", train_file="exoplanet",
                 log_dir="./logs", model_dir="../data/models", table_dir="../data/tables",
@@ -66,6 +67,8 @@ class Chromosome(object):
         self.batch_size = batch_size
         self.num_epochs = num_epochs
         self.dropout_rate = dropout_rate
+        self.l1 = l1_coef
+        self.l2 = l2_coef
 
         self.dnn_kl_weight = dnn_kl_weight
         self.dnn_weight = dnn_weight
@@ -137,7 +140,7 @@ class Chromosome(object):
         # VAE model = encoder + decoder
         # build encoder model
         inputs = Input(shape=self.input_shape, name='encoder_input')
-        kernel_regularizer = l1_l2(l1 = 0, l2 = 0)
+        kernel_regularizer = l1_l2(l1 = self.l1, l2 = self.l2)
 
         x = Reshape(self.input_shape+(1,))(inputs)
         #--------- Encoder CNN Layers ------------
@@ -238,7 +241,7 @@ class Chromosome(object):
 
     def DNN(self, inputs_dnn):
 
-        kernel_regularizer = l1_l2(l1 = 0.001, l2 = 0.001)
+        kernel_regularizer = l1_l2(l1 = self.l1, l2 = self.l2)
         x = Reshape(self.input_shape+(1,))(inputs_dnn)
         #--------- Predictor CNN Layers ------------
         zipper = zip(self.size_filter,
