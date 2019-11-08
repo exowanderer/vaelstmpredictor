@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
             from vaelstmpredictor.utils.data_utils import SpitzerCal
             data = SpitzerCal(lookback = clargs.lookback, delay = clargs.delay, step=6, batch_size=128, test_size=0.2, shuffle=True)
-            # lookback=1440, delay=144,
+            # lookback=1440, delay=144,)
             chrom_params['data'] = data
 
             info_message('\n\nParams for this VAE_NN:')
