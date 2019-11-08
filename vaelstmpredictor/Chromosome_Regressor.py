@@ -123,7 +123,7 @@ class Chromosome(object):
         #--------- Predictor Dense Layers ------------
         for i, dense_ratio in enumerate(self.dnn_hidden_dims):
             dense_name = "Predictor_{}_{}".format("Dense", i)
-            dense_size = int(K.int_shape(x)[1]*dense_ratio)
+            dense_size = max(1, int(K.int_shape(x)[1]*dense_ratio))
 
             if(i < len(self.dnn_hidden_dims) -1):
                 x = Dense(dense_size, activation='relu', name=dense_name)(x)
