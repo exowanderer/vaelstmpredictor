@@ -442,7 +442,7 @@ def mutate(new_generation, chromosomeID,
                         dup_index = random.choice(range(num_dnn_layers))
                         size_dnn_hidden = np.append(size_dnn_hidden, size_dnn_hidden[dup_index])
                     else:
-                        size_dnn_hidden = np.append(size_dnn_hidden, min_val)
+                        size_dnn_hidden = np.append(size_dnn_hidden, int(min_val))
                     num_dnn_layers += 1
 
                 new_generation.set_value(chromosomeID, "num_dnn_layers", num_dnn_layers)
@@ -471,9 +471,9 @@ def mutate(new_generation, chromosomeID,
                         size_pool = np.append(size_pool, size_pool[dup_index])
                         size_filter = np.append(size_filter, size_filter[dup_index])
                     else:
-                        size_kernel = np.append(size_kernel, min_val)
-                        size_pool = np.append(size_pool, min_val)
-                        size_filter = np.append(size_filter, min_val)
+                        size_kernel = np.append(size_kernel, int(min_val))
+                        size_pool = np.append(size_pool, int(min_val))
+                        size_filter = np.append(size_filter, int(min_val))
                     num_conv_layers += 1
 
                 new_generation.set_value(chromosomeID, "num_conv_layers", num_conv_layers)
@@ -494,11 +494,14 @@ def mutate(new_generation, chromosomeID,
 
                     change_p = np.random.uniform(-range_change, range_change)
                     current_p = array_p[change_index] + change_p
-                    current_p = np.max([current_p, min_val])
+                    current_p = np.max([current_p, int(min_val)])
                     current_p = np.int(np.round(current_p))
 
                     array_p[change_index] = current_p
                     new_generation.set_value(chromosomeID, param, array_p)
+
+        #Change All values to integers
+        new_generation[param] = new_generation[param]//1
 
     if(mutation_happened):
         new_generation.set_value(chromosomeID, 'info', new_generation.loc[chromosomeID, 'info']+" [Mutated]")

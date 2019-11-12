@@ -31,44 +31,18 @@ def warning_message(message, end = '\n'):
 def info_message(message, end = '\n'):
     print('[INFO] {}'.format(message), end = end)
 
-def configure_multi_hidden_layers(num_hidden, input_size,
-                                  min_hidden1, max_hidden,
-                                  start_small = True, init_large = True):
-    # To force outer boundary inclusion with numpy
-    max_hidden = max_hidden + 1
-    input_size = input_size + 1
-
-    zero = 0
-    if input_size is not None and init_large:
-        hidden_dims = [random.randint(input_size//2, input_size)]
-    else:
-        hidden_dims = [random.randint(min_hidden1, max_hidden)]
-
-    # set to zero or random
-    if start_small:
-        hidden_dims = hidden_dims + [zero]*(num_hidden-1)
-    else:
-        upper_layers = np.random.randint(zero, max_hidden, size = num_hidden-1)
-
-        hidden_dims = np.append(hidden_dims, upper_layers)
-
-    return hidden_dims
-
 def create_blank_dataframe(generationID, population_size):
 
     generation = pd.DataFrame()
 
     zeros = np.zeros(population_size, dtype = int)
+    zeros_float = np.zeros(population_size, dtype = float)
     arange = np.arange(population_size, dtype = int)
 
     generation['generationID'] = zeros + generationID
     generation['chromosomeID'] = arange
     generation['isTrained'] = zeros
-    generation['num_vae_layers'] = zeros
     generation['num_dnn_layers'] = zeros
-    generation['size_vae_latent'] = zeros
-    generation['size_vae_hidden'] = zeros
-    generation['size_dnn_hidden'] = zeros
     generation['fitness'] = np.float32(zeros) - 1.0
     generation['batch_size'] = zeros
     generation['cross_prob'] = zeros
@@ -90,63 +64,48 @@ def create_blank_dataframe(generationID, population_size):
     generation['start_time'] = np.float32(zeros)
     generation['end_time'] = np.float32(zeros)
     generation['train_file'] = ['train_file']*population_size
-    generation['dnn_weight'] = np.float32(zeros)
-    generation['dnn_kl_weight'] = np.float32(zeros)
-    generation['vae_kl_weight'] = np.float32(zeros)
-    generation['vae_weight'] = np.float32(zeros)
     generation['w_kl_anneal'] = zeros
     generation['num_conv_layers'] = zeros
     generation['size_kernel'] = [np.array([], dtype=int)]*population_size
     generation['size_pool'] = [np.array([], dtype=int)]*population_size
     generation['size_filter'] = [np.array([], dtype=int)]*population_size
+    generation['size_dnn_hidden'] = [np.array([], dtype=float)]*population_size
     generation['info'] = ['']*population_size
-    generation['val_vae_reconstruction_loss'] = np.float32(zeros)
-    generation['val_vae_latent_args_loss'] = np.float32(zeros)
-    generation['val_dnn_latent_args_loss'] = np.float32(zeros)
-    generation['val_dnn_predictor_layer_loss'] = np.float32(zeros)
+
+    generation['lookback'] = zeros
+    generation['delay'] = zeros
+    generation['l1_coef'] = zeros_float
+    generation['l2_coef'] = zeros_float
+    generation['dropout_rate'] = zeros_float
 
     return generation
 
 def generate_random_chromosomes(population_size, clargs, geneationID = 0,
-                        min_vae_hidden_layers = 1, max_vae_hidden_layers = 5,
                         min_dnn_hidden_layers = 1, max_dnn_hidden_layers = 5,
-                        min_vae_hidden = 2, max_vae_hidden = 1024,
-                        min_dnn_hidden = 2, max_dnn_hidden = 1024,
-                        min_vae_latent = 2, max_vae_latent = 1024,
+                        min_dnn_hidden = 0.1, max_dnn_hidden = 3.1,
                         min_conv_layers = 1, max_conv_layers = 5,
                         min_kernel_size = 0, max_kernel_size = 6,
                         min_pool_size = 0, max_pool_size = 4,
                         min_filter_size = 1, max_filter_size = 128,
+                        min_coef = 0, max_coef = 1,
+                        min_lookback = 100, max_lookback = 10000,
+                        min_delay = 1, max_delay = 1000,
+                        min_dropout = 0.1, max_dropout = 0.9,
                         verbose=False):
 
     # create blank dataframe with full SQL database required entrie
     generation = create_blank_dataframe(geneationID, population_size)
 
-    # Add weights from clargs
-    generation['dnn_kl_weight'] = np.repeat(clargs.dnn_kl_weight, population_size)
-    generation['dnn_weight'] = np.repeat(clargs.dnn_weight, population_size)
-    generation['vae_kl_weight'] = np.repeat(clargs.vae_kl_weight, population_size)
-    generation['vae_weight'] = np.repeat(clargs.vae_weight, population_size)
-
     '''
     # Overwrite chromosome parameters to evolve with random choices
-    vae_nLayers_choices = range(min_vae_hidden_layers, max_vae_hidden_layers)
     dnn_nLayers_choices = range(min_dnn_hidden_layers, max_dnn_hidden_layers)
-    vae_latent_choices = range(min_vae_latent, max_vae_latent)
-    vae_nUnits_choices = range(min_vae_hidden, max_vae_hidden)
     dnn_nUnits_choices = range(min_dnn_hidden, max_dnn_hidden)
     conv_nUnits_choices = range(min_conv_layers, max_conv_layers)
     kernel_nUnits_choices = range(min_kernel_size, max_kernel_size)
     pool_nUnits_choices = range(min_pool_size, max_pool_size)
     filter_nUnits_choices = range(min_filter_size, max_filter_size)
 
-    generation['num_vae_layers'] = np.random.choice(vae_nLayers_choices,
-                                                        size = population_size)
     generation['num_dnn_layers'] = np.random.choice(dnn_nLayers_choices,
-                                                        size = population_size)
-    generation['size_vae_latent'] = np.random.choice(vae_latent_choices,
-                                                        size = population_size)
-    generation['size_vae_hidden'] = np.random.choice(vae_nUnits_choices,
                                                         size = population_size)
     generation['size_dnn_hidden'] = np.random.choice(dnn_nUnits_choices,
                                                         size = population_size)
@@ -158,28 +117,35 @@ def generate_random_chromosomes(population_size, clargs, geneationID = 0,
         generation.set_value(i, "size_pool",  np.random.choice(pool_nUnits_choices, size = (generation.loc[i, 'num_conv_layers'])))
         generation.set_value(i, "size_filter",  np.random.choice(filter_nUnits_choices, size = (generation.loc[i, 'num_conv_layers'])))
     '''
-    generation['num_vae_layers'] = loguniform(low=min_vae_hidden_layers, high=max_vae_hidden_layers,
+    generation['num_dnn_layers'] = loguniform(low=min_dnn_hidden_layers, high=max_dnn_hidden_layers+1,
                                                         size = population_size)
-    generation['num_dnn_layers'] = loguniform(low=min_dnn_hidden_layers, high=max_dnn_hidden_layers,
+    generation['num_conv_layers'] = loguniform(low=min_conv_layers, high=max_conv_layers+1,
                                                         size = population_size)
-    generation['size_vae_latent'] = loguniform(low=min_vae_latent, high=max_vae_latent,
+    generation['lookback'] = loguniform(low=min_lookback, high=max_lookback+1,
                                                         size = population_size)
-    generation['size_vae_hidden'] = loguniform(low=min_vae_hidden, high=max_vae_hidden,
+    generation['delay'] = loguniform(low=min_delay, high=max_delay+1,
                                                         size = population_size)
-    generation['size_dnn_hidden'] = loguniform(low=min_dnn_hidden, high=max_dnn_hidden,
-                                                        size = population_size)
-    generation['num_conv_layers'] = loguniform(low=min_conv_layers, high=max_conv_layers,
-                                                        size = population_size)
+    generation['l1_coef'] = loguniform(low=min_coef, high=max_coef,
+                                                        size = population_size, dtype=float)
+    generation['l2_coef'] = loguniform(low=min_coef, high=max_coef,
+                                                        size = population_size, dtype=float)
+    generation['dropout_rate'] = loguniform(low=min_dropout, high=max_dropout,
+                                                        size = population_size, dtype=float)
+
+    #Satic Values
+    generation["lookback"] = [1440]*population_size
+    generation["delay"] = [144]*population_size
 
     for i in range(population_size):
-        generation.set_value(i, "size_kernel",  loguniform(low=min_kernel_size, high=max_kernel_size, size = (generation.loc[i, 'num_conv_layers'])))
-        generation.set_value(i, "size_pool",  loguniform(low=min_pool_size, high=max_pool_size, size = (generation.loc[i, 'num_conv_layers'])))
-        generation.set_value(i, "size_filter",  loguniform(low=min_filter_size, high=max_filter_size, size = (generation.loc[i, 'num_conv_layers'])))
+        generation.set_value(i, "size_kernel",  loguniform(low=min_kernel_size, high=max_kernel_size+1, size = (generation.loc[i, 'num_conv_layers'])))
+        generation.set_value(i, "size_pool",  loguniform(low=min_pool_size, high=max_pool_size+1, size = (generation.loc[i, 'num_conv_layers'])))
+        generation.set_value(i, "size_filter",  loguniform(low=min_filter_size, high=max_filter_size+1, size = (generation.loc[i, 'num_conv_layers'])))
+        generation.set_value(i, "size_dnn_hidden", loguniform(low=min_dnn_hidden, high=max_dnn_hidden, size = (generation.loc[i, 'num_dnn_layers']), dtype=float))
 
     return generation
 
-def loguniform(low=0, high=1, size=None):
-    return np.exp(np.random.uniform(np.log(low+1), np.log(high+2), size)).astype(int) -1
+def loguniform(low=0, high=1, size=None, dtype=int):
+    return np.exp(np.random.uniform(np.log(low+1), np.log(high+1), size)).astype(dtype) -1
 
 def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=True):
     generationID = generation['generationID'][0]
@@ -196,10 +162,6 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
             batch_size = clargs.batch_size
             optimizer = clargs.optimizer
             num_epochs = clargs.num_epochs
-            dnn_weight = chromosome.dnn_weight
-            vae_weight = chromosome.vae_weight
-            vae_kl_weight = chromosome.vae_kl_weight
-            dnn_kl_weight = chromosome.dnn_kl_weight
             prediction_log_var_prior = clargs.prediction_log_var_prior
             patience = clargs.patience
             kl_anneal = clargs.kl_anneal
@@ -217,20 +179,18 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
             end_time = chromosome.end_time
             run_time = chromosome.end_time - chromosome.start_time
             hostname = clargs.hostname
-            val_vae_reconstruction_loss = chromosome.val_vae_reconstruction_loss
-            val_vae_latent_args_loss = chromosome.val_vae_latent_args_loss
-            val_dnn_latent_args_loss = chromosome.val_dnn_latent_args_loss
-            val_dnn_predictor_layer_loss = chromosome.val_dnn_predictor_layer_loss
-            num_vae_layers = chromosome.num_vae_layers
             num_dnn_layers = chromosome.num_dnn_layers
-            size_vae_latent = chromosome.size_vae_latent
-            size_vae_hidden = chromosome.size_vae_hidden
-            size_dnn_hidden = chromosome.size_dnn_hidden
             num_conv_layers = chromosome.num_conv_layers
+            size_dnn_hidden = json.dumps(chromosome.size_dnn_hidden.tolist())
             size_kernel = json.dumps(chromosome.size_kernel.tolist())
             size_pool = json.dumps(chromosome.size_pool.tolist())
             size_filter = json.dumps(chromosome.size_filter.tolist())
             info = chromosome.info
+            lookback = chromosome.lookback
+            delay = chromosome.delay
+            l1_coef = chromosome.l1_coef
+            l2_coef = chromosome.l2_coef
+            dropout_rate = chromosome.dropout_rate
 
             c = db.session.query(Chromosome).filter(Chromosome.chromosomeID == chromosomeID, Chromosome.generationID == generationID).first()
             if(c == None):
@@ -242,10 +202,6 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
                                     batch_size = batch_size,
                                     optimizer = optimizer,
                                     num_epochs = num_epochs,
-                                    dnn_weight = dnn_weight,
-                                    vae_weight = vae_weight,
-                                    vae_kl_weight = vae_kl_weight,
-                                    dnn_kl_weight = dnn_kl_weight,
                                     prediction_log_var_prior = prediction_log_var_prior,
                                     patience = patience,
                                     kl_anneal = kl_anneal,
@@ -263,20 +219,18 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
                                     end_time = end_time,
                                     run_time = run_time,
                                     hostname = hostname,
-                                    val_vae_reconstruction_loss = val_vae_reconstruction_loss,
-                                    val_vae_latent_args_loss = val_vae_latent_args_loss,
-                                    val_dnn_latent_args_loss = val_dnn_latent_args_loss,
-                                    val_dnn_predictor_layer_loss = val_dnn_predictor_layer_loss,
-                                    num_vae_layers = num_vae_layers,
                                     num_dnn_layers = num_dnn_layers,
-                                    size_vae_latent = size_vae_latent,
-                                    size_vae_hidden = size_vae_hidden,
                                     size_dnn_hidden = size_dnn_hidden,
                                     num_conv_layers = num_conv_layers,
                                     size_kernel = size_kernel,
                                     size_pool = size_pool,
                                     size_filter = size_filter,
-                                    info = info)
+                                    info = info,
+                                    lookback = lookback,
+                                    delay = delay,
+                                    l1_coef = l1_coef,
+                                    l2_coef = l2_coef,
+                                    dropout_rate = dropout_rate)
                 db.session.add(chrom)
             else :
                 c.fitness = fitness
@@ -285,10 +239,6 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
                 c.batch_size = batch_size
                 c.optimizer = optimizer
                 c.num_epochs = num_epochs
-                c.dnn_weight = dnn_weight
-                c.vae_weight = vae_weight
-                c.vae_kl_weight = vae_kl_weight
-                c.dnn_kl_weight = dnn_kl_weight
                 c.prediction_log_var_prior = prediction_log_var_prior
                 c.patience = patience
                 c.kl_anneal = kl_anneal
@@ -306,20 +256,18 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
                 c.end_time = end_time
                 c.run_time = run_time
                 c.hostname = hostname
-                c.val_vae_reconstruction_loss = val_vae_reconstruction_loss
-                c.val_vae_latent_args_loss = val_vae_latent_args_loss
-                c.val_dnn_latent_args_loss = val_dnn_latent_args_loss
-                c.val_dnn_predictor_layer_loss = val_dnn_predictor_layer_loss
-                c.num_vae_layers = num_vae_layers
                 c.num_dnn_layers = num_dnn_layers
-                c.size_vae_latent = size_vae_latent
-                c.size_vae_hidden = size_vae_hidden
                 c.size_dnn_hidden = size_dnn_hidden
                 c.num_conv_layers = num_conv_layers
                 c.size_kernel = size_kernel
                 c.size_pool = size_pool
                 c.size_filter = size_filter
                 c.info = info
+                c.lookback = lookback
+                c.delay = delay
+                c.l1_coef = l1_coef
+                c.l2_coef = l2_coef
+                c.dropout_rate = dropout_rate
             db.session.commit()
 
     while True:
@@ -338,57 +286,24 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
         assert(sql_chrom.isTrained == 2), "Finished training yet there's a chromosome with isTrained != 2"
         generation.set_value(chrom.chromosomeID, "isTrained", sql_chrom.isTrained)
         generation.set_value(chrom.chromosomeID, "fitness", sql_chrom.fitness)
-        generation.set_value(chrom.chromosomeID, "val_dnn_latent_args_loss", sql_chrom.val_dnn_latent_args_loss)
-        generation.set_value(chrom.chromosomeID, "val_dnn_predictor_layer_loss", sql_chrom.val_dnn_predictor_layer_loss)
-        generation.set_value(chrom.chromosomeID, "val_vae_latent_args_loss", sql_chrom.val_vae_latent_args_loss)
-        generation.set_value(chrom.chromosomeID, "val_vae_reconstruction_loss", sql_chrom.val_vae_reconstruction_loss)
     return generation
-
-def refactor_weights(new_generation, generation):
-    dnn_weights = []
-    dnn_kl_weights = []
-    vae_weights = []
-    vae_kl_weights = []
-    for chrom in generation.itertuples():
-        if(chrom.val_vae_reconstruction_loss > 0 and chrom.val_vae_latent_args_loss > 0 and chrom.val_dnn_latent_args_loss > 0 and chrom.val_dnn_predictor_layer_loss  > 0):
-            val_loss = chrom.val_vae_reconstruction_loss + chrom.val_vae_latent_args_loss + chrom.val_dnn_latent_args_loss + chrom.val_dnn_predictor_layer_loss
-            dnn_weight_ = val_loss / chrom.val_dnn_predictor_layer_loss
-            dnn_kl_weight_ = val_loss / chrom.val_dnn_latent_args_loss
-            vae_weight_ = val_loss / chrom.val_vae_reconstruction_loss
-            vae_kl_weight_ = val_loss / chrom.val_vae_latent_args_loss
-            dnn_weights.append(dnn_weight_)
-            dnn_kl_weights.append(dnn_kl_weight_)
-            vae_weights.append(vae_weight_)
-            vae_kl_weights.append(vae_kl_weight_)
-    dnn_weight_new = np.median(dnn_weights)
-    dnn_kl_weight_new = np.median(dnn_kl_weights)
-    vae_weight_new = np.median(vae_weights)
-    vae_kl_weight_new = np.median(vae_kl_weights)
-    print("Weights", dnn_weight_new, dnn_kl_weight_new, vae_weight_new, vae_kl_weight_new)
-    for chrom in new_generation.itertuples():
-        new_generation.set_value(chrom.chromosomeID, "dnn_weight", dnn_weight_new)
-        new_generation.set_value(chrom.chromosomeID, "dnn_kl_weight", dnn_kl_weight_new)
-        new_generation.set_value(chrom.chromosomeID, "vae_weight", vae_weight_new)
-        new_generation.set_value(chrom.chromosomeID, "vae_kl_weight", vae_kl_weight_new)
 
 def load_generation_from_sql(generationID, population_size):
     generation = create_blank_dataframe(generationID, population_size)
     for chrom in generation.itertuples():
         sql_chrom = db.session.query(Chromosome).filter(Chromosome.chromosomeID == chrom.chromosomeID, Chromosome.generationID == generationID).first()
+        generation.set_value(chrom.chromosomeID, "delay", sql_chrom.delay)
+        generation.set_value(chrom.chromosomeID, "lookback", sql_chrom.lookback)
+        generation.set_value(chrom.chromosomeID, "l1_coef", sql_chrom.l1_coef)
+        generation.set_value(chrom.chromosomeID, "l2_coef", sql_chrom.l2_coef)
+        generation.set_value(chrom.chromosomeID, "dropout_rate", sql_chrom.dropout_rate)
         generation.set_value(chrom.chromosomeID, "info", sql_chrom.info)
         generation.set_value(chrom.chromosomeID, "size_pool", np.array(json.loads(sql_chrom.size_filter)))
         generation.set_value(chrom.chromosomeID, "size_filter", np.array(json.loads(sql_chrom.size_filter)))
         generation.set_value(chrom.chromosomeID, "size_kernel", np.array(json.loads(sql_chrom.size_kernel)))
+        generation.set_value(chrom.chromosomeID, "size_dnn_hidden", np.array(json.loads(sql_chrom.size_dnn_hidden)))
         generation.set_value(chrom.chromosomeID, "num_conv_layers", sql_chrom.num_conv_layers)
-        generation.set_value(chrom.chromosomeID, "size_dnn_hidden", sql_chrom.size_dnn_hidden)
-        generation.set_value(chrom.chromosomeID, "size_vae_hidden", sql_chrom.size_vae_hidden)
-        generation.set_value(chrom.chromosomeID, "size_vae_latent", sql_chrom.size_vae_latent)
         generation.set_value(chrom.chromosomeID, "num_dnn_layers", sql_chrom.num_dnn_layers)
-        generation.set_value(chrom.chromosomeID, "num_vae_layers", sql_chrom.num_vae_layers)
-        generation.set_value(chrom.chromosomeID, "val_vae_reconstruction_loss", sql_chrom.val_vae_reconstruction_loss)
-        generation.set_value(chrom.chromosomeID, "val_vae_latent_args_loss", sql_chrom.val_vae_latent_args_loss)
-        generation.set_value(chrom.chromosomeID, "val_dnn_latent_args_loss", sql_chrom.val_dnn_latent_args_loss)
-        generation.set_value(chrom.chromosomeID, "val_dnn_predictor_layer_loss", sql_chrom.val_dnn_predictor_layer_loss)
         generation.set_value(chrom.chromosomeID, "hostname", sql_chrom.hostname)
         generation.set_value(chrom.chromosomeID, "start_time", sql_chrom.start_time)
         generation.set_value(chrom.chromosomeID, "end_time", sql_chrom.end_time)
@@ -406,10 +321,6 @@ def load_generation_from_sql(generationID, population_size):
         generation.set_value(chrom.chromosomeID, "kl_anneal", sql_chrom.kl_anneal)
         generation.set_value(chrom.chromosomeID, "patience", sql_chrom.patience)
         generation.set_value(chrom.chromosomeID, "prediction_log_var_prior", sql_chrom.prediction_log_var_prior)
-        generation.set_value(chrom.chromosomeID, "dnn_kl_weight", sql_chrom.dnn_kl_weight)
-        generation.set_value(chrom.chromosomeID, "vae_kl_weight", sql_chrom.vae_kl_weight)
-        generation.set_value(chrom.chromosomeID, "vae_weight", sql_chrom.vae_weight)
-        generation.set_value(chrom.chromosomeID, "dnn_weight", sql_chrom.dnn_weight)
         generation.set_value(chrom.chromosomeID, "num_epochs", sql_chrom.num_epochs)
         generation.set_value(chrom.chromosomeID, "optimizer", sql_chrom.optimizer)
         generation.set_value(chrom.chromosomeID, "batch_size", sql_chrom.batch_size)
@@ -424,11 +335,9 @@ def select_parents(generation):
     '''Generate two random numbers between 0 and total_fitness
         not including total_fitness'''
 
-    a = 0.5
-    c = 40
-    b = -10
-    d = 10
-    total_fitness = sum(np.exp(generation.fitness*a + b)*c+d)
+    min_val = np.min(generation.fitness)
+    max_val = np.max(generation.fitness)
+    total_fitness = sum(normal_fitness(generation.fitness, min_val, max_val))
     assert(total_fitness >= 0), '`total_fitness` should not be negative'
 
     rand_parent1 = random.random()*total_fitness
@@ -440,7 +349,7 @@ def select_parents(generation):
     fitness_count = 0
     for chromosome in generation.itertuples():
         #fitness_count += chromosome.fitness
-        fitness_count += np.exp(chromosome.fitness*a + b)*c+d
+        fitness_count += normal_fitness(chromosome.fitness, min_val, max_val)
 
         if(parent1 is None and fitness_count >= rand_parent1):
             parent1 = chromosome
@@ -455,6 +364,10 @@ def select_parents(generation):
 
     return parent1, parent2
 
+def normal_fitness(fitness, min_val, max_val):
+    normal_f = (fitness - min_val)/(max_val - min_val)
+    return normal_f*5 +1
+
 def cross_over(new_generation, generation, parent1, parent2,
                 chromosomeID, param_choices, cross_prob, verbose=False):
     if verbose: info_message('Crossing over with probability: {}'.format(cross_prob))
@@ -466,7 +379,7 @@ def cross_over(new_generation, generation, parent1, parent2,
         crossover_happened = True
 
         for param in param_choices:
-            if(param in ["size_kernel", "size_pool", "size_filter"]):
+            if(param in ["size_kernel", "size_pool", "size_filter", "size_dnn_hidden"]):
                 continue
             p1_param = generation.ix[idx_parent1, param]
             p2_param = generation.ix[idx_parent2, param]
@@ -491,6 +404,23 @@ def cross_over(new_generation, generation, parent1, parent2,
                     new_array[i] = array_p1[i] if parent_choises[i] else array_p2[i]
             new_generation.set_value(chromosomeID, array_param, new_array)
 
+        #Merge Kernel sizes, Max Pooling layers and Filter sizes
+        num_dnn_layers = new_generation.ix[chromosomeID, "num_dnn_layers"]
+        parent_choises = np.random.choice([True, False], size = num_dnn_layers) #Boolean array to decide whether to choose from parent1 or parent2
+
+        for array_param in ["size_dnn_hidden"]:
+            new_array = np.array([0]*num_dnn_layers, dtype=int)
+            for i in range(num_dnn_layers):
+                array_p1 = generation.ix[idx_parent1, array_param]
+                array_p2 = generation.ix[idx_parent2, array_param]
+                if(len(array_p1) <= i):
+                    new_array[i] = array_p2[i]
+                elif(len(array_p2) <= i):
+                    new_array[i] = array_p1[i]
+                else:
+                    new_array[i] = array_p1[i] if parent_choises[i] else array_p2[i]
+            new_generation.set_value(chromosomeID, array_param, new_array)
+
         new_generation.set_value(chromosomeID, 'info', 'Child of '+str(parent1.chromosomeID)+' and '+str(parent2.chromosomeID))
     else:
         crossover_happened = False
@@ -499,8 +429,7 @@ def cross_over(new_generation, generation, parent1, parent2,
         p2_fitness = generation.ix[idx_parent2, 'fitness']
 
         idx_child = idx_parent1 if p1_fitness > p2_fitness else idx_parent1
-        params_copy = param_choices + ['fitness', 'hostname', 'start_time', 'end_time', 'run_time', 'isTrained',
-                                       'val_vae_reconstruction_loss', 'val_vae_latent_args_loss', 'val_dnn_latent_args_loss', 'val_dnn_predictor_layer_loss']
+        params_copy = param_choices + ['fitness', 'hostname', 'start_time', 'end_time', 'run_time', 'isTrained']
         parent_p = generation.loc[idx_child, params_copy]
         new_generation.set_value(chromosomeID, params_copy, parent_p)
         new_generation.set_value(chromosomeID, 'info', 'Descendant of '+str(generation.loc[idx_child, 'chromosomeID']))
@@ -518,19 +447,29 @@ def mutate(new_generation, chromosomeID,
         if(random.random() <= prob):
             mutation_happened = True
 
-            if(param not in ["num_conv_layers", "size_kernel", "size_pool", "size_filter"]):
-                # Compute delta_param step
-                change_p = np.random.uniform(-range_change, range_change)
+            if param == "num_dnn_layers":
+                # Add or remove 1 DNN layer
 
-                # Add delta_param to param
-                current_p = new_generation.loc[chromosomeID, param] + change_p
+                num_dnn_layers = new_generation.loc[chromosomeID, "num_dnn_layers"]
+                size_dnn_hidden = new_generation.loc[chromosomeID, "size_dnn_hidden"]
 
-                # If param less than `min_val`, then set param to `min_val`
-                current_p = np.max([current_p, int(min_val)])
-                current_p = np.int(np.round(current_p))
+                change_p = np.int(np.round(np.random.uniform(-1, 1)))
+                if(change_p == -1):
+                    if(num_dnn_layers > 0):
+                        del_index = random.choice(range(num_dnn_layers))
+                        size_dnn_hidden = np.delete(size_dnn_hidden, del_index)
+                        num_dnn_layers -= 1
+                elif(change_p == 1):
+                    if(num_dnn_layers > 0):
+                        dup_index = random.choice(range(num_dnn_layers))
+                        size_dnn_hidden = np.append(size_dnn_hidden, size_dnn_hidden[dup_index])
+                    else:
+                        size_dnn_hidden = np.append(size_dnn_hidden, min_val)
+                    num_dnn_layers += 1
 
-                # All params must be integer sized: round and convert
-                new_generation.set_value(chromosomeID, param, current_p)
+                new_generation.set_value(chromosomeID, "num_dnn_layers", num_dnn_layers)
+                new_generation.set_value(chromosomeID, "size_dnn_hidden", size_dnn_hidden)
+
             elif param == "num_conv_layers":
                 # Add or remove 1 Convolution layer
 
@@ -564,24 +503,42 @@ def mutate(new_generation, chromosomeID,
                 new_generation.set_value(chromosomeID, "size_pool", size_pool)
                 new_generation.set_value(chromosomeID, "size_filter", size_filter)
 
-            elif param in ["size_kernel", "size_pool", "size_filter"]:
+            elif param in ["size_kernel", "size_pool", "size_filter", "size_dnn_hidden"]:
                 # Choose a random index and mutate it
 
-                num_conv_layers = new_generation.loc[chromosomeID, "num_conv_layers"]
+                num_layers = new_generation.loc[chromosomeID, "num_conv_layers"]
+                if(param == "size_dnn_hidden"):
+                    num_layers = new_generation.loc[chromosomeID, "num_dnn_layers"]
+
                 array_p = new_generation.loc[chromosomeID, param]
-                if(num_conv_layers > 0):
-                    change_index = random.choice(range(num_conv_layers))
+                if(num_layers > 0):
+                    change_index = random.choice(range(num_layers))
 
                     change_p = np.random.uniform(-range_change, range_change)
                     current_p = array_p[change_index] + change_p
-                    current_p = np.max([current_p, int(min_val)])
-                    current_p = np.int(np.round(current_p))
+                    current_p = np.max([current_p, min_val])
+                    current_p = type(min_val)(current_p)
 
                     array_p[change_index] = current_p
                     new_generation.set_value(chromosomeID, param, array_p)
+            else:
+                # Compute delta_param step
+                change_p = np.random.uniform(-range_change, range_change)
 
-        #Change All values to integers
-        new_generation[param] = new_generation[param]//1
+                # Add delta_param to param
+                current_p = new_generation.loc[chromosomeID, param] + change_p
+
+                # If param less than `min_val`, then set param to `min_val`
+                current_p = np.max([current_p, min_val])
+                current_p = type(min_val)(current_p)
+
+                # All params must be integer sized: round and convert
+                new_generation.set_value(chromosomeID, param, current_p)
+
+
+            #Satic Values
+            new_generation.set_value(chromosomeID, "lookback", 1440)
+            new_generation.set_value(chromosomeID, "delay", 144)
 
     if(mutation_happened):
         new_generation.set_value(chromosomeID, 'info', new_generation.loc[chromosomeID, 'info']+" [Mutated]")
