@@ -26,7 +26,7 @@ def info_message(message):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--sql_server',
-                        default='LAUDeepGenerativeGenetics.pythonanywhere.com',
+                        default='philippesaade11.pythonanywhere.com',
                         help='The URL or IP of the SQL server')
     clargs = parser.parse_args()
 
@@ -36,6 +36,7 @@ if __name__ == '__main__':
                 os.mkdir(val)
 
     base_url = clargs.sql_server
+    print(base_url)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(("8.8.8.8", 80))

@@ -124,7 +124,7 @@ class Chromosome(object):
                 print("Train File \"{}\" not recognized".format(train_file))
             return
         
-        self.original_dim = data.data_train.shape[1]
+        self.original_dim = self.x_train.shape[1]
         self.input_shape = (self.original_dim, )
 
         if(len(self.y_train.shape) == 1):
