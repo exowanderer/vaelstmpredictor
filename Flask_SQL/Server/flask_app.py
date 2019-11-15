@@ -4,6 +4,7 @@
 from flask import request, jsonify, render_template
 from database import Chromosome, Variables, db, app
 from sqlalchemy import func
+import numpy as np
 
 @app.route('/')
 def index():
@@ -56,6 +57,11 @@ def AddChrom():
         size_pool = request.args.get('size_pool')
         size_filter = request.args.get('size_filter')
         info = request.args.get('info')
+        l1_coef = request.args.get('l1_coef')
+        l2_coef = request.args.get('l2_coef')
+        lookback = request.args.get('lookback')
+        delay = request.args.get('delay')
+        dropout_rate = request.args.get('dropout_rate')
 
         c = db.session.query(Chromosome).filter(Chromosome.chromosomeID == chromosomeID,
                                                 Chromosome.generationID == generationID,
@@ -112,6 +118,11 @@ def AddChrom():
         c.size_pool = size_pool
         c.size_filter = size_filter
         c.info = info
+        c.l1_coef = l1_coef
+        c.l2_coef = l2_coef
+        c.lookback = lookback
+        c.delay = delay
+        c.dropout_rate = dropout_rate
         db.session.commit()
         return "1"
     return '0'
@@ -140,7 +151,12 @@ def GetGeneration():
                         'size_kernel': c.size_kernel,
                         'size_pool': c.size_pool,
                         'size_filter': c.size_filter,
-            			'info': c.info})
+            			'info': c.info,
+                        'l1_coef': c.l1_coef,
+                        'l2_coef': c.l2_coef,
+                        'lookback': c.lookback,
+                        'delay': c.delay,
+                        'dropout_rate': c.dropout_rate})
             trained += (c.isTrained == 2)
             taken += (c.isTrained == 1)
             not_taken += (c.isTrained == 0)
@@ -199,7 +215,12 @@ def GetDatabase():
                         'size_kernel': c.size_kernel,
                         'size_pool': c.size_pool,
                         'size_filter': c.size_filter,
-            			'info': c.info})
+            			'info': c.info,
+                        'l1_coef': c.l1_coef,
+                        'l2_coef': c.l2_coef,
+                        'lookback': c.lookback,
+                        'delay': c.delay,
+                        'dropout_rate': c.dropout_rate})
         return jsonify(resp)
     return '0'
 
@@ -256,7 +277,12 @@ def GetUnTrainedChrom():
                         'size_kernel': c.size_kernel,
                         'size_pool': c.size_pool,
                         'size_filter': c.size_filter,
-            			'info': c.info})
+            			'info': c.info,
+                        'l1_coef': c.l1_coef,
+                        'l2_coef': c.l2_coef,
+                        'lookback': c.lookback,
+                        'delay': c.delay,
+                        'dropout_rate': c.dropout_rate})
     return '0'
 
 @app.route('/GetIsDone')
@@ -278,34 +304,41 @@ def Visuals():
             return generationID*population + chromosomeID
 
         nodes = []
+
         min_val = db.session.query(func.min(Chromosome.fitness)).filter(Chromosome.fitness > 0).first()[0]
         max_val = db.session.query(func.max(Chromosome.fitness)).filter(Chromosome.fitness > 0).first()[0]
+
         for c in chroms:
-            if(c.fitness < min_val):
-                c.fitness = min_val
-            c.fitness = ((1/c.fitness) - 1/max_val)/(1/min_val - 1/max_val)
+            fitness = c.fitness
+            if(fitness < min_val):
+                fitness = min_val + np.random.uniform(-1, 1)
+
+            fitness = ((1/fitness) - (1/max_val))/((1/min_val) - (1/max_val))
+            fitness = np.sqrt(np.sqrt(fitness))
+            fitness = 0 if np.isnan(fitness) else fitness
             nodes.append({"generation": c.generationID,
                             "name": c.chromosomeID,
-                            "fitness": c.fitness,
+                            "fitness": fitness,
                             "size": c.num_conv_layers,
                             "height": c.num_dnn_layers})
         links = []
         for c in chroms:
-            bold = 0 if ("Mutated" in c.info) else 1
-            if("Descendant" in c.info):
-                parentID = int(c.info.split(" ")[2])
-                links.append({"source": get_index(c.generationID -1, parentID),
-                                "target": get_index(c.generationID, c.chromosomeID),
-                                "op": bold})
-            elif("Child" in c.info):
-                parentID1 = int(c.info.split(" ")[2])
-                parentID2 = int(c.info.split(" ")[4])
-                links.append({"source": get_index(c.generationID -1, parentID1),
-                                "target": get_index(c.generationID, c.chromosomeID),
-                                "op": bold})
-                links.append({"source": get_index(c.generationID -1, parentID2),
-                                "target": get_index(c.generationID, c.chromosomeID),
-                                "op": bold})
+            if c.fitness > 0:
+                bold = 0 if ("Mutated" in c.info) else 1
+                if("Descendant" in c.info):
+                    parentID = int(c.info.split(" ")[2])
+                    links.append({"source": get_index(c.generationID -1, parentID),
+                                    "target": get_index(c.generationID, c.chromosomeID),
+                                    "op": bold})
+                elif("Child" in c.info):
+                    parentID1 = int(c.info.split(" ")[2])
+                    parentID2 = int(c.info.split(" ")[4])
+                    links.append({"source": get_index(c.generationID -1, parentID1),
+                                    "target": get_index(c.generationID, c.chromosomeID),
+                                    "op": bold})
+                    links.append({"source": get_index(c.generationID -1, parentID2),
+                                    "target": get_index(c.generationID, c.chromosomeID),
+                                    "op": bold})
 
 
         resp["nodes"] = nodes

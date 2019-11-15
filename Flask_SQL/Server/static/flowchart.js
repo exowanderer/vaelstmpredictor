@@ -2,7 +2,7 @@ d3.flowchart = function()
 {
     var flowchart = {},
         node_width = 24 ,
-        node_height = 2 ,
+        node_height = 5 ,
         size = [1, 1] ,
         sort_type = "fitness" ,
         scale_type = "scaled" ,
@@ -122,7 +122,7 @@ d3.flowchart = function()
             node.key = "node-" + i;
             i += 1;
             } );
-        
+
         i = 0;
         links.forEach( function( link ) {
             var source = link.source,
