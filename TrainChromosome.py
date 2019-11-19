@@ -142,8 +142,8 @@ if __name__ == '__main__':
                 from vaelstmpredictor.utils.data_utils import dummyData
                 data = dummyData(clargs.batch_size)
             elif(clargs.train_file == "mnist"):
-                from keras.datasets import mnist
-                data = mnist.load_data()
+                from vaelstmpredictor.utils.data_utils import MNISTData
+                data = MNISTData(clargs.batch_size)
             elif(clargs.train_file == "bostonHousing"):
                 from vaelstmpredictor.utils.data_utils import bostonHousingData
                 data = bostonHousingData(clargs.batch_size)
@@ -196,6 +196,12 @@ if __name__ == '__main__':
             params["val_vae_latent_args_loss"] = chromosome.best_losses['val_vae_latent_layer_loss']
             params["val_dnn_latent_args_loss"] = chromosome.best_losses['val_dnn_latent_layer_loss']
             params["val_dnn_predictor_layer_loss"] = chromosome.best_losses['val_dnn_predictor_layer_loss']
+
+            params["test_fitness"] = chromosome.test_fitness
+            params["test_vae_reconstruction_loss"] = chromosome.best_losses['test_vae_reconstruction_loss']
+            params["test_vae_latent_args_loss"] = chromosome.best_losses['test_vae_latent_layer_loss']
+            params["test_dnn_latent_args_loss"] = chromosome.best_losses['test_dnn_latent_layer_loss']
+            params["test_dnn_predictor_layer_loss"] = chromosome.best_losses['test_dnn_predictor_layer_loss']
 
             params["hostname"] = clargs.hostname
             params["start_time"] = start_time

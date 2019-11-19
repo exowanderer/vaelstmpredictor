@@ -2,7 +2,7 @@ import numpy as np
 from keras import backend as K
 # from keras.callbacks import ProgbarLogger, History, RemoteMonitor, LearningRateScheduler
 # from keras.callbacks import CSVLogger, ReduceLROnPlateau, LambdaCallback
-from keras.callbacks import TerminateOnNaN, EarlyStopping, ModelCheckpoint, TensorBoard, History
+from keras.callbacks import TerminateOnNaN, EarlyStopping, ModelCheckpoint, TensorBoard, History, Callback
 from keras.layers import Input, Lambda, concatenate, Dense
 from keras.layers import Conv1D, MaxPooling1D, Layer, Add, Multiply
 from keras.layers import UpSampling1D, Flatten, Reshape
@@ -12,6 +12,7 @@ from keras.models import Model, Sequential
 from keras.regularizers import l1_l2
 
 from sklearn.preprocessing import LabelBinarizer, MinMaxScaler
+from sklearn.utils import shuffle
 
 def debug_message(message, end='\n'):
     print('[DEBUG] {}'.format(message), end=end)
@@ -51,7 +52,8 @@ class Chromosome(object):
                 dnn_kl_weight=1, dnn_weight=1, vae_kl_weight=1, vae_weight=1,
                 optimizer="adam", predictor_type="prediction", train_file="exoplanet",
                 log_dir="./logs", model_dir="../data/models", table_dir="../data/tables",
-                save_model=False, verbose=True, rainout=False):
+                save_model=False, verbose=True):
+
         ''' Configure dnn '''
         #network parameters
         self.size_filter = size_filter
@@ -62,7 +64,6 @@ class Chromosome(object):
         self.vae_hidden_dims = vae_hidden_dims
         self.num_conv_layers = num_conv_layers
 
-        self.rainout = rainout
         self.verbose = verbose
         self.batch_size = batch_size
         self.num_epochs = num_epochs
@@ -84,45 +85,20 @@ class Chromosome(object):
         self.save_model = save_model
 
         np.random.seed(42)
-        if(train_file == "exoplanet"):
-            condensation_category_train = data.train_labels[:,0] == int(rainout)
-            condensation_category_validation = data.valid_labels[:,0] == int(rainout)
+        data.x_test, data.y_test = shuffle(data.x_test, data.y_test)
+        data.x_train, data.y_train = shuffle(data.x_train, data.y_train)
 
-            scaler = MinMaxScaler()
-            self.y_train = scaler.fit_transform(data.train_labels[condensation_category_train, 1:])
-            self.y_test = scaler.transform(data.valid_labels[condensation_category_validation, 1:])
+        #For Training
+        self.x_train = data.x_train
+        self.y_train = data.y_train
 
-            self.x_train = data.data_train[condensation_category_train]
-            self.x_test = data.data_valid[condensation_category_validation]
-
-        elif(train_file == "dummyData"):
-            min_val = -1000
-            max_val = 1000
-            self.x_train = (data.data_train - min_val)/(max_val - min_val)
-            self.y_train = data.train_labels
-            self.x_test = (data.data_valid - min_val)/(max_val - min_val)
-            self.y_test = data.valid_labels
-
-        elif(train_file == "mnist"):
-            (self.x_train, self.y_train), (self.x_test, self.y_test) = data
-
-            self.image_size = self.x_train.shape[1]
-            self.original_dim = self.image_size * self.image_size
-            self.x_train = np.reshape(self.x_train, [-1, self.original_dim])
-            self.x_test = np.reshape(self.x_test, [-1, self.original_dim])
-            self.x_train = self.x_train.astype('float32') / 255
-            self.x_test = self.x_test.astype('float32') / 255
-
-        elif(train_file == "bostonHousing"):
-            self.x_train = data.data_train
-            self.y_train = data.train_labels
-            self.x_test = data.data_valid
-            self.y_test = data.valid_labels
-
-        else:
-            if(self.verbose):
-                print("Train File \"{}\" not recognized".format(train_file))
-            return
+        split_i = int(len(data.x_test)*0.2)
+        #For the GA
+        self.x_test = data.x_test[split_i:]
+        self.y_test = data.y_test[split_i:]
+        #For Validation
+        self.x_val = data.x_test[:split_i]
+        self.y_val = data.y_test[:split_i]
         
         self.original_dim = self.x_train.shape[1]
         self.input_shape = (self.original_dim, )
@@ -298,7 +274,7 @@ class Chromosome(object):
 
             loss={'vae_reconstruction': self.vae_reconstruction_loss,
                   'dnn_latent_layer': self.dnn_kl_loss,
-                  'dnn_predictor_layer': self.dnn_predictor_loss,
+                  'dnn_predictor_layer': self.classification_loss,
                   'vae_latent_layer': self.vae_kl_loss},
 
             loss_weights={'vae_reconstruction': self.vae_weight,
@@ -306,13 +282,17 @@ class Chromosome(object):
                           'dnn_predictor_layer': self.dnn_weight,
                           'vae_latent_layer': self.vae_kl_weight},
         )
-        
+
         self.history = self.model.fit(self.x_train,
                 [self.x_train, self.x_train, self.y_train, self.y_train],
                 epochs=self.num_epochs,
                 batch_size=self.batch_size,
                 validation_data=(self.x_test, [self.x_test, self.x_test, self.y_test, self.y_test]),
                 callbacks=callbacks)
+
+        val_results = self.model.evaluate(self.x_val,
+                                          [self.x_val, self.x_val, self.y_val, self.y_val],
+                                          batch_size=self.batch_size)
 
         best_loss = None
         best_loss_index = None
@@ -324,8 +304,15 @@ class Chromosome(object):
         self.best_losses = {"val_vae_reconstruction_loss": self.history.history['val_vae_reconstruction_loss'][best_loss_index],
                             "val_vae_latent_layer_loss": self.history.history['val_vae_latent_layer_loss'][best_loss_index],
                             "val_dnn_latent_layer_loss": self.history.history['val_dnn_latent_layer_loss'][best_loss_index],
-                            "val_dnn_predictor_layer_loss": self.history.history['val_dnn_predictor_layer_loss'][best_loss_index]}
+                            "val_dnn_predictor_layer_loss": self.history.history['val_dnn_predictor_layer_loss'][best_loss_index],
+
+                            "test_vae_reconstruction_loss": val_results[1],
+                            "test_dnn_latent_layer_loss": val_results[2],
+                            "test_dnn_predictor_layer_loss": val_results[3],
+                            "test_vae_latent_layer_loss": val_results[4]}
+
         self.fitness = 1/best_loss
+        self.test_fitness = 1/val_results[0]
 
         if(self.save_model):
             self.model.save_weights('vae_mlp_mnist.h5')

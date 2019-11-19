@@ -25,6 +25,8 @@ def info_message(message, end='\n'):
 def warning_message(message, end='\n'):
     print('[WARNING] {}'.format(message), end=end)
 
+np.random.seed(52770)
+
 class MNISTData(object):
 
     def __init__(self, batch_size):
@@ -57,13 +59,10 @@ class MNISTData(object):
         x_test = x_test.astype('float32') / 255
 
         """These are all of the necessary `data_instance` components"""
-        self.train_labels = y_train
-        self.valid_labels = y_test
-        self.test_labels = np.arange(0)  # irrelevant(?)
-
-        self.data_train = x_train
-        self.data_valid = x_test
-        self.data_test = np.arange(0)  # irrelevant(?)
+        self.y_train = y_train
+        self.x_train = x_train
+        self.y_test = y_test
+        self.x_test = x_test
 
 
 class bostonHousingData(object):
@@ -86,13 +85,11 @@ class bostonHousingData(object):
         # y_train = y_train[:n_samples_train]
 
         """These are all of the necessary `data_instance` components"""
-        self.train_labels = y_train
-        self.valid_labels = y_test
-        self.test_labels = np.arange(0)  # irrelevant(?)
+        self.y_train = y_train
+        self.y_test = y_test
 
-        self.data_train = x_train
-        self.data_valid = x_test
-        self.data_test = np.arange(0)  # irrelevant(?)
+        self.x_train = x_train
+        self.x_test = x_test
 
 
 class dummyData(object):
@@ -113,13 +110,11 @@ class dummyData(object):
 
         (x_train, x_test, y_train, y_test) = train_test_split(features, labels, test_size=0.2)
 
-        self.train_labels = y_train
-        self.valid_labels = y_test
-        self.test_labels = np.arange(0)  # irrelevant(?)
+        self.y_train = y_train
+        self.y_test = y_test
 
-        self.data_train = x_train.astype('float32') / 1000
-        self.data_valid = x_test.astype('float32') / 1000
-        self.data_test = np.arange(0)  # irrelevant(?)
+        self.x_train = x_train.astype('float32') / 1000
+        self.x_test = x_test.astype('float32') / 1000
 
 
 class dummyData2(object):
@@ -142,11 +137,12 @@ class dummyData2(object):
 
         (x_train, x_test, y_train, y_test) = train_test_split(features_split, labels_split, test_size=0.2)
 
-        self.train_labels = np.reshape(y_train, (y_train.shape[0], n_windows))
-        self.valid_labels = np.reshape(y_test, (y_test.shape[0], n_windows))
-
-        self.data_train = x_train
-        self.data_valid = x_test
+        min_val = -1000
+        max_val = 1000
+        self.x_train = (x_train - min_val)/(max_val - min_val)
+        self.y_train = np.reshape(y_train, (y_train.shape[0], n_windows))
+        self.x_test = (x_test - min_val)/(max_val - min_val)
+        self.y_test = np.reshape(y_test, (y_test.shape[0], n_windows))
 
 class SpitzerCalOrig(object):
 
@@ -361,10 +357,9 @@ class ExoplanetData(object):
     exoplanet_data_online = exoplanet_data_online.format(exoplanet_data_key)
 
     def __init__(self, train_file=None, batch_size=128, test_size=0.20,
-                 normalize_spec=False, skip_features=5, use_all_data=True):
+                 normalize_spec=False, skip_features=5, use_all_data=True, rainout=False):
         ''' set skip_features to 0 to use `all` of the data
         '''
-
         if train_file is None:
             info_message('`default_train_file`: {}'.format(
                 self.default_train_file))
@@ -424,34 +419,33 @@ class ExoplanetData(object):
             for k, spec in enumerate(spectra):
                 spectra[k] = spec - np.median(spec)
 
-        x_train = physics[idx_train]  # features for decoder
-        y_train = spectra[idx_train]  # labels for decoder
+        y_train = physics[idx_train]  # features for decoder
+        x_train = spectra[idx_train]  # labels for decoder
 
-        x_test = physics[idx_test]  # features for decoder
-        y_test = spectra[idx_test]  # labels for decoder
+        y_test = physics[idx_test]  # features for decoder
+        x_test = spectra[idx_test]  # labels for decoder
 
-        n_samples_test = y_test.shape[0]
+        n_samples_test = x_test.shape[0]
         n_samples_test = (n_samples_test // batch_size) * batch_size
 
-        y_test = y_test[:n_samples_test]
         x_test = x_test[:n_samples_test]
+        y_test = y_test[:n_samples_test]
 
-        n_samples_train = y_train.shape[0]
+        n_samples_train = x_train.shape[0]
         n_samples_train = (n_samples_train // batch_size) * batch_size
 
-        y_train = y_train[:n_samples_train]
         x_train = x_train[:n_samples_train]
+        y_train = y_train[:n_samples_train]
 
-        # these are our "labels"; the regresser will be conditioning on these
-        
-        self.train_labels = x_train
-        self.valid_labels = x_test
-        self.test_labels = np.array([])  # irrelevant(?)
+        condensation_category_train = y_train[:,0] == int(rainout)
+        condensation_category_validation = y_test[:,0] == int(rainout)
 
-        # these are our "features"; the VAE will be reproducing these
-        self.data_train = y_train
-        self.data_valid = y_test
-        self.data_test = np.array([])  # irrelevant(?)
+        scaler = MinMaxScaler()
+        self.y_train = scaler.fit_transform(y_train[condensation_category_train, 1:])
+        self.y_test = scaler.transform(y_test[condensation_category_validation, 1:])
+
+        self.x_train = x_train[condensation_category_train]
+        self.x_test = x_test[condensation_category_validation]
 
 
     def download_exoplanet_data(self):
