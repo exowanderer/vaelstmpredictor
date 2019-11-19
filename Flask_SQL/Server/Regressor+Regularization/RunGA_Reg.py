@@ -208,7 +208,7 @@ if __name__ == '__main__':
                      'delay': (10, 1),
                      'l1_coef': (0.1, 0.0),
                      'l2_coef': (0.1, 0.0),
-                     'dropout_rate': (0.1, 0.20)}
+                     'dropout_rate': (0.1, 0.25),}
 
     start = time()
     # while gen_num < num_generations:

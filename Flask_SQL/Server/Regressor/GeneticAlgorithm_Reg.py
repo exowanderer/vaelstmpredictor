@@ -500,6 +500,9 @@ def mutate(new_generation, chromosomeID,
                     array_p[change_index] = current_p
                     new_generation.set_value(chromosomeID, param, array_p)
 
+        #Change All values to integers
+        new_generation[param] = new_generation[param]//1
+
     if(mutation_happened):
         new_generation.set_value(chromosomeID, 'info', new_generation.loc[chromosomeID, 'info']+" [Mutated]")
 
