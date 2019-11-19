@@ -4,7 +4,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'This is The Secret Key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://LAUDeepGenerativ:123456789VaeLstmPredictor123456789@LAUDeepGenerativeGenetics.mysql.pythonanywhere-services.com/LAUDeepGenerativ$default'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://philippesaade11:123456789VaeLstmPredictor123456789@philippesaade11.mysql.pythonanywhere-services.com/philippesaade11$vaelstmpredictor'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app, resources={r"/*": {"origins": "*"}},
      allow_headers=["Content-Type", "Authorization",
@@ -56,17 +56,21 @@ class Chromosome(db.Model):
     val_dnn_predictor_layer_loss = db.Column(db.Float, default=1)
     info = db.Column(db.String(100), default='')
 
-    # Genes
+    # VAE Genes
     num_vae_layers = db.Column(db.Integer, default=0)
-    num_dnn_layers = db.Column(db.Integer, default=0)
     size_vae_latent = db.Column(db.Integer, default=0)
     size_vae_hidden = db.Column(db.Integer, default=0)
+
+    # DNN Genes
+    num_dnn_layers = db.Column(db.Integer, default=0)
+    size_dnn_hidden = db.Column(db.Integer, default=0)
+    # size_dnn_hidden = db.Column(db.String(150), default='[]')
+
+    # CNN Genes
     num_conv_layers = db.Column(db.Integer, default=0)
     size_kernel = db.Column(db.String(150), default='[]')
     size_pool = db.Column(db.String(150), default='[]')
     size_filter = db.Column(db.String(150), default='[]')
-    # size_dnn_hidden = db.Column(db.Integer, default=0)
-    size_dnn_hidden = db.Column(db.String(150), default='[]')
 
     # Add regularization genes
     l1_coef = db.Column(db.Float, default=0.01)
