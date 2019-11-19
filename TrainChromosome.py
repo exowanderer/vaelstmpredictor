@@ -26,7 +26,7 @@ def info_message(message):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--sql_server',
-                        default='philippesaade11.pythonanywhere.com',
+                        default='laudeepgenerativegenetics.pythonanywhere.com',
                         help='The URL or IP of the SQL server')
     clargs = parser.parse_args()
 
