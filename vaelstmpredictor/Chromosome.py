@@ -146,7 +146,7 @@ class Chromosome(object):
                 x = Dense(dense_size, activation='relu', name=dense_name)(x)
             else:
                 x = Dense(dense_size, activation='sigmoid', name=dense_name)(x)
-            # x = Dropout(self.dropout_rate)(x)
+            x = Dropout(self.dropout_rate)(x)
         #-------------------------------------------
 
         self.z_mean_vae = Dense(self.vae_latent_dim, name='z_mean')(x)
@@ -170,7 +170,7 @@ class Chromosome(object):
         for i, dense_size in enumerate(self.vae_hidden_dims[::-1]):
             dense_name = "Decoder_{}_{}".format("Dense", i)
             x = Dense(dense_size, activation='relu', name=dense_name)(x)
-            # x = Dropout(self.dropout_rate)(x)
+            x = Dropout(self.dropout_rate)(x)
         #-------------------------------------------
 
         x = Dense(last_dense_dim, activation='relu')(x)
@@ -246,7 +246,7 @@ class Chromosome(object):
                 x = Dense(dense_size, activation='relu', name=dense_name)(x)
             else:
                 x = Dense(dense_size, activation='sigmoid', name=dense_name)(x)
-            # x = Dropout(self.dropout_rate)(x)
+            x = Dropout(self.dropout_rate)(x)
         #-------------------------------------------
 
         self.z_mean_dnn = Dense(self.dnn_latent_dim, name='z_mean_dnn')(x)
