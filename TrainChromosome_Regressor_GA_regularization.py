@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
             # Added Regularization values
             clargs.l1_coef = params["l1_coef"]
-            clargs.l1_coef = params["l1_coef"]
+            clargs.l2_coef = params["l2_coef"]
             clargs.dropout_rate = params["dropout_rate"]
             clargs.lookback = params["lookback"]
             clargs.delay = params["delay"]
@@ -129,6 +129,10 @@ if __name__ == '__main__':
             chrom_params['size_kernel'] = size_kernel
             chrom_params['size_pool'] = size_pool
             chrom_params['size_filter'] = size_filter
+
+            chrom_params["l1_coef"] = clargs.l1_coef 
+            chrom_params["l2_coef"] = clargs.l2_coef 
+            chrom_params["dropout_rate"] = clargs.dropout_rate
 
             from vaelstmpredictor.utils.data_utils import SpitzerCal
             data = SpitzerCal(lookback = clargs.lookback, delay = clargs.delay, step=6, batch_size=128, test_size=0.2, shuffle=True)

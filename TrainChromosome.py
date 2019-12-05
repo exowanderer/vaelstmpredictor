@@ -102,6 +102,10 @@ if __name__ == '__main__':
             clargs.size_pool = params["size_pool"]
             clargs.size_filter = params["size_filter"]
 
+            clargs.l1_coef = params["l1_coef"]
+            clargs.l2_coef = params["l2_coef"]
+            clargs.dropout_rate = params["dropout_rate"]
+
             clargs.hostname = hostname
 
             vae_hidden_dims = [clargs.size_vae_hidden] * clargs.num_vae_layers
@@ -133,6 +137,10 @@ if __name__ == '__main__':
             chrom_params['size_kernel'] = size_kernel
             chrom_params['size_pool'] = size_pool
             chrom_params['size_filter'] = size_filter
+
+            chrom_params["l1_coef"] = clargs.l1_coef 
+            chrom_params["l2_coef"] = clargs.l2_coef 
+            chrom_params["dropout_rate"] = clargs.dropout_rate
 
             data = None
             if(clargs.train_file == "exoplanet"):
