@@ -274,7 +274,7 @@ class Chromosome(object):
 
             loss={'vae_reconstruction': self.vae_reconstruction_loss,
                   'dnn_latent_layer': self.dnn_kl_loss,
-                  'dnn_predictor_layer': self.classification_loss,
+                  'dnn_predictor_layer': self.dnn_predictor_loss,
                   'vae_latent_layer': self.vae_kl_loss},
 
             loss_weights={'vae_reconstruction': self.vae_weight,
