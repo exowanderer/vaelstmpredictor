@@ -31,44 +31,17 @@ def warning_message(message, end = '\n'):
 def info_message(message, end = '\n'):
     print('[INFO] {}'.format(message), end = end)
 
-def configure_multi_hidden_layers(num_hidden, input_size,
-                                  min_hidden1, max_hidden,
-                                  start_small = True, init_large = True):
-    # To force outer boundary inclusion with numpy
-    max_hidden = max_hidden + 1
-    input_size = input_size + 1
-
-    zero = 0
-    if input_size is not None and init_large:
-        hidden_dims = [random.randint(input_size//2, input_size)]
-    else:
-        hidden_dims = [random.randint(min_hidden1, max_hidden)]
-
-    # set to zero or random
-    if start_small:
-        hidden_dims = hidden_dims + [zero]*(num_hidden-1)
-    else:
-        upper_layers = np.random.randint(zero, max_hidden, size = num_hidden-1)
-
-        hidden_dims = np.append(hidden_dims, upper_layers)
-
-    return hidden_dims
-
 def create_blank_dataframe(generationID, population_size):
 
     generation = pd.DataFrame()
 
     zeros = np.zeros(population_size, dtype = int)
+    zeros_float = np.zeros(population_size, dtype = float)
     arange = np.arange(population_size, dtype = int)
 
     generation['generationID'] = zeros + generationID
     generation['chromosomeID'] = arange
     generation['isTrained'] = zeros
-    generation['num_vae_layers'] = zeros
-    generation['num_dnn_layers'] = zeros
-    generation['size_vae_latent'] = zeros
-    generation['size_vae_hidden'] = zeros
-    generation['size_dnn_hidden'] = zeros
     generation['fitness'] = np.float32(zeros) - 1.0
     generation['batch_size'] = zeros
     generation['cross_prob'] = zeros
@@ -95,28 +68,42 @@ def create_blank_dataframe(generationID, population_size):
     generation['vae_kl_weight'] = np.float32(zeros)
     generation['vae_weight'] = np.float32(zeros)
     generation['w_kl_anneal'] = zeros
-    generation['num_conv_layers'] = zeros
-    generation['size_kernel'] = [np.array([], dtype=int)]*population_size
-    generation['size_pool'] = [np.array([], dtype=int)]*population_size
-    generation['size_filter'] = [np.array([], dtype=int)]*population_size
     generation['info'] = ['']*population_size
     generation['val_vae_reconstruction_loss'] = np.float32(zeros)
     generation['val_vae_latent_args_loss'] = np.float32(zeros)
     generation['val_dnn_latent_args_loss'] = np.float32(zeros)
     generation['val_dnn_predictor_layer_loss'] = np.float32(zeros)
 
+    generation['num_vae_layers'] = zeros
+    generation['size_vae_hidden'] = zeros
+    generation['size_vae_latent'] = zeros
+
+    generation['num_dnn_layers'] = zeros
+    generation['size_dnn_hidden'] = zeros
+
+    generation['num_conv_layers'] = zeros
+    generation['size_kernel'] = [np.array([], dtype=int)]*population_size
+    generation['size_pool'] = [np.array([], dtype=int)]*population_size
+    generation['size_filter'] = [np.array([], dtype=int)]*population_size
+
+    generation['l1_coef'] = zeros_float
+    generation['l2_coef'] = zeros_float
+    generation['dropout_rate'] = zeros_float
+
     return generation
 
 def generate_random_chromosomes(population_size, clargs, geneationID = 0,
                         min_vae_hidden_layers = 1, max_vae_hidden_layers = 5,
                         min_dnn_hidden_layers = 1, max_dnn_hidden_layers = 5,
-                        min_vae_hidden = 2, max_vae_hidden = 1024,
-                        min_dnn_hidden = 2, max_dnn_hidden = 1024,
-                        min_vae_latent = 2, max_vae_latent = 1024,
+                        min_vae_hidden = 100, max_vae_hidden = 2000,
+                        min_dnn_hidden = 100, max_dnn_hidden = 2000,
+                        min_vae_latent = 2, max_vae_latent = 250,
                         min_conv_layers = 1, max_conv_layers = 5,
                         min_kernel_size = 0, max_kernel_size = 6,
                         min_pool_size = 0, max_pool_size = 4,
                         min_filter_size = 1, max_filter_size = 128,
+                        min_coef = 0, max_coef = 1,
+                        min_dropout = 0.1, max_dropout = 0.9,
                         verbose=False):
 
     # create blank dataframe with full SQL database required entrie
@@ -170,6 +157,12 @@ def generate_random_chromosomes(population_size, clargs, geneationID = 0,
                                                         size = population_size)
     generation['num_conv_layers'] = loguniform(low=min_conv_layers, high=max_conv_layers,
                                                         size = population_size)
+    generation['l1_coef'] = loguniform(low=min_coef, high=max_coef,
+                                                        size = population_size, dtype=float)
+    generation['l2_coef'] = loguniform(low=min_coef, high=max_coef,
+                                                        size = population_size, dtype=float)
+    generation['dropout_rate'] = loguniform(low=min_dropout, high=max_dropout,
+                                                        size = population_size, dtype=float)
 
     for i in range(population_size):
         generation.set_value(i, "size_kernel",  loguniform(low=min_kernel_size, high=max_kernel_size, size = (generation.loc[i, 'num_conv_layers'])))
@@ -178,8 +171,8 @@ def generate_random_chromosomes(population_size, clargs, geneationID = 0,
 
     return generation
 
-def loguniform(low=0, high=1, size=None):
-    return np.exp(np.random.uniform(np.log(low+1), np.log(high+2), size)).astype(int) -1
+def loguniform(low=0, high=1, size=None, dtype=int):
+    return np.exp(np.random.uniform(np.log(low+1), np.log(high+1), size)).astype(dtype) -1
 
 def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=True):
     generationID = generation['generationID'][0]
@@ -230,6 +223,9 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
             size_kernel = json.dumps(chromosome.size_kernel.tolist())
             size_pool = json.dumps(chromosome.size_pool.tolist())
             size_filter = json.dumps(chromosome.size_filter.tolist())
+            l1_coef = chromosome.l1_coef
+            l2_coef = chromosome.l2_coef
+            dropout_rate = chromosome.dropout_rate
             info = chromosome.info
 
             c = db.session.query(Chromosome).filter(Chromosome.chromosomeID == chromosomeID, Chromosome.generationID == generationID).first()
@@ -276,7 +272,10 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
                                     size_kernel = size_kernel,
                                     size_pool = size_pool,
                                     size_filter = size_filter,
-                                    info = info)
+                                    info = info,
+                                    l1_coef = l1_coef,
+                                    l2_coef = l2_coef,
+                                    dropout_rate = dropout_rate)
                 db.session.add(chrom)
             else :
                 c.fitness = fitness
@@ -319,6 +318,9 @@ def train_generation(generation, clargs, verbose=False, sleep_time=30, save_DB=T
                 c.size_kernel = size_kernel
                 c.size_pool = size_pool
                 c.size_filter = size_filter
+                c.l1_coef = l1_coef
+                c.l2_coef = l2_coef
+                c.dropout_rate = dropout_rate
                 c.info = info
             db.session.commit()
 
@@ -376,7 +378,10 @@ def load_generation_from_sql(generationID, population_size):
     for chrom in generation.itertuples():
         sql_chrom = db.session.query(Chromosome).filter(Chromosome.chromosomeID == chrom.chromosomeID, Chromosome.generationID == generationID).first()
         generation.set_value(chrom.chromosomeID, "info", sql_chrom.info)
-        generation.set_value(chrom.chromosomeID, "size_pool", np.array(json.loads(sql_chrom.size_filter)))
+        generation.set_value(chrom.chromosomeID, "l1_coef", sql_chrom.l1_coef)
+        generation.set_value(chrom.chromosomeID, "l2_coef", sql_chrom.l2_coef)
+        generation.set_value(chrom.chromosomeID, "dropout_rate", sql_chrom.dropout_rate)
+        generation.set_value(chrom.chromosomeID, "size_pool", np.array(json.loads(sql_chrom.size_pool)))
         generation.set_value(chrom.chromosomeID, "size_filter", np.array(json.loads(sql_chrom.size_filter)))
         generation.set_value(chrom.chromosomeID, "size_kernel", np.array(json.loads(sql_chrom.size_kernel)))
         generation.set_value(chrom.chromosomeID, "num_conv_layers", sql_chrom.num_conv_layers)
@@ -424,11 +429,9 @@ def select_parents(generation):
     '''Generate two random numbers between 0 and total_fitness
         not including total_fitness'''
 
-    a = 0.5
-    c = 40
-    b = -10
-    d = 10
-    total_fitness = sum(np.exp(generation.fitness*a + b)*c+d)
+    min_val = np.min(generation.fitness)
+    max_val = np.max(generation.fitness)
+    total_fitness = sum(normal_fitness(generation.fitness, min_val, max_val))
     assert(total_fitness >= 0), '`total_fitness` should not be negative'
 
     rand_parent1 = random.random()*total_fitness
@@ -440,7 +443,7 @@ def select_parents(generation):
     fitness_count = 0
     for chromosome in generation.itertuples():
         #fitness_count += chromosome.fitness
-        fitness_count += np.exp(chromosome.fitness*a + b)*c+d
+        fitness_count += normal_fitness(chromosome.fitness, min_val, max_val)
 
         if(parent1 is None and fitness_count >= rand_parent1):
             parent1 = chromosome
@@ -454,6 +457,10 @@ def select_parents(generation):
         'Currently parent1:{}\tparent2:{}'.format(parent1, parent2)
 
     return parent1, parent2
+
+def normal_fitness(fitness, min_val, max_val):
+    normal_f = (fitness - min_val)/(max_val - min_val)
+    return normal_f*5 +1
 
 def cross_over(new_generation, generation, parent1, parent2,
                 chromosomeID, param_choices, cross_prob, verbose=False):
@@ -527,7 +534,7 @@ def mutate(new_generation, chromosomeID,
 
                 # If param less than `min_val`, then set param to `min_val`
                 current_p = np.max([current_p, int(min_val)])
-                current_p = np.int(np.round(current_p))
+                current_p = type(min_val)(current_p)
 
                 # All params must be integer sized: round and convert
                 new_generation.set_value(chromosomeID, param, current_p)
@@ -575,13 +582,11 @@ def mutate(new_generation, chromosomeID,
                     change_p = np.random.uniform(-range_change, range_change)
                     current_p = array_p[change_index] + change_p
                     current_p = np.max([current_p, int(min_val)])
-                    current_p = np.int(np.round(current_p))
+                    current_p = type(min_val)(current_p)
 
                     array_p[change_index] = current_p
                     new_generation.set_value(chromosomeID, param, array_p)
 
-        #Change All values to integers
-        new_generation[param] = new_generation[param]//1
 
     if(mutation_happened):
         new_generation.set_value(chromosomeID, 'info', new_generation.loc[chromosomeID, 'info']+" [Mutated]")

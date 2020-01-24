@@ -29,26 +29,30 @@ if __name__ == '__main__':
                         help='optimizer name')
     parser.add_argument('--num_epochs', type=int, default=1,
                         help='number of epochs')
-    parser.add_argument('--max_vae_hidden_layers', type=int, default=5,
+    parser.add_argument('--max_vae_hidden_layers', type=int, default=3,
                         help='Maximum number of VAE hidden layers')
-    parser.add_argument('--max_vae_latent', type=int, default=512,
+    parser.add_argument('--max_vae_latent', type=int, default=500,
                         help='Maximum number of VAE neurons per layer')
-    parser.add_argument('--max_dnn_latent', type=int, default=512,
+    parser.add_argument('--max_dnn_latent', type=int, default=500,
                         help='Maximum number of DNN neurons per layer')
-    parser.add_argument('--max_vae_hidden', type=int, default=512,
+    parser.add_argument('--max_vae_hidden', type=int, default=1250,
                         help='Maximum number of VAE neurons per layer')
-    parser.add_argument('--max_dnn_hidden', type=int, default=512,
+    parser.add_argument('--max_dnn_hidden', type=int, default=1250,
                         help='Maximum number of VAE neurons per layer')
-    parser.add_argument('--max_dnn_hidden_layers', type=int, default=5,
+    parser.add_argument('--max_dnn_hidden_layers', type=int, default=3,
                         help='Maximum number of DNN hidden layers')
-    parser.add_argument('--max_conv_layers', type=int, default=5,
+    parser.add_argument('--max_conv_layers', type=int, default=3,
                         help='Maximum number of Convolution layers')
     parser.add_argument('--max_kernel_size', type=int, default=6,
                         help='Maximum kernel size (x2 +1)')
     parser.add_argument('--max_pool_size', type=int, default=4,
                         help='Maximum Max Pooling size (x2)')
-    parser.add_argument('--max_filter_size', type=int, default=128,
+    parser.add_argument('--max_filter_size', type=int, default=75,
                         help='Maximum number of filters for each convolution layer')
+    parser.add_argument('--max_coef', type=float, default=1.0,
+                        help='Maximum coeficient')
+    parser.add_argument('--max_dropout', type=float, default=0.9,
+                        help='Maximum Dropout')
     parser.add_argument('--min_vae_hidden_layers', type=int, default=1,
                         help='minimum number of VAE hidden layers')
     parser.add_argument('--min_vae_latent', type=int, default=2,
@@ -69,6 +73,10 @@ if __name__ == '__main__':
                         help='Minimum Max Pooling size (x2)')
     parser.add_argument('--min_filter_size', type=int, default=1,
                         help='Minimum number of filters for each convolution layer')
+    parser.add_argument('--min_coef', type=float, default=0.0,
+                        help='Minimum coeficient')
+    parser.add_argument('--min_dropout', type=float, default=0.2,
+                        help='Minimum Dropout')
     parser.add_argument('--dnn_weight', type=float, default=1,
                         help='relative weight on prediction loss')
     parser.add_argument('--vae_weight', type=float, default=1,
@@ -179,6 +187,10 @@ if __name__ == '__main__':
                                                  max_kernel_size=clargs.max_kernel_size,
                                                  max_filter_size=clargs.max_filter_size,
                                                  min_filter_size=clargs.min_filter_size,
+                                                 min_coef=clargs.min_coef,
+                                                 max_coef=clargs.max_coef,
+                                                 min_dropout=clargs.min_dropout,
+                                                 max_dropout=clargs.max_dropout,
                                                  verbose=clargs.verbose)
         CurrentGen.value = 0
     else:
@@ -203,12 +215,15 @@ if __name__ == '__main__':
     param_choices = {'num_vae_layers': (1, 1),
                      'num_dnn_layers': (1, 1),
                      'size_vae_latent': (10, 1),
-                     'size_vae_hidden': (50, 1),
-                     'size_dnn_hidden': (50, 1),
+                     'size_vae_hidden': (100, 1),
+                     'size_dnn_hidden': (100, 1),
                      'num_conv_layers': (1, 1),
                      'size_kernel': (1, 0),
                      'size_pool': (1, 0),
-                     'size_filter': (10, 1)}
+                     'size_filter': (10, 1),
+                     'l1_coef': (0.1, 0.0),
+                     'l2_coef': (0.1, 0.0),
+                     'dropout_rate': (0.1, 0.20)}
 
     start = time()
     # while gen_num < num_generations:

@@ -72,8 +72,8 @@ class Chromosome(db.Model):
     size_kernel = db.Column(db.String(150), default='[]')
     size_pool = db.Column(db.String(150), default='[]')
     size_filter = db.Column(db.String(150), default='[]')
-    # size_dnn_hidden = db.Column(db.Integer, default=0)
-    size_dnn_hidden = db.Column(db.String(150), default='[]')
+    size_dnn_hidden = db.Column(db.Integer, default=0)
+    # size_dnn_hidden = db.Column(db.String(150), default='[]')
 
     # Add regularization genes
     l1_coef = db.Column(db.Float, default=0.01)

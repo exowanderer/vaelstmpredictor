@@ -28,7 +28,7 @@ def AddChrom():
             return '1'
 
         for key in request.args.keys():
-            c[key] = request.args.get(key)
+            setattr(c, key, request.args.get(key))
 
         db.session.commit()
         return "1"
