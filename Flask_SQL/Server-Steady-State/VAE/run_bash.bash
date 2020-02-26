@@ -1,0 +1,1 @@
+python3 RunGA_VAE.py --batch_size 256 --chroms_per_loop 10 --num_epochs 150 --mutate_prob 0.1 --population_size 100

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+
+        <meta charset="utf-8">
+        <title>Visualization of a genetic algorithm</title>
+        <style>
+
+            body {
+                font-family: "Helvetica Neue",Helvetica,sans-serif;
+            }
+
+            form {
+                position: relative;
+                right: 0px;
+                top: 0px;
+            }
+
+            .node rect {
+                /* cursor : move; */
+                /* fill-opacity : .9; */
+                /* shape-rendering : crispEdges; */
+                stroke-width : 0;
+            }
+
+            .node text {
+                pointer-events : none;
+                /* text-shadow : 0 1px 0 #fff; */
+            }
+
+            .link {
+                fill : none;
+            }
+
+            .link-normal {
+                stroke-opacity : .05;
+            }
+
+            .link-strong {
+                stroke-opacity : .15;
+            }
+
+            .link:hover {
+                stroke-opacity : .9;
+            }
+
+            .link-selected {
+                stroke-opacity : 1.0;
+            }
+
+            .static-link-selected {
+                stroke-opacity : 1.0;
+            }
+
+            .node-selected {
+                fill : #000 !important;
+                stroke : #000 !important;
+                stroke-width : 1 !important;
+                stroke-opacity : 1.0 !important;
+                z-index : 1 !important;
+            }
+
+            .static-node-selected {
+                fill : #000 !important;
+                stroke : #000 !important;
+                stroke-width : 1 !important;
+                stroke-opacity : 1.0 !important;
+                z-index : 1 !important;
+            }
+
+
+            .link-strong:hover {
+                stroke-opacity : .5;
+            }
+
+            .rcorners {
+                border-radius : 15px;
+                border : 2px solid #8AC007;
+                padding : 20px;
+            }
+
+            .border {
+                border : 1px solid rgba( 11,22,33,0.2);
+                stroke-opacity : .2;
+            }
+
+            .noborder {
+                border : 0px;
+            }
+
+            #evolution_container {
+                width : 1800px;
+            }
+
+            #evolution {
+                width : 1798px;
+                height : 600px;
+            }
+
+
+        </style>
+
+    </head>
+
+    <body>
+
+        <!-- <header>
+            <aside>May 9, 2015</aside>
+            <p>Karsten Ahnert</p>
+        </header> -->
+
+        <main>
+
+            <h1>Visualization of a genetic algorithm!</h1>
+
+            <div id="evolution_container" class="border">
+                <form style="z-index:1">
+                    Y-axis:
+                    <label><input type="radio" name="scale_type" value="scaled">Scaled</label>
+                    <label><input type="radio" name="scale_type" value="unscaled" checked="true">Full range</label>
+                </form>
+
+                <form style="z-index:1">
+                    Node sorting:
+                    <label><input type="radio" name="sort_type" value="fitness" checked="true">Fitness</label>
+                    <label><input type="radio" name="sort_type" value="scaled_size" >Num Conv</label>
+                    <label><input type="radio" name="sort_type" value="scaled_height" >Num DNN</label>
+                    <label><input type="radio" name="sort_type" value="unsorted" >Index</label>
+                </form>
+
+
+                <form style="z-index:1">
+                    Node colors:
+                    <label><input type="radio" name="color_type" value="fitness" checked="true">Fitness</label>
+                    <label><input type="radio" name="color_type" value="size" >Num Conv</label>
+                    <label><input type="radio" name="color_type" value="height" >Num DNN</label>
+                </form>
+
+                <div id="evolution"></div>
+            </div>
+            <div id="extra_info"></div>
+
+        </main>
+
+    </body>
+
+    <script type="text/javascript" src="/static/third_party/d3.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/static/third_party/jquery-2.1.3.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/static/third_party/colorbrewer.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/static/flowchart.js" charset="utf-8"></script>
+
+    <script>
+
+        // helper function
+        function range1( i ){ return  i ? range1( i - 1 ).concat( i ) : [] }
+
+        var evolution_height = $( "#evolution" ).height(),
+            evolution_width  = $( "#evolution" ).width();
+
+        var margin = { top : 5 , right : 5 , bottom : 8 , left : 5} ,
+            width = evolution_width - margin.left - margin.right,
+            height = evolution_height - margin.top - margin.bottom;
+
+        var format_number = d3.format( "4.2f" ) ,
+            format = function( d ) {
+                str  = "Fitness: " + format_number( d.fitness );
+                str += " ,#Conv: " + d.size + "(" + format_number( d.scaled_size ) + ")";
+                str += " ,#DNN: " + d.height + "(" + format_number( d.scaled_height ) + ")";
+                return  str;
+            } ,
+            color = d3.scale.category20();
+
+        var svg = d3.select( "#evolution" ).append( "svg" )
+                .attr( "width" , width + margin.left + margin.right )
+                .attr( "height" , height + margin.top + margin.bottom )
+                .attr( "class" , "aligned" )
+            .append( "g" )
+                .attr( "transform" , "translate(" + margin.left + "," + margin.top + ")" );
+
+        var flowchart  = d3.flowchart()
+                .node_width( 10 )
+                .node_height( 2 )
+                .size( [ width , height ] );
+
+        flowchart.sort_type( $('input[name=sort_type]:checked').val() );
+        flowchart.scale_type( $('input[name=scale_type]:checked').val() );
+
+        var path = flowchart.link();
+
+        var fitness_color = null ,
+            size_color = null ,
+            height_color = null;
+        var link_color = d3.scale.ordinal()
+            .domain( [-1,0,1,2] )   // elite, mutation, crossover, reproduce
+            // .range( colorbrewer.Set1[4] );
+            .range( [ "red" , "blue" , "green" , "yellow" ] );
+
+        d3.json( "http://LAUDeepGenerativeGenetics.pythonanywhere.com/Visuals" , function( data ) {
+            //Extra Info
+            $("#extra_info").html("Max Fitness: "+data.max+"<br>Min Fitness: "+data.min);
+
+
+            // initialize the flowchart, create the graph
+            flowchart.nodes( data.nodes )
+                .links( data.links )
+                .init();
+
+            var i = 0 ,
+                max_size = 0 ,
+                max_height = 0;
+            flowchart.nodes().forEach( function( node ) {
+                if( node.size > max_size ) { max_size = node.size; }
+                if( node.height > max_height ) { max_height = node.height; }
+            } );
+            flowchart.nodes().forEach( function( node ) {
+                node.scaled_size = 1.0 - node.size / max_size;
+                node.scaled_height = 1.0 - node.height / max_height;
+            } );
+
+
+
+            color_range = colorbrewer.RdYlGn[ 6 ];
+            color_range_fitness = color_range.slice( 0 );  // clone array (deep copy)
+            color_range_fitness.reverse();
+            // color_range = d3.scale.category20c()
+            //     .domain( range1(20) )
+            //     .range();
+            fitness_color = d3.scale.quantile()
+                .domain( data.nodes.map( function( n ) { return n.fitness; } ) )
+                .range( color_range_fitness );
+            size_color = d3.scale.quantile()
+                .domain( data.nodes.map( function( n ) { return n.scaled_size; } ) )
+                .range( color_range );
+            height_color = d3.scale.quantile()
+                .domain( data.nodes.map( function( n ) { return n.scaled_height; } ) )
+                .range( color_range );
+
+            update_visualization();
+
+            var d = flowchart.nodes()[ flowchart.nodes().length-1 ];
+
+            svg.selectAll( "path.link.ancestor-of-" + d.key )
+                .classed( "static-link-selected" , true );
+
+            svg.selectAll( "g.node.ancestor-of-" + d.key + " rect")
+                .classed( "static-node-selected" , true );
+        } );
+
+        d3.selectAll( "input[name=sort_type]" ).on( "change" , change_visualization );
+        d3.selectAll( "input[name=scale_type]" ).on( "change" , change_visualization );
+        d3.selectAll( "input[name=color_type]" ).on( "change" , change_color );
+
+        function get_node_color()
+        {
+            color_type = $('input[name=color_type]:checked').val();
+
+            if( color_type == "fitness" )
+            {
+                return function( d ) { return fitness_color( d.fitness ); }
+            }
+            if( color_type == "size" )
+            {
+                return function( d ) { return size_color( d.scaled_size ); }
+            }
+            if( color_type == "height" )
+            {
+                return function( d ) { return height_color( d.scaled_height ); }
+            }
+        }
+
+        function update_visualization()
+        {
+            // remove all existing elements
+            svg.selectAll( "g" ).remove();
+
+            // calculate the node positions
+            flowchart.layout();
+
+            // create nodes, hence a group for each node
+            var node = svg.append( "g" ).selectAll( ".node" )
+                .data( flowchart.nodes() )
+                .enter().append( "g" )
+                    .attr( "class" , function( d ) {
+                        str = "node";
+                        d.ancestor_of.forEach( function( d ) { str += " ancestor-of-" + d; } );
+                        return str; } )
+                    .attr( "transform" , function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+            // append a rect to each node
+            var rect = node.append( "rect" )
+                .attr( "height" , function( d ) { return d.dy; } )
+                .attr( "width" , flowchart.node_width() )
+                .style( "fill" , get_node_color() )
+                .on( "mouseover" , mouseover )
+                .on( "mouseout" , mouseout )
+                .on( "mousedown" , mousedown )
+                .append( "title" )
+                    .text( function( d ) { return format( d ); } );
+
+            // create links
+            var link = svg.append( "g" ).selectAll( ".link" )
+                .data( flowchart.links() )
+                .enter().append( "path" )
+                    .attr( "class" , function( d ) {
+                        str = "";
+                        if( d.op == -1 ) { str = "link link-strong"; } else { str = "link link-normal"; }
+                        d.ancestor_of.forEach( function( d ) { str += " ancestor-of-" + d; } );
+                        return str;
+                        } )
+                    .attr( "d" , path )
+                    .style( "stroke-width" , function( d ) { return Math.max( 1 , d.dy ); } )
+                    .style( "stroke" , function( d ) { return link_color( d.op ); } );
+        }
+
+        function update_color()
+        {
+            var node = svg.selectAll( "g.node rect" );
+            node.style( "fill" , get_node_color() );
+        }
+
+        function change_visualization()
+        {
+            flowchart.sort_type( $('input[name=sort_type]:checked').val() );
+            flowchart.scale_type( $('input[name=scale_type]:checked').val() );
+            update_visualization();
+        }
+
+        function change_color()
+        {
+            update_color();
+        }
+
+        function mouseover( d )
+        {
+            svg.selectAll( "path.link.ancestor-of-" + d.key )
+               .classed( "link-selected" , true );
+
+            svg.selectAll( "g.node.ancestor-of-" + d.key + " rect")
+                .classed( "node-selected" , true );
+        }
+
+        function mouseout( d )
+        {
+            svg.selectAll( "path.link.ancestor-of-" + d.key )
+               .classed( "link-selected" , false );
+
+            svg.selectAll( "g.node.ancestor-of-" + d.key + " rect")
+                .classed( "node-selected" , false );
+        }
+
+        function mousedown( d )
+        {
+            svg.selectAll( "path.link" )
+                .classed( "static-link-selected" , false );
+
+            svg.selectAll( "g.node rect")
+                .classed( "static-node-selected" , false );
+
+            svg.selectAll( "path.link.ancestor-of-" + d.key )
+                .classed( "static-link-selected" , true );
+
+            svg.selectAll( "g.node.ancestor-of-" + d.key + " rect")
+                .classed( "static-node-selected" , true );
+        }
+
+
+    </script>
+
+
+</html>
