@@ -26,4 +26,4 @@ We use the [ExoTransmit-PLATON](https://github.com/exowanderer/platon), [CHIMERA
 
 ### Current Stage
 
-We are currently experimenting and testing the genetic algorithm to improve on the MNIST hand-written digit classification scheme. This is almost complete (March 29 2019), and we will soon move onto training for regression with the exoplanet spectral databases.
+We are currently experimenting and testing the genetic algorithm to improve on the ExoSpec regression scheme. This is almost complete (March 29 2020), and we will soon move onto training for regression with the exoplanet spectral databases.
