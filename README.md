@@ -1,6 +1,6 @@
 ### Variational Autoencoder for both Classification and Regression of Autocorrelated Data
 
-This is the implementation of the Classifying VAE and Classifying VAE+LSTM models, as described in [_A Classifying Variational Autoencoder with Application to Polyphonic Music Generation_](https://arxiv.org/abs/1711.07050) by Jay A. Hennig, Akash Umakantha, and Ryan C. Williamson: https://mobeets.github.io/classifying-vae-lstm
+This is the implementation of the Classifying VAE and Classifying VAE+LSTM models, as described in [_A Classifying Variational Autoencoder with Application to Polyphonic Music Generation_](https://arxiv.org/abs/1711.07050) by Jay A. Hennig, Akash Umakantha, and Ryan C. Williamson.
 
 [Exowanderer](github.com/exowanderer) extended the Classifying-VAE to a Classifying-and-Regressing-VAE (i.e. a `VAEPredictor`)
 [PhilippeSaade11](github.com/philippesaade11) created the genetic algorithm to optimize the hyperparameters
@@ -26,6 +26,4 @@ We use the [ExoTransmit-PLATON](https://github.com/exowanderer/platon), [CHIMERA
 
 ### Current Stage
 
-We completed both Dense and Conv1D classification with MNIST for our initial experiments to determine the proper configuration of the network, debug issues, and diagnose our genetic algorithm (GA) statistics+configuration. We now have 3 versions of the GA operational: single computer with pandas, multi-computer with SQL via local network connections, multi-computer with our cloud-based SQL integrated flask app to operature the GA.  Currently, we can expand to any number of computers trivially -- CPU or GPU, as well as local or cloud (GCP, AWS, and Colab). Our algorithm scales linearly with the number of machines (per CPU/GPU class).
-
-We are currently testing the Conv1DNets with our cloud+SQL based genetic algorithm to regress the first exoplanet spectroscopic data set. This is almost complete (Aug 21 2019). Our VAE-LSTM-Predictor package now operates both classification and regression -- with DenseNets and Conv1DNets -- inside a SQL+cloud-based, fully scalable Genetic Algorithm infrastructure.
+We are currently experimenting and testing the genetic algorithm to improve on the MNIST hand-written digit classification scheme. This is almost complete (March 29 2019), and we will soon move onto training for regression with the exoplanet spectral databases.

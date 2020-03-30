@@ -1,9 +1,8 @@
 .DS_Store
 *.pyc
+*.0
 
 data/models/*
-data/tables/*
-
 !data/models/.gitkeep
 
 *.mid
@@ -14,4 +13,3 @@ dist
 *log*
 bak*
 *save*
-__pycache__

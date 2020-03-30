@@ -2,10 +2,13 @@
 Code to load pianoroll data (.pickle)
 """
 import numpy as np
+import pandas as pd
 import os
 import joblib
 
+from keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 
 try:
     # Python 3
@@ -14,229 +17,16 @@ except:
     # Python 2
     import cPickle
 
-try:
-    # Python 2
-    range
-except:
-    # Python 3
-    def range(x): return iter(range(x))
+def debug_message(message, end='\n'):
+    print('[DEBUG] {}'.format(message), end=end)
 
-rel_keys = {'a': 'C',
-            'b-': 'D-',
-            'b': 'D',
-            'c': 'E-',
-            'c#': 'E',
-            'd-': 'F-',
-            'd': 'F',
-            'd#': 'F#',
-            'e-': 'G-',
-            'e': 'G',
-            'f': 'A-',
-            'f#': 'A',
-            'g': 'B-',
-            'g#': 'B',
-            'a-': 'C-',
-            }
+def info_message(message, end='\n'):
+    print('[INFO] {}'.format(message), end=end)
 
+def warning_message(message, end='\n'):
+    print('[WARNING] {}'.format(message), end=end)
 
-def relative_major(k):
-    return k if k.isupper() else rel_keys[k]
-
-
-def pianoroll_to_song(roll, offset=21):
-    f = lambda x: (np.where(x)[0] + offset).tolist()
-    return [f(s) for s in roll]
-
-
-def song_to_pianoroll(song, offset=21):
-    """
-    song = [(60, 72, 79, 88), (72, 79, 88), (67, 70, 76, 84), ...]
-    """
-    rolls = []
-    all_notes = [y for x in song for y in x]
-    if min(all_notes) - offset < 0:
-        offset -= 12
-        # assert(False)
-    if max(all_notes) - offset > 87:
-        offset += 12
-        # assert(False)
-    for notes in song:
-        roll = np.zeros(88)
-        roll[[n - offset for n in notes]] = 1.
-        rolls.append(roll)
-    return np.vstack(rolls)
-
-
-def sliding_inds(n, seq_length, step_length):
-    return np.arange(n - seq_length, step=step_length)
-
-
-def sliding_window(roll, seq_length, step_length=1):
-    """
-    returns [n x seq_length x 88]
-        if step_length == 1, then roll[i,1:] == roll[i+1,:-1]
-    """
-    rolls = []
-    for i in sliding_inds(roll.shape[0], seq_length, step_length):
-        rolls.append(roll[i:i + seq_length, :])
-    if len(rolls) == 0:
-        return np.array([])
-    return np.dstack(rolls).swapaxes(0, 2).swapaxes(1, 2)
-
-
-def songs_to_pianoroll(songs, seq_length, step_length,
-                       inner_fcn=song_to_pianoroll):
-    """
-    songs = [song1, song2, ...]
-    """
-    rolls = [sliding_window(inner_fcn(s), seq_length, step_length)
-             for s in songs]
-    rolls = [r for r in rolls if len(r) > 0]
-    inds = [i * np.ones((len(r),)) for i, r in enumerate(rolls)]
-    return np.vstack(rolls), np.hstack(inds)
-
-
-class PianoData:
-
-    def __init__(self, train_file, batch_size=None, seq_length=1, step_length=1, return_label_next=True, return_label_hist=False, squeeze_x=True, squeeze_y=True, use_rel_major=True):
-        """
-        returns [n x seq_length x 88] where rows referring to the same song will overlap an amount determined by step_length
-
-        specifying batch_size will ensure that that mod(n, batch_size) == 0
-        """
-        try:
-            # Python 3
-            with open(train_file, 'rb') as pickle_file:
-                D = cPickle.load(pickle_file)
-        except:
-            # Python 2
-            with open(train_file) as pickle_file:
-                D = cPickle.load(pickle_file)
-
-        self.train_file = train_file  # .pickle source file
-        self.batch_size = batch_size  # ensures that nsamples is divisible by this
-        self.seq_length = seq_length  # returns [n x seq_length x 88]
-        self.step_length = step_length  # controls overlap in rows of X
-        # if True, y is next val of X; else y == X
-        self.return_label_next = return_label_next
-        # if True, y is next val of X for each column of X; else y == [n x 1 x
-        # 88]
-        self.return_label_hist = return_label_hist
-        self.squeeze_x = squeeze_x  # remove singleton dimensions in X?
-        self.squeeze_y = squeeze_y  # remove singleton dimensions in y?
-        # minor keys get mapped to their relative major, e.g. 'a' -> 'C'
-        self.use_rel_major = use_rel_major
-
-        # sequences with song indices
-        self.data_train, self.labels_train, self.train_song_inds = \
-            self.make_xy(D['train'])
-        self.data_test, self.labels_test, self.test_song_inds = \
-            self.make_xy(D['test'])
-        self.data_valid, self.labels_valid, self.valid_song_inds = \
-            self.make_xy(D['valid'])
-
-        # # song index per sequence
-        # self.train_song_inds = self.song_inds(D['train'])
-        # self.test_song_inds = self.song_inds(D['test'])
-        # self.valid_song_inds = self.song_inds(D['valid'])
-
-        # mode per sequence
-        if 'train_mode' in D:
-            self.train_song_modes = self.song_modes(
-                D['train_mode'], self.train_song_inds)
-            self.test_song_modes = self.song_modes(
-                D['test_mode'], self.test_song_inds)
-            self.valid_song_modes = self.song_modes(
-                D['valid_mode'], self.valid_song_inds)
-        if 'train_key' in D:
-            D = self.update_keys(D)
-            self.key_map = self.make_keymap(D)
-            self.train_labels = self.song_keys(
-                D['train_key'], self.train_song_inds)
-            self.test_labels = self.song_keys(
-                D['test_key'], self.test_song_inds)
-            self.valid_labels = self.song_keys(
-                D['valid_key'], self.valid_song_inds)
-
-        if seq_length > 1:
-            X = vstack([self.data_train,
-                        self.data_valid,
-                        self.data_test,
-                        self.labels_train,
-                        self.labels_valid,
-                        self.labels_test
-                        ])
-
-            idx = X.sum(axis=0).sum(axis=0) > 0
-
-            n_train = self.data_train.shape[0]
-            n_valid = self.data_valid.shape[0]
-            n_test = self.data_test.shape[0]
-
-            self.data_train = self.data_train[:, :, idx].reshape((n_train, -1))
-            self.data_valid = self.data_valid[:, :, idx].reshape((n_valid, -1))
-            self.data_test = self.data_test[:, :, idx].reshape((n_test, -1))
-
-            self.labels_train = self.labels_train[:, :, idx]
-            self.labels_train = self.labels_train.reshape((n_train, -1))
-            self.labels_valid = self.labels_valid[:, :, idx]
-            self.labels_valid = self.labels_valid.reshape((n_valid, -1))
-            self.labels_test = self.labels_test[
-                :, :, idx].reshape((n_test, -1))
-
-            self.original_dim = idx.sum() * seq_length
-        else:
-            self.original_dim = None
-
-    def make_xy(self, songs):
-        inner_fcn = song_to_pianoroll
-        data_rolls, song_inds = songs_to_pianoroll(
-            songs, self.seq_length + int(self.return_label_next), self.step_length, inner_fcn=inner_fcn)
-        data_rolls = self.adjust_for_batch_size(data_rolls)
-        song_inds = self.adjust_for_batch_size(song_inds)
-        if self.return_label_next:  # make Y the last col of X
-            if self.return_label_hist:
-                labels_rolls = data_rolls[:, 1:, :]
-            else:
-                labels_rolls = data_rolls[:, -1, :]
-            data_rolls = data_rolls[:, :-1, :]
-        else:
-            labels_rolls = data_rolls
-        if self.squeeze_x:  # e.g., if X is [n x 1 x 88]
-            data_rolls = data_rolls.squeeze()
-        if self.squeeze_y:
-            labels_rolls = labels_rolls.squeeze()
-        return data_rolls, labels_rolls, song_inds
-
-    def song_modes(self, modes, song_inds):
-        return np.array(modes)[song_inds.astype(int)]
-
-    def update_keys(self, D):
-        if not self.use_rel_major:
-            return
-        D['train_key'] = [relative_major(k) for k in D['train_key']]
-        D['test_key'] = [relative_major(k) for k in D['test_key']]
-        D['valid_key'] = [relative_major(k) for k in D['valid_key']]
-        return D
-
-    def make_keymap(self, D):
-        all_keys = np.unique(
-            np.hstack([D['train_key'], D['test_key'], D['valid_key']]))
-        return dict(zip(all_keys, range(len(all_keys))))
-
-    def song_keys(self, keys, song_inds):
-        """
-        also converts keys to ints, e.g., ['A', 'B', 'C'] -> [0, 1, 2]
-        """
-        key_inds = [self.key_map[k] for k in keys]
-        return np.array(key_inds)[song_inds.astype(int)]
-
-    def adjust_for_batch_size(self, items):
-        if self.batch_size is None:
-            return items
-        mod = (items.shape[0] % self.batch_size)
-        return items[:-mod] if mod > 0 else items
-
+np.random.seed(52770)
 
 class MNISTData(object):
 
@@ -244,6 +34,9 @@ class MNISTData(object):
         from keras.datasets import mnist
 
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+        y_train = to_categorical(y_train)
+        y_test = to_categorical(y_test)
 
         n_samples_test = x_test.shape[0]
         n_samples_test = (n_samples_test // batch_size) * batch_size
@@ -267,32 +60,318 @@ class MNISTData(object):
         x_test = x_test.astype('float32') / 255
 
         """These are all of the necessary `data_instance` components"""
-        self.train_labels = y_train
-        self.valid_labels = y_test
-        self.test_labels = np.arange(0)  # irrelevant(?)
+        self.y_train = y_train
+        self.x_train = x_train
+        self.y_test = y_test
+        self.x_test = x_test
+
+
+class bostonHousingData(object):
+
+    def __init__(self, batch_size):
+        from keras.datasets import boston_housing
+
+        (x_train, y_train), (x_test, y_test) = boston_housing.load_data()
+
+        # n_samples_test = x_test.shape[0]
+        # n_samples_test = (n_samples_test // batch_size) * batch_size
+
+        # x_test = x_test[:n_samples_test]
+        # y_test = y_test[:n_samples_test]
+
+        # n_samples_train = x_train.shape[0]
+        # n_samples_train = (n_samples_train // batch_size) * batch_size
+
+        # x_train = x_train[:n_samples_train]
+        # y_train = y_train[:n_samples_train]
+
+        """These are all of the necessary `data_instance` components"""
+        self.y_train = y_train
+        self.y_test = y_test
+
+        self.x_train = x_train
+        self.x_test = x_test
+
+
+class dummyData(object):
+
+    def __init__(self, batch_size):
+        n_samples = batch_size*100
+        min_amp = 1e-10
+        max_amp = 1e3
+        amps = np.random.uniform(min_amp, max_amp, n_samples) # wave amplitudes
+        phases = np.random.uniform(0, 2*np.pi, n_samples) # wave phase
+        periods = np.random.uniform(0.9, 1.1, n_samples) # wave period 
+
+        n_features = 1000
+        times = np.linspace(-2*np.pi, 2*np.pi, n_features)
+        features = amps[:,None]*np.sin(2*np.pi /periods[:,None] * (times - phases[:,None]))
+        print(features.shape)
+        labels = np.c_[amps, phases, periods]  # this may need to be `np.r_` instead of `np.c_` (?)
+
+        (x_train, x_test, y_train, y_test) = train_test_split(features, labels, test_size=0.2)
+
+        self.y_train = y_train
+        self.y_test = y_test
+
+        self.x_train = x_train.astype('float32') / 1000
+        self.x_test = x_test.astype('float32') / 1000
+
+
+class dummyData2(object):
+
+    def __init__(self, batch_size, n_features, n_windows, n_steps):
+        n_samples = batch_size*100
+
+        features = np.random.normal(0, 1, size=(n_samples, n_features))
+        labels = np.random.normal(0, 1, size=(n_samples, 1))
+
+        features_split = np.array([features[0:(n_windows), :]])
+        labels_split = np.array([labels[0:(n_windows)]])
+        for i in range(1, n_samples, n_steps):
+            if(i+n_windows < len(features)):
+                fsplit = features[i:(i+n_windows), :]
+                features_split = np.r_[features_split,[fsplit]]
+
+                lsplit = labels[i:(i+n_windows)]
+                labels_split = np.r_[labels_split,[lsplit]]
+
+        (x_train, x_test, y_train, y_test) = train_test_split(features_split, labels_split, test_size=0.2)
+
+        min_val = -1000
+        max_val = 1000
+        self.x_train = (x_train - min_val)/(max_val - min_val)
+        self.y_train = np.reshape(y_train, (y_train.shape[0], n_windows))
+        self.x_test = (x_test - min_val)/(max_val - min_val)
+        self.y_test = np.reshape(y_test, (y_test.shape[0], n_windows))
+
+class SpitzerCalOrig(object):
+
+    def __init__(self, n_windows, n_steps):
+        keep_cols = ['xpos', 'ypos', 'xfwhm', 'yfwhm']
+                     #, 'bg_flux', 'pix1', 'pix2', 'pix3', 'pix4', 'pix5', 'pix6',
+                     #'pix7', 'pix8', 'pix9', 'fluxerr', 'sigma_bg_flux'] 
+
+        pmap_filename = 'pmap_ch2_0p1s_x4_rmulti_s3_7.csv'
+        default_train_file = os.environ['HOME'] + '/.vaelstmpredictor/data/'
+
+        df = pd.read_csv(default_train_file+pmap_filename)
+        df.dropna(inplace=True)
+
+        # adjust the pixel values to be normalized
+        # by the mean of the sum of all pixel values
+        df['pixsum'] = df['pix1'] + df['pix2'] + df['pix3'] + df['pix4'] + df['pix5'] + df['pix6'] + df['pix7'] + df['pix8'] + df['pix9']
+        medflux = np.median(df['pixsum'])
+        meanflux = np.mean(df['pixsum'])
+        df['pix1'] /= meanflux
+        df['pix2'] /= meanflux
+        df['pix3'] /= meanflux
+        df['pix4'] /= meanflux
+        df['pix5'] /= meanflux
+        df['pix6'] /= meanflux
+        df['pix7'] /= meanflux
+        df['pix8'] /= meanflux
+        df['pix9'] /= meanflux
+
+        # normalize bg_flux in some way as well.
+        meanbgflux = np.mean(df['bg_flux'])
+        df['bg_flux'] /= meanbgflux
+
+        # normalize xerr & yerr in some way as well
+        meanxerr = np.mean(df['xerr'])
+        meanyerr = np.mean(df['yerr'])
+        df['xerr'] /= meanxerr
+        df['yerr'] /= meanyerr
+
+        # choose feature set 16 feature feature set
+        features = np.array(df[keep_cols])
+
+        # normalize y
+        labels = df['flux'] / np.median(df['flux'])
+        # labels = np.random.uniform(0.5, 1.5, len(df))
+        labels = np.array(labels).reshape((-1, 1)) 
+
+        features_split = features[:(len(features)//n_windows)*n_windows, :].reshape((-1, n_windows, features.shape[1])) 
+        labels_split = labels[:(len(labels)//n_windows)*n_windows, :].reshape((-1, n_windows, 1))
+
+        for i in range(1, n_windows, n_steps):
+            f_split = features[i:((len(features)-i)//n_windows)*n_windows +i, :].reshape((-1, n_windows, features.shape[1])) 
+            l_split = labels[i:((len(labels)-i)//n_windows)*n_windows +i, :].reshape((-1, n_windows, 1))
+
+            features_split = np.r_[features_split, f_split]
+            labels_split = np.r_[labels_split, l_split]
+
+        (x_train, x_test, y_train, y_test) = train_test_split(features_split, labels_split, test_size=0.2)
+
+        self.train_labels = np.reshape(y_train, (y_train.shape[0], n_windows))
+        self.valid_labels = np.reshape(y_test, (y_test.shape[0], n_windows))
 
         self.data_train = x_train
         self.data_valid = x_test
-        self.data_test = np.arange(0)  # irrelevant(?)
 
-        self.labels_train = self.data_train
-        self.labels_valid = self.data_valid
+
+def generator(features, labels, lookback, delay, min_index, max_index,
+          shuffle=False, batch_size=128, step=6):
+    if max_index is None:
+        max_index = len(labels) - delay - 1
+    i = min_index + lookback
+    while 1:
+        if shuffle:
+            rows = np.random.randint(
+                min_index + lookback, max_index, size=batch_size)
+        else:
+            if i + batch_size >= max_index:
+                i = min_index + lookback
+            rows = np.arange(i, min(i + batch_size, max_index))
+            i += len(rows)
+
+        samples = np.zeros((len(rows),
+                           lookback // step,
+                           features.shape[-1]))
+        targets = np.zeros((len(rows),))
+
+        for j, row in enumerate(rows):
+            indices = range(rows[j] - lookback, rows[j], step)
+            samples[j] = features.iloc[indices].values
+            targets[j] = labels.iloc[rows[j] + delay]
+        yield samples, targets
+
+def preprocess_spitzercal(pmap_filename=None, 
+                          include_pld=False, 
+                          include_bg_flux=False,
+                          include_uncs=False):
+
+    default_train_file = os.environ['HOME'] + '/.vaelstmpredictor/data/'
+
+    if pmap_filename is None:
+        pmap_filename = 'pmap_ch2_0p1s_x4_rmulti_s3_7.csv'
+
+    df = pd.read_csv(os.path.join(default_train_file, pmap_filename))
+    df.dropna(inplace=True)
+
+    keep_cols = ['xpos', 'ypos', 'xfwhm', 'yfwhm']
+
+    if include_pld:
+        # adjust the pixel values to be normalized
+        # by the mean of the sum of all pixel values
+        df['pixsum'] = (df['pix1'] + df['pix2'] + df['pix3'] + df['pix4'] + 
+                        df['pix5'] + df['pix6'] + df['pix7'] + df['pix8'] + 
+                        df['pix9'])
+
+        medflux = np.median(df['pixsum'])
+        meanflux = np.mean(df['pixsum'])
+        df['pix1'] /= meanflux
+        df['pix2'] /= meanflux
+        df['pix3'] /= meanflux
+        df['pix4'] /= meanflux
+        df['pix5'] /= meanflux
+        df['pix6'] /= meanflux
+        df['pix7'] /= meanflux
+        df['pix8'] /= meanflux
+        df['pix9'] /= meanflux
+
+        keep_cols.extend(['pix1', 'pix2', 'pix3', 'pix4', 'pix5', 
+                          'pix6', 'pix7', 'pix8', 'pix9'])
+    
+    #, 'bg_flux', , 'fluxerr', 'sigma_bg_flux'] 
+
+    if include_bg_flux:
+        # normalize bg_flux in some way as well.
+        meanbgflux = np.mean(df['bg_flux'])
+        df['bg_flux'] /= meanbgflux
+
+        keep_cols.append('bg_flux')
+
+    if include_uncs:
+        # normalize xerr & yerr in some way as well
+        meanxerr = np.mean(df['xerr'])
+        meanyerr = np.mean(df['yerr'])
+        df['xerr'] /= meanxerr
+        df['yerr'] /= meanyerr
+
+        keep_cols.extend(['xerr', 'yerr'])
+
+    # choose feature set 16 feature feature set
+    features = df[keep_cols]
+
+    # normalize y
+    labels = df['flux'] / np.median(df['flux'])
+    # labels = np.random.uniform(0.5, 1.5, len(df))
+    # labels = np.array(labels).reshape((-1, 1))
+
+    return features, labels
+
+class SpitzerCal(object):
+
+    def __init__(self, lookback=1440, delay=144, step=6, 
+                 batch_size=128, test_size=0.2, shuffle=True):
+        features, labels = preprocess_spitzercal(pmap_filename=None, 
+                                                 include_pld=False, 
+                                                 include_bg_flux=False,
+                                                 include_uncs=False)
+
+        # (x_train, x_test, y_train, y_test) = train_test_split(
+  #           features, labels, test_size=test_size)
+
+        self.train_labels = None
+        self.valid_labels = None
+
+        self.data_train = None
+        self.data_valid = None
+
+        train_min_idx = 0
+        train_max_idx = int((1-test_size) * labels.size)
+
+        test_min_idx = train_max_idx + 1
+        test_max_idx = len(labels) - delay - 1
+        
+        self.train_gen = generator(features, labels,
+                              lookback=lookback,
+                              delay=delay,
+                              min_index=train_min_idx,
+                              max_index=train_max_idx,
+                              shuffle=shuffle,
+                              step=step, 
+                              batch_size=batch_size)
+
+        self.val_gen = generator(features, labels,
+                            lookback=lookback,
+                            delay=delay,
+                            min_index=test_min_idx,
+                            max_index=test_max_idx,
+                            step=step,
+                            batch_size=batch_size)
+
+        self.val_steps = (test_max_idx - test_min_idx - lookback) // batch_size
+
+        self.output_shape = (lookback//step)
+        self.input_shape = ((lookback//step), features.shape[1])
 
 
 class ExoplanetData(object):
-    exoplanet_filename = 'exoplanet_spectral_database_normalized.joblib.save'
+    exoplanet_filename = 'exoplanet_spectral_folded_database.joblib.save'
+    # exoplanet_filename = 'exoplanet_spectral_folded_database_normalized.joblib.save'
     default_train_file = os.environ['HOME'] + '/.vaelstmpredictor/data/'
 
-    def __init__(self, train_file=None, batch_size=128, test_size=0.30,
-                 normalize_spec=False, skip_features=5):
+    exoplanet_data_key = '1KIEDaGkDlcgZmL6t8rDlCp9PGN7glbWq'
+    exoplanet_data_online = 'https://drive.google.com/open?id={}'
+    exoplanet_data_online = exoplanet_data_online.format(exoplanet_data_key)
+
+    def __init__(self, train_file=None, batch_size=128, test_size=0.20,
+                 normalize_spec=False, skip_features=5, use_all_data=True, rainout=False):
         ''' set skip_features to 0 to use `all` of the data
         '''
+        if train_file is None:
+            info_message('`default_train_file`: {}'.format(
+                self.default_train_file))
 
-        if train_file is None or not os.path.exists(train_file):
-            print('[WARNING] `train_file` does not exist. '
-                  'Using default location')
-            print('[WARNING] `train_file`: {}'.format(train_file))
-            print('[WARNING] `default_train_file`: {}'.format(
+            train_file = self.default_train_file
+        elif not os.path.exists(train_file):
+            warning_message('`train_file` does not exist. '
+                            'Using default location')
+
+            warning_message('`train_file`: {}'.format(train_file))
+            warning_message('`default_train_file`: {}'.format(
                 self.default_train_file))
 
             train_file = self.default_train_file
@@ -300,114 +379,108 @@ class ExoplanetData(object):
         exoplanet_filename = '{}/{}'.format(train_file,
                                             self.exoplanet_filename)
 
+        if not os.path.exists(exoplanet_filename):
+            info_message('{} does not exist; '
+                         'give me data or give me death'.format(train_file))
+            info_message('Downloading Exoplanet Spectral Database')
+            print('\tThis could several minutes [~15 minutes?]')
+
+            if not os.path.exists(train_file):
+                os.mkdir(os.environ['HOME'] + '/.vaelstmpredictor')
+                os.mkdir(self.default_train_file)
+
+            self.download_exoplanet_data()
+
         spectra, physics = joblib.load(exoplanet_filename)
 
-        if skip_features:
-            spectra = spectra[:, ::skip_features]
+        # if skip_features:
+        #     spectra_ = spectra[:, ::skip_features]
 
-        idx_train, idx_test = train_test_split(np.arange(len(spectra)),
+        #     if use_all_data:
+        #         physics_ = physics.copy()
+        #         for k in range(1, skip_features):
+        #             debug_message('Physics: {}'.format(physics.shape))
+        #             debug_message('Spectra_: {}'.format(spectra_.shape))
+        #             debug_message('Spectra: {}'.format(spectra.shape))
+
+        #             physics_ = np.r_[physics_, physics]
+        #             spectra_ = np.r_[spectra_, spectra[:, k::skip_features]]
+
+        #     spectra = spectra_
+
+        # idx_shuffle = np.random.shuffle(np.arange(physics.shape[0]))
+
+        # spectra = spectra[idx_shuffle]
+        # physics = physics[idx_shuffle]
+
+        idx_train, idx_test = train_test_split(np.arange(physics.shape[0]),
                                                test_size=test_size)
 
         if normalize_spec:
             for k, spec in enumerate(spectra):
                 spectra[k] = spec - np.median(spec)
 
-        x_train = physics[idx_train]  # features for decoder
-        y_train = spectra[idx_train]  # labels for decoder
+        y_train = physics[idx_train]  # features for decoder
+        x_train = spectra[idx_train]  # labels for decoder
 
-        x_test = physics[idx_test]  # features for decoder
-        y_test = spectra[idx_test]  # labels for decoder
+        y_test = physics[idx_test]  # features for decoder
+        x_test = spectra[idx_test]  # labels for decoder
 
-        n_samples_test = y_test.shape[0]
+        n_samples_test = x_test.shape[0]
         n_samples_test = (n_samples_test // batch_size) * batch_size
 
-        y_test = y_test[:n_samples_test]
         x_test = x_test[:n_samples_test]
+        y_test = y_test[:n_samples_test]
 
-        n_samples_train = y_train.shape[0]
+        n_samples_train = x_train.shape[0]
         n_samples_train = (n_samples_train // batch_size) * batch_size
 
-        y_train = y_train[:n_samples_train]
         x_train = x_train[:n_samples_train]
+        y_train = y_train[:n_samples_train]
 
-        # these are our "labels"; the regresser will be conditioning on these
-        self.train_labels = x_train
-        self.valid_labels = x_test
-        self.test_labels = np.array([])  # irrelevant(?)
+        condensation_category_train = y_train[:,0] == int(rainout)
+        condensation_category_validation = y_test[:,0] == int(rainout)
 
-        # these are our "features"; the VAE will be reproducing these
-        self.data_train = y_train
-        self.data_valid = y_test
-        self.data_test = np.array([])  # irrelevant(?)
+        scaler = MinMaxScaler()
+        self.y_train = scaler.fit_transform(y_train[condensation_category_train, 1:])
+        self.y_test = scaler.transform(y_test[condensation_category_validation, 1:])
 
-        # This is a 'copy' because the output must equal the input
-        self.labels_train = self.data_train
-        self.labels_valid = self.data_valid
+        self.x_train = x_train[condensation_category_train]
+        self.x_test = x_test[condensation_category_validation]
 
 
-def info_message(message, end='\n'):
-    print('[INFO] {}'.format(message), end=end)
+    def download_exoplanet_data(self):
+        # os.system("git clone https://github.com/jeroenmeulenaar/python3-mega.git")
+        # os.system(os.environ['HOME']+"/anaconda3/envs/tf_gpu/bin/pip install -r python3-mega/requirements.txt")
+        import subprocess
 
+        pip = os.environ['HOME'] + '/anaconda3/envs/tf_env/bin/pip'
+        git = 'git+https://github.com/jeroenmeulenaar/python3-mega.git'
+        command = pip + ' install ' + git
 
-def test_data_shapes(batch_size=128):
-    # Compare mnist data shapes to exospec data shapes
-    #   to confirm that exospec data is formated 'the same' as mnist data
-    #   so far so good!
-    from keras.utils import to_categorical
-    # Load MNIST Data
-    mnistdata = MNISTData(batch_size=batch_size)
-    exospec = ExoplanetData(batch_size=batch_size)
+        prog = subprocess.Popen(command,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        out, err = prog.communicate()
 
-    mnistdata.train_labels = to_categorical(mnistdata.train_labels)
-    mnistdata.valid_labels = to_categorical(mnistdata.valid_labels)
+        from mega import Mega
 
-    print()
-    info_message('train_labels')
-    print(mnistdata.train_labels.shape)
-    print(exospec.train_labels.shape)
-    print()
+        mega = Mega()
+        m = Mega.from_ephemeral()
+        print("Downaling File...")
+        # Download normalized data
+        m.download_from_url(
+            'https://mega.nz/#!O6A3wS4a!vTsMQZxl3VnbPbbksfJ0243oWDxv5z1g1zy4XIow4HQ')
+        # os.system('mv exoplanet_spectral_database_normalized.joblib.save '+os.environ['HOME']+'/.vaelstmpredictor/data')
 
-    info_message('valid_labels')
-    print(mnistdata.valid_labels.shape)
-    print(exospec.valid_labels.shape)
-    print()
+        spec_file_name = 'exoplanet_spectral_folded_database_normalized.joblib.save'
+        os.rename(spec_file_name, self.default_train_file + spec_file_name)
+        # m.download_from_url('https://mega.nz/#!T7YjkayK!rLqsthYpbbN9dv2yAM6kkjt986soX0KaKsmEqdHeR3U')
+        # #Download not normalized data
 
-    info_message('test_labels')
-    print(mnistdata.test_labels.shape)
-    print(exospec.test_labels.shape)
-    print()
-
-    info_message('data_train')
-    print(mnistdata.data_train.shape)
-    print(exospec.data_train.shape)
-    print()
-
-    info_message('data_valid')
-    print(mnistdata.data_valid.shape)
-    print(exospec.data_valid.shape)
-    print()
-
-    info_message('data_test')
-    print(mnistdata.data_test.shape)
-    print(exospec.data_test.shape)
-    print()
-
-    info_message('labels_train')
-    print(mnistdata.labels_train.shape)
-    print(exospec.labels_train.shape)
-    print()
-
-    info_message('labels_valid')
-    print(mnistdata.labels_valid.shape)
-    print(exospec.labels_valid.shape)
-
+        # spec_file_name = 'exoplanet_spectral_folded_database.joblib.save'
+        # os.rename(spec_file_name, self.default_train_file + spec_file_name)
 
 class BlankClass(object):
-
     def __init__(self):
         pass
-
-if __name__ == '__main__':
-    # train_file = '../data/input/Piano-midi_all.pickle'
-    train_file = '../data/input/JSB Chorales_all.pickle'
-    P = PianoData(train_file, seq_length=1, step_length=1)
