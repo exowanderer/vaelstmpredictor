@@ -45,8 +45,11 @@ class Chromosome(db.Model):
     size_kernel_encoder = db.Column(db.String(150), default='[]')
     size_pool_encoder = db.Column(db.String(150), default='[]')
     size_filter_encoder = db.Column(db.String(150), default='[]')
+    batchnorm_encoder = db.Column(db.String(150), default='[]')
+
     num_dnn_encoder = db.Column(db.Integer, default=0)
     size_dnn_encoder = db.Column(db.String(150), default='[]')
+    l1_dnn_encoder = db.Column(db.String(150), default='[]')
 
     #Decoder
     # num_cnn_decoder = db.Column(db.Integer, default=0)
@@ -58,6 +61,7 @@ class Chromosome(db.Model):
 
     #Latent
     size_latent = db.Column(db.Integer, default=0)
+    size_resnet = db.Column(db.Integer, default=0)
     #-------------------------------------------------------------------
 
 

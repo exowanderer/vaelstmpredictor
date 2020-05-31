@@ -4,7 +4,7 @@ sys.path.append(os.path.abspath('../'))
 from database import db, Chromosome
 import numpy as np
 import pandas as pd
-from numpy import random
+import random
 import time
 from flask import json
 import os
@@ -45,8 +45,10 @@ def create_blank_dataframe(clargs):
     generation['size_kernel_encoder'] = [np.array([], dtype=int)]*population_size
     generation['size_pool_encoder'] = [np.array([], dtype=int)]*population_size
     generation['size_filter_encoder'] = [np.array([], dtype=int)]*population_size
+    generation['batchnorm_encoder'] = [np.array([], dtype=int)]*population_size
     generation['num_dnn_encoder'] = np.ones(population_size, dtype=int)
     generation['size_dnn_encoder'] = [np.array([], dtype=int)]*population_size
+    generation['l1_dnn_encoder'] = [np.array([], dtype=int)]*population_size
 
     # generation['num_cnn_decoder'] = np.ones(population_size, dtype=int)
     # generation['size_kernel_decoder'] = [np.array([], dtype=int)]*population_size
@@ -56,6 +58,7 @@ def create_blank_dataframe(clargs):
     # generation['size_dnn_decoder'] = [np.array([], dtype=int)]*population_size
 
     generation['size_latent'] = np.ones(population_size, dtype=int)
+    generation['size_resnet'] = np.zeros(population_size, dtype=int)
 
     return generation
 
@@ -66,8 +69,13 @@ def load_generation_from_sql(array_genes_sizes):
     return generation
 
 def add_generation_to_sql(generation, array_genes_sizes):
+    if type(generation) == pd.Series:
+        generation = generation.to_frame().T
     for param in list(array_genes_sizes.keys()):
         generation[param] = generation[param].apply(np.ndarray.tolist).apply(json.dumps)
+
+    if "id" in generation:
+        generation = generation.drop("id", axis=1)
     generation.to_sql('Chromosome', db.engine, if_exists='append', index=False)
 
 def generate_random_chromosomes(clargs, array_genes_sizes):
@@ -91,6 +99,9 @@ def generate_random_chromosomes(clargs, array_genes_sizes):
     generation['size_latent'] = loguniform(low=clargs.min_latent_layers,
                                            high=clargs.max_latent_layers,
                                            size = population_size)
+    generation['size_resnet'] = loguniform(low=clargs.min_resnet,
+                                           high=clargs.max_resnet,
+                                           size = population_size)
 
     for i in range(population_size):
         generation["size_kernel_encoder"].iat[i] = loguniform(low=clargs.min_kernel_size,
@@ -101,6 +112,9 @@ def generate_random_chromosomes(clargs, array_genes_sizes):
                                                                    size = (generation.loc[i, 'num_cnn_encoder']))
         generation["size_filter_encoder"].iat[i] = loguniform(low=clargs.min_filter_size,
                                                                    high=clargs.max_filter_size,
+                                                                   size = (generation.loc[i, 'num_cnn_encoder']))
+        generation["batchnorm_encoder"].iat[i] = loguniform(low=clargs.min_batchnorm,
+                                                                   high=clargs.max_batchnorm,
                                                                    size = (generation.loc[i, 'num_cnn_encoder']))
 
         # generation["size_kernel_decoder"].iat[i] = loguniform(low=clargs.min_kernel_size,
@@ -116,6 +130,10 @@ def generate_random_chromosomes(clargs, array_genes_sizes):
         generation["size_dnn_encoder"].iat[i] = loguniform(low=clargs.min_dnn_size,
                                                                 high=clargs.max_dnn_size,
                                                                 size = (generation.loc[i, 'num_dnn_encoder']))
+        generation["l1_dnn_encoder"].iat[i] = loguniform(low=clargs.min_l1,
+                                                                high=clargs.max_l1,
+                                                                size = (generation.loc[i, 'num_dnn_encoder']))
+
         # generation["size_dnn_decoder"].iat[i] = loguniform(low=clargs.min_dnn_size,
         #                                                         high=clargs.max_dnn_size,
         #                                                         size = (generation.loc[i, 'num_dnn_decoder']))
@@ -123,6 +141,8 @@ def generate_random_chromosomes(clargs, array_genes_sizes):
     add_generation_to_sql(generation, array_genes_sizes)
 
 def loguniform(low=0, high=1, size=None, dtype=int):
+    if dtype==int:
+        high += 1
     return np.exp(np.random.uniform(np.log(low+1), np.log(high+1), size)).astype(dtype) -1
 
 def train_generation(array_genes_sizes, sleep_time=30):
@@ -139,7 +159,7 @@ def train_generation(array_genes_sizes, sleep_time=30):
     return generation
 
 def select_parents(generation):
-    rank_fit = generation["fitness"].rank(ascending=False)
+    rank_fit = generation["fitness"].rank(ascending=True)
     rank_sum = rank_fit.sum()
 
     p1_num = np.random.uniform(0, rank_sum)
@@ -190,6 +210,8 @@ def cross_over(parent1, parent2, cross_prob, param_choices, array_genes_sizes):
         child['info'] = 'Child of {} and {}'.format(parent1["id"], parent2["id"])
         return pd.Series(child)
 
+    print(parent1)
+    print(parent2)
     child = random.choice([parent1, parent2]).to_dict()
     child['info'] = 'Descendant of {}'.format(child["id"])
     child["date_created"] = int(time.time())
@@ -201,7 +223,7 @@ def mutate(child, mutate_prob, param_choices, array_genes_sizes):
     mutation_happened = False
     child = child.to_dict()
 
-    for param, (range_change, min_val) in param_choices.items():
+    for param, (range_change, min_val, max_val) in param_choices.items():
         if(param not in list(array_genes_sizes.keys())):
             if(random.random() <= mutate_prob):
                 mutation_happened = True
@@ -216,14 +238,17 @@ def mutate(child, mutate_prob, param_choices, array_genes_sizes):
                 current_p = child[param] + change_p
 
                 # If param less than `min_val`, then set param to `min_val`
-                current_p = np.max([current_p, int(min_val)])
-                current_p = type(min_val)(current_p)
+                current_p = np.max([current_p, min_val])
+                current_p = np.min([current_p, max_val])
+
+                if type(min_val) == int:
+                    current_p = round(current_p)
 
                 # All params must be integer sized: round and convert
                 child[param] = current_p
 
 
-    for param, (range_change, min_val) in param_choices.items():
+    for param, (range_change, min_val, max_val) in param_choices.items():
         if(param in list(array_genes_sizes.keys())):
             size = child[array_genes_sizes[param]]
 
@@ -231,15 +256,19 @@ def mutate(child, mutate_prob, param_choices, array_genes_sizes):
             while(len(child[param]) != size):
                 if len(child[param]) > size:
                     del_index = random.choice(range(len(child[param])))
-                    child[param] = np.delete(child[param], del_index)
+                    child[param] = np.delete(child[param], del_index).astype(type(min_val))
                 elif len(child[param]) < size:
                     if len(child[param]) != 0:
                         dup_index = random.choice(range(len(child[param])))
-                        child[param] = np.append(child[param], child[param][dup_index])
+                        child[param] = np.append(child[param], child[param][dup_index]).astype(type(min_val))
                     else:
-                        child[param] = np.append(child[param], int(min_val))
+                        new_val = min_val + (random.random() * (max_val - min_val))
+                        if type(min_val) == int:
+                            new_val = round(new_val)
 
-            if(random.random() <= mutate_prob):
+                        child[param] = np.append(child[param], new_val).astype(type(min_val))
+
+            if(random.random() <= mutate_prob and len(child[param]) > 0):
                     mutation_happened = True
 
                     change_index = random.choice(range(len(child[param])))
@@ -251,7 +280,9 @@ def mutate(child, mutate_prob, param_choices, array_genes_sizes):
 
                     current_p = child[param][change_index] + change_p
                     current_p = np.max([current_p, int(min_val)])
-                    current_p = type(min_val)(current_p)
+                    if type(min_val) == int:
+                        current_p = round(current_p)
+
                     child[param][change_index] = current_p
 
     if(mutation_happened):
