@@ -10,7 +10,9 @@ import argparse
 import pandas as pd
 from database import Variables, Chromosome, db
 
-from GeneticAlgorithm_VAE import generate_random_chromosomes, train_generation, create_blank_dataframe, select_parents, cross_over, mutate, load_generation_from_sql, add_generation_to_sql
+from GeneticAlgorithm_VAE import (generate_random_chromosomes, train_generation,
+                                  create_blank_dataframe, select_parents, cross_over,
+                                  mutate, load_generation_from_sql, add_generation_to_sql)
 
 
 def debuge_message(message): print('[DEBUG] {}'.format(message))
